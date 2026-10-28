@@ -1,0 +1,12 @@
+node_modules
+dist
+pnpm-lock.yaml
+docs/api/openapi.json
+database/migrations
+playwright-report
+test-results
+docs
+.claude
+CLAUDE.md
+tests/fixtures
+scripts

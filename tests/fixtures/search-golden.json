@@ -1,0 +1,13 @@
+{
+  "_note": "TEMPLATE for card A02. Replace the example recipes with 10-15 of your real recipes (tests/fixtures/recipes/*.json) and expand to about 30 query/recipe pairs. Cases marked status=example are placeholders and must not be counted in the pass rate.",
+  "locale": ["fi", "en"],
+  "cases": [
+    { "id": "inflection-1", "query": "porkkanaa", "expect": ["<recipe-id-containing-porkkana>"], "kind": "inflection", "status": "example" },
+    { "id": "plural-1",     "query": "porkkanat", "expect": ["<recipe-id-containing-porkkana>"], "kind": "inflection", "status": "example" },
+    { "id": "compound-1",   "query": "keitto",    "expect": ["<recipe-id-with-lihakeitto>"],     "kind": "compound",   "status": "example" },
+    { "id": "english-1",    "query": "carrot",    "expect": ["<recipe-id-with-carrot-or-porkkana>"], "kind": "english", "status": "example" },
+    { "id": "typo-1",       "query": "porkana",   "expect": ["<recipe-id-containing-porkkana>"], "kind": "typo",       "status": "example" },
+    { "id": "umlaut-1",     "query": "mansikka",  "expect": ["<recipe-id>"], "mustNotMatch": ["<recipe-id-with-mänsikkä-if-any>"], "kind": "umlaut", "status": "example" },
+    { "id": "ingredient-field-1", "query": "kerma", "expect": ["<recipe-id-with-kerma-only-in-ingredients>"], "kind": "ranking", "status": "example" }
+  ]
+}

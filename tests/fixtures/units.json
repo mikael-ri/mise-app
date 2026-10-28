@@ -1,0 +1,29 @@
+{
+  "_note": "SEED for card A05. Review with the owner and extend. Volume base unit: ml. Mass base unit: g. Count, mass, volume and package are different dimensions and are never converted into each other.",
+  "units": [
+    { "code": "ml",  "dimension": "volume",  "toBase": 1,    "aliases": ["millilitra"] },
+    { "code": "dl",  "dimension": "volume",  "toBase": 100,  "aliases": ["desilitra", "desilitraa"] },
+    { "code": "l",   "dimension": "volume",  "toBase": 1000, "aliases": ["litra", "litraa"] },
+    { "code": "tl",  "dimension": "volume",  "toBase": 5,    "aliases": ["teelusikka", "teelusikallinen", "tsp"] },
+    { "code": "rkl", "dimension": "volume",  "toBase": 15,   "aliases": ["ruokalusikka", "ruokalusikallinen", "tbsp"] },
+    { "code": "g",   "dimension": "mass",    "toBase": 1,    "aliases": ["gramma", "grammaa"] },
+    { "code": "kg",  "dimension": "mass",    "toBase": 1000, "aliases": ["kilo", "kiloa"] },
+    { "code": "kpl", "dimension": "count",   "toBase": null, "aliases": ["kappale", "kappaletta", "pcs"] },
+    { "code": "kynsi", "dimension": "count", "toBase": null, "aliases": ["kynttä", "kynsi", "kynnet"] },
+    { "code": "prk", "dimension": "package", "toBase": null, "aliases": ["purkki", "purkkia"] },
+    { "code": "ps",  "dimension": "package", "toBase": null, "aliases": ["pussi", "pussia", "pkt"] },
+    { "code": "tlk", "dimension": "package", "toBase": null, "aliases": ["tölkki", "tölkkiä"] },
+    { "code": "nippu", "dimension": "package", "toBase": null, "aliases": ["nippua"] }
+  ],
+  "vague": [
+    { "text": "maun mukaan", "scalePolicy": "to_taste" },
+    { "text": "ripaus",      "scalePolicy": "to_taste" },
+    { "text": "kourallinen", "scalePolicy": "to_taste" }
+  ],
+  "scaleCases": [
+    { "name": "linear grams",       "in": { "qty": "400", "unit": "g" },  "baseYield": 4, "targetYield": 3, "out": { "qty": "300", "unit": "g" } },
+    { "name": "range stays range",  "in": { "min": "2", "max": "3", "unit": "kpl" }, "baseYield": 4, "targetYield": 2, "out": { "min": "1", "max": "1.5", "unit": "kpl" } },
+    { "name": "to taste unchanged", "in": { "text": "maun mukaan" },     "baseYield": 4, "targetYield": 8, "out": { "text": "maun mukaan" } },
+    { "name": "keeps original unit","in": { "qty": "2", "unit": "dl" },  "baseYield": 4, "targetYield": 6, "out": { "qty": "3", "unit": "dl" } }
+  ]
+}
