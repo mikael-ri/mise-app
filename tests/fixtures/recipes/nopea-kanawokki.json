@@ -1,0 +1,260 @@
+{
+  "title": "Nopea Kanawokki",
+  "tags": [],
+  "source_url": null,
+  "yield_text": "4 annosta",
+  "time_text": null,
+  "prep_minutes": null,
+  "cook_minutes": null,
+  "total_minutes": null,
+  "passive_minutes": null,
+  "general_notes": null,
+  "content": {
+    "schema_version": 1,
+    "yield": {
+      "quantity": "4",
+      "unit": "servings"
+    },
+    "ingredient_groups": [
+      {
+        "id": "g1",
+        "name": "Kastike",
+        "order": 1
+      }
+    ],
+    "ingredients": [
+      {
+        "id": "l1",
+        "group_id": null,
+        "display_name": "isoja kanan fileesuikaleita",
+        "original_quantity_text": "300 g (1 rs)",
+        "amount_min": "300",
+        "amount_max": "300",
+        "original_unit": "g",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": [
+          "'1 rs' (tray) stated in parentheses"
+        ]
+      },
+      {
+        "id": "l2",
+        "group_id": null,
+        "display_name": "valkosipulinkynsi",
+        "original_quantity_text": "2 kpl",
+        "amount_min": "2",
+        "amount_max": "2",
+        "original_unit": "kpl",
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l3",
+        "group_id": null,
+        "display_name": "punasipuli",
+        "original_quantity_text": "1 kpl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "kpl",
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l4",
+        "group_id": null,
+        "display_name": "porkkana",
+        "original_quantity_text": "1 kpl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "kpl",
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l5",
+        "group_id": null,
+        "display_name": "paprika",
+        "original_quantity_text": "1 kpl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "kpl",
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l6",
+        "group_id": null,
+        "display_name": "vihreitä papuja (pakaste)",
+        "original_quantity_text": "200 g (1 ps)",
+        "amount_min": "200",
+        "amount_max": "200",
+        "original_unit": "g",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": [
+          "'1 ps' stated in parentheses"
+        ]
+      },
+      {
+        "id": "l7",
+        "group_id": null,
+        "display_name": "täysjyvänuudeleita",
+        "original_quantity_text": "200 g",
+        "amount_min": "200",
+        "amount_max": "200",
+        "original_unit": "g",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l8",
+        "group_id": null,
+        "display_name": "paahdettua seesamiöljyä",
+        "original_quantity_text": "2 rkl",
+        "amount_min": "2",
+        "amount_max": "2",
+        "original_unit": "rkl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l9",
+        "group_id": null,
+        "display_name": "suolaa",
+        "original_quantity_text": "1/2 tl",
+        "amount_min": "0.5",
+        "amount_max": "0.5",
+        "original_unit": "tl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l10",
+        "group_id": "g1",
+        "display_name": "lime",
+        "original_quantity_text": "1 kpl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "kpl",
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": [
+          "Step 4 says squeeze 2 rkl juice from it"
+        ]
+      },
+      {
+        "id": "l11",
+        "group_id": "g1",
+        "display_name": "soijakastiketta",
+        "original_quantity_text": "1/2 dl",
+        "amount_min": "0.5",
+        "amount_max": "0.5",
+        "original_unit": "dl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l12",
+        "group_id": "g1",
+        "display_name": "vettä",
+        "original_quantity_text": "1/2 dl",
+        "amount_min": "0.5",
+        "amount_max": "0.5",
+        "original_unit": "dl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l13",
+        "group_id": "g1",
+        "display_name": "vaahterasiirappia",
+        "original_quantity_text": "1 rkl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "rkl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l14",
+        "group_id": "g1",
+        "display_name": "paahdettua seesamiöljyä",
+        "original_quantity_text": "1 rkl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "rkl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l15",
+        "group_id": "g1",
+        "display_name": "punaista chilitahnaa",
+        "original_quantity_text": "2 tl",
+        "amount_min": "2",
+        "amount_max": "2",
+        "original_unit": "tl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      }
+    ],
+    "instructions": [
+      {
+        "id": "s1",
+        "order": 1,
+        "text": "Ota kana huoneenlämpöön."
+      },
+      {
+        "id": "s2",
+        "order": 2,
+        "text": "Kuori ja hienonna sipulit. Pese, kuori ja suikaloi porkkana. Huuhtele paprika, halkaise, poista siemenet ja suikaloi paprika. Sulata pavut pakkauksen ohjeen mukaan."
+      },
+      {
+        "id": "s3",
+        "order": 3,
+        "text": "Keitä nuudelit pakkauksen ohjeen mukaan. Valuta nuudelit."
+      },
+      {
+        "id": "s4",
+        "order": 4,
+        "text": "Purista limen mehu (2 rkl). Sekoita kastikkeen ainekset."
+      },
+      {
+        "id": "s5",
+        "order": 5,
+        "text": "Kuumenna puolet öljystä (1 rkl) wokpannussa tai paistokasarissa. Lisää kanat ja paista käännellen kypsäksi. Mausta suolalla. Lisää kasvikset ja loput öljystä (1 rkl) pannulle, paista käännellen pari minuuttia. Sekoita joukkoon nuudelit ja kastike."
+      }
+    ]
+  },
+  "_flags": [
+    "Steps 4 and 5 were on one line in the source; split.",
+    "Uses 'kpl' units explicitly; sesame oil appears in both groups."
+  ]
+}

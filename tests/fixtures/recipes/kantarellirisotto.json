@@ -1,0 +1,237 @@
+{
+  "title": "Kantarellirisotto",
+  "tags": [],
+  "source_url": null,
+  "yield_text": "4 annosta",
+  "time_text": "40 min",
+  "prep_minutes": null,
+  "cook_minutes": null,
+  "total_minutes": 40,
+  "passive_minutes": null,
+  "general_notes": null,
+  "content": {
+    "schema_version": 1,
+    "yield": {
+      "quantity": "4",
+      "unit": "servings"
+    },
+    "ingredient_groups": [],
+    "ingredients": [
+      {
+        "id": "l1",
+        "group_id": null,
+        "display_name": "kantarelleja",
+        "original_quantity_text": "1 l",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "l",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l2",
+        "group_id": null,
+        "display_name": "voita",
+        "original_quantity_text": "50 g",
+        "amount_min": "50",
+        "amount_max": "50",
+        "original_unit": "g",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l3",
+        "group_id": null,
+        "display_name": "salottisipulia",
+        "original_quantity_text": "3",
+        "amount_min": "3",
+        "amount_max": "3",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l4",
+        "group_id": null,
+        "display_name": "valkosipulinkynttä",
+        "original_quantity_text": "2",
+        "amount_min": "2",
+        "amount_max": "2",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l5",
+        "group_id": null,
+        "display_name": "oliiviöljyä",
+        "original_quantity_text": "1 dl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "dl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l6",
+        "group_id": null,
+        "display_name": "risottoriisiä",
+        "original_quantity_text": "3 dl",
+        "amount_min": "3",
+        "amount_max": "3",
+        "original_unit": "dl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l7",
+        "group_id": null,
+        "display_name": "kuivaa valkoviiniä",
+        "original_quantity_text": "2 dl",
+        "amount_min": "2",
+        "amount_max": "2",
+        "original_unit": "dl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l8",
+        "group_id": null,
+        "display_name": "tuoretta timjamia",
+        "original_quantity_text": "1/2 dl",
+        "amount_min": "0.5",
+        "amount_max": "0.5",
+        "original_unit": "dl",
+        "preparation_note": "silputtuna",
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l9",
+        "group_id": null,
+        "display_name": "kasvislientä",
+        "original_quantity_text": "7 dl",
+        "amount_min": "7",
+        "amount_max": "7",
+        "original_unit": "dl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l10",
+        "group_id": null,
+        "display_name": "merisuolaa",
+        "original_quantity_text": "1/2 tl",
+        "amount_min": "0.5",
+        "amount_max": "0.5",
+        "original_unit": "tl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l11",
+        "group_id": null,
+        "display_name": "mustapippuria",
+        "original_quantity_text": "1/4 tl",
+        "amount_min": "0.25",
+        "amount_max": "0.25",
+        "original_unit": "tl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l12",
+        "group_id": null,
+        "display_name": "parmesaanijuustoa",
+        "original_quantity_text": "1 dl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "dl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l13",
+        "group_id": null,
+        "display_name": "kevätsipuli",
+        "original_quantity_text": "1",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": null,
+        "preparation_note": "silputtuna",
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l14",
+        "group_id": null,
+        "display_name": "lehtipersiljaa",
+        "original_quantity_text": "1 1/2 dl",
+        "amount_min": "1.5",
+        "amount_max": "1.5",
+        "original_unit": "dl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      }
+    ],
+    "instructions": [
+      {
+        "id": "s1",
+        "order": 1,
+        "text": "Puhdista ja paloittele kantarellit. Kuumenna nokare voita pannulla ja paista sienet. Siirrä sivuun odottamaan."
+      },
+      {
+        "id": "s2",
+        "order": 2,
+        "text": "Hienonna sipulit. Kuullota niitä paistokasarissa oliiviöljyssä ja voissa kunnes ovat läpikuultavia, mutta älä anna ruskistua. Lisää riisi ja jatka kuullottamista hetki. Kaada joukkoon valkoviini ja anna kiehahtaa. Lisää timjami."
+      },
+      {
+        "id": "s3",
+        "order": 3,
+        "text": "Lisää kasvislientä riisin joukkoon kauhallinen kerrallaan ja jatka kypsentämistä välillä sekoitellen. Lisää lientä aina edellisen erän imeydyttyä."
+      },
+      {
+        "id": "s4",
+        "order": 4,
+        "text": "Kypsennä, kunnes riisi on napakan pehmeää (15–20 minuuttia)."
+      },
+      {
+        "id": "s5",
+        "order": 5,
+        "text": "Mausta risotto suolalla ja pippurilla. Lisää joukkoon kantarellit, juustoraaste, kevätsipuli ja lehtipersilja. Tarjoa kantarellirisotto heti."
+      }
+    ]
+  },
+  "_flags": [
+    "In the source all five steps were in one paragraph; I split them at the step numbers.",
+    "Mixed fraction styles (1/2, 1 1/2): good parsing test.",
+    "Mushrooms measured by volume (1 l).",
+    "Step 1 mentions extra butter ('nokare') beyond the 50 g listed."
+  ]
+}

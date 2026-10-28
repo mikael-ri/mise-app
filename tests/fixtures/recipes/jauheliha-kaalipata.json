@@ -1,0 +1,236 @@
+{
+  "title": "Jauheliha-kaalipata",
+  "tags": [],
+  "source_url": null,
+  "yield_text": "6 annosta",
+  "time_text": "Valmistelu 20 min , haudutus 1 tunti",
+  "prep_minutes": 20,
+  "cook_minutes": 60,
+  "total_minutes": null,
+  "passive_minutes": null,
+  "general_notes": null,
+  "content": {
+    "schema_version": 1,
+    "yield": {
+      "quantity": "6",
+      "unit": "servings"
+    },
+    "ingredient_groups": [],
+    "ingredients": [
+      {
+        "id": "l1",
+        "group_id": null,
+        "display_name": "valkokaalia (keräkaali)",
+        "original_quantity_text": "1 kg",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "kg",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l2",
+        "group_id": null,
+        "display_name": "porkkanaa",
+        "original_quantity_text": "2",
+        "amount_min": "2",
+        "amount_max": "2",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l3",
+        "group_id": null,
+        "display_name": "vettä",
+        "original_quantity_text": "6 dl",
+        "amount_min": "6",
+        "amount_max": "6",
+        "original_unit": "dl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l4",
+        "group_id": null,
+        "display_name": "lihaliemikuutiota",
+        "original_quantity_text": "2",
+        "amount_min": "2",
+        "amount_max": "2",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l5",
+        "group_id": null,
+        "display_name": "riisiä (pitkäjyväinen)",
+        "original_quantity_text": "1 dl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "dl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l6",
+        "group_id": null,
+        "display_name": "jauhelihaa (esim. sika-nauta)",
+        "original_quantity_text": "400 g",
+        "amount_min": "400",
+        "amount_max": "400",
+        "original_unit": "g",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l7",
+        "group_id": null,
+        "display_name": "sipuli",
+        "original_quantity_text": "1 iso",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": [
+          "Size given as 'iso'"
+        ]
+      },
+      {
+        "id": "l8",
+        "group_id": null,
+        "display_name": "rypsiöljyä",
+        "original_quantity_text": "n. 1 rkl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "rkl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": [
+          "Approximate (n.)"
+        ]
+      },
+      {
+        "id": "l9",
+        "group_id": null,
+        "display_name": "siirappia",
+        "original_quantity_text": "0,5 dl",
+        "amount_min": "0.5",
+        "amount_max": "0.5",
+        "original_unit": "dl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l10",
+        "group_id": null,
+        "display_name": "tomaattisosetta",
+        "original_quantity_text": "1 rkl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "rkl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l11",
+        "group_id": null,
+        "display_name": "soijakastiketta",
+        "original_quantity_text": "1 rkl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "rkl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l12",
+        "group_id": null,
+        "display_name": "meiramia (kuivattu)",
+        "original_quantity_text": "1 rkl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "rkl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l13",
+        "group_id": null,
+        "display_name": "valkopippuria (jauhettu)",
+        "original_quantity_text": "0,5 tl",
+        "amount_min": "0.5",
+        "amount_max": "0.5",
+        "original_unit": "tl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      }
+    ],
+    "instructions": [
+      {
+        "id": "s1",
+        "order": 1,
+        "text": "Ota jauheliha huoneenlämpöön noin puoli tuntia ennen ruoanvalmistusta."
+      },
+      {
+        "id": "s2",
+        "order": 2,
+        "text": "Huuhtele kaali ja suikaloi se. Kuori ja viipaloi porkkanat."
+      },
+      {
+        "id": "s3",
+        "order": 3,
+        "text": "Kuumenna vesi reilun kokoisessa kattilassa. Lisää lihaliemikuutiot, kaali, porkkanat sekä riisi. Anna kiehua, sekoita välillä. Veden määrä voi aluksi näyttää niukalta. Kaalista irtoaa kuitenkin nestettä kypsymisen aikana. Lisää hieman vettä tarvittaessa."
+      },
+      {
+        "id": "s4",
+        "order": 4,
+        "text": "Hienonna sipuli."
+      },
+      {
+        "id": "s5",
+        "order": 5,
+        "text": "Paista jauheliha ja sipuli öljyssä paistinpannulla. Lisää ne kattilaan."
+      },
+      {
+        "id": "s6",
+        "order": 6,
+        "text": "Mausta kaalipata siirapilla, tomaattisoseella, soijakastikkeella, meiramilla ja valkopippurilla."
+      },
+      {
+        "id": "s7",
+        "order": 7,
+        "text": "Anna hautua kannen alla hiljalleen kiehuen vähintään 30 minuutin (jopa tunnin) ajan, kunnes riisi on kypsää ja kaali pehmeää. Sekoita välillä pohjaa myöten kypsymisen aikana."
+      }
+    ]
+  },
+  "_flags": [
+    "Sub-bullets of steps 3 and 7 were appended to their steps.",
+    "Time given as two parts (prep 20 min, simmer 1 h)."
+  ]
+}

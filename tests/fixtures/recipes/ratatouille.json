@@ -1,0 +1,266 @@
+{
+  "title": "Ratatouille",
+  "tags": [],
+  "source_url": null,
+  "yield_text": "4 annosta",
+  "time_text": "30-60 min",
+  "prep_minutes": null,
+  "cook_minutes": null,
+  "total_minutes": null,
+  "passive_minutes": null,
+  "general_notes": null,
+  "content": {
+    "schema_version": 1,
+    "yield": {
+      "quantity": "4",
+      "unit": "servings"
+    },
+    "ingredient_groups": [
+      {
+        "id": "g1",
+        "name": "Viimeistelyyn",
+        "order": 1
+      }
+    ],
+    "ingredients": [
+      {
+        "id": "l1",
+        "group_id": null,
+        "display_name": "punasipulia",
+        "original_quantity_text": "2",
+        "amount_min": "2",
+        "amount_max": "2",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l2",
+        "group_id": null,
+        "display_name": "paprikaa (punainen, keltainen ja vihreä)",
+        "original_quantity_text": "3",
+        "amount_min": "3",
+        "amount_max": "3",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l3",
+        "group_id": null,
+        "display_name": "kesäkurpitsa",
+        "original_quantity_text": "1-2",
+        "amount_min": "1",
+        "amount_max": "2",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l4",
+        "group_id": null,
+        "display_name": "munakoiso",
+        "original_quantity_text": "1 iso",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": [
+          "Size given as 'iso'"
+        ]
+      },
+      {
+        "id": "l5",
+        "group_id": null,
+        "display_name": "oliiviöljyä",
+        "original_quantity_text": null,
+        "amount_min": null,
+        "amount_max": null,
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "to_taste",
+        "alternatives": [],
+        "uncertainties": [
+          "No quantity given"
+        ]
+      },
+      {
+        "id": "l6",
+        "group_id": null,
+        "display_name": "kuorittuja tomaatteja",
+        "original_quantity_text": "1 prk",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "prk",
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": [
+          "Package size not given"
+        ]
+      },
+      {
+        "id": "l7",
+        "group_id": null,
+        "display_name": "paseerattua tomaattia",
+        "original_quantity_text": "1 prk",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "prk",
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": [
+          "Package size not given"
+        ]
+      },
+      {
+        "id": "l8",
+        "group_id": null,
+        "display_name": "laakerinlehti",
+        "original_quantity_text": "2",
+        "amount_min": "2",
+        "amount_max": "2",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l9",
+        "group_id": null,
+        "display_name": "valkosipulin kynttä",
+        "original_quantity_text": "6",
+        "amount_min": "6",
+        "amount_max": "6",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l10",
+        "group_id": null,
+        "display_name": "basilikaa",
+        "original_quantity_text": "melko reilusti",
+        "amount_min": null,
+        "amount_max": null,
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "to_taste",
+        "alternatives": [],
+        "uncertainties": [
+          "Vague amount"
+        ]
+      },
+      {
+        "id": "l11",
+        "group_id": null,
+        "display_name": "mustapippuria myllystä",
+        "original_quantity_text": null,
+        "amount_min": null,
+        "amount_max": null,
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "to_taste",
+        "alternatives": [],
+        "uncertainties": [
+          "No quantity given"
+        ]
+      },
+      {
+        "id": "l12",
+        "group_id": null,
+        "display_name": "rosmariinin oksa tai pari",
+        "original_quantity_text": null,
+        "amount_min": null,
+        "amount_max": null,
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "to_taste",
+        "alternatives": [],
+        "uncertainties": [
+          "Roughly 1-2 sprigs, written as text"
+        ]
+      },
+      {
+        "id": "l13",
+        "group_id": null,
+        "display_name": "hienoa merisuolaa",
+        "original_quantity_text": "1 tl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "tl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l14",
+        "group_id": "g1",
+        "display_name": "tuoretta persiljaa",
+        "original_quantity_text": "reilusti",
+        "amount_min": null,
+        "amount_max": null,
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "to_taste",
+        "alternatives": [],
+        "uncertainties": [
+          "Vague amount; 'viimeistelyyn' (to finish) moved to the group name"
+        ]
+      },
+      {
+        "id": "l15",
+        "group_id": "g1",
+        "display_name": "hunajaa",
+        "original_quantity_text": "1 rkl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "rkl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l16",
+        "group_id": "g1",
+        "display_name": "yrttimarinoituja fetakuutioita",
+        "original_quantity_text": "5 rkl",
+        "amount_min": "5",
+        "amount_max": "5",
+        "original_unit": "rkl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [
+          "mozzarella palloja"
+        ],
+        "uncertainties": []
+      }
+    ],
+    "instructions": [
+      {
+        "id": "s1",
+        "order": 1,
+        "text": "Pese kesäkurpitsat ja munakoisot, niitä ei ei kuorita. Pese myös paprikat ja poista niistä siemenkodat. Paloittele kaikki kasvikset n. 2cm kuutioiksi. (paprikat voi halutessa paahtaa kuumassa uunissa nopeasti). Kuullota sipulilohkoja kuumassa rautapadassa öljyssä. Lisää muut kasvikset ja kuullota myös niitä. Lisää sitten kasvisten joukkoon pataan suola, mausteet ja tomaatit, anna hautua hiljalleen, välillä sekoitellen n. 30 min. kannella peitettynä. Lisää pinnalle loppuvaiheessa silputtu persilja juustot ja hunaja anna hetki muhia. Tarkista maku ja tarjoa tuoreen maalaisleivän tai patongin kera. Juomaksi kevyttä Ranskalaista punaviiniä."
+      }
+    ]
+  },
+  "_flags": [
+    "Directions are ONE unnumbered paragraph in the source; kept as a single step (good test for unstructured instructions).",
+    "Many lines without quantities; 'viimeistelyyn' lines grouped under 'Viimeistelyyn' (my interpretation).",
+    "Typo 'ei ei', 'kynttä' split from 'valkosipulin'; kept verbatim. Source columns were tab-separated."
+  ]
+}

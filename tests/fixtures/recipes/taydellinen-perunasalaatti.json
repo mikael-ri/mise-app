@@ -1,0 +1,257 @@
+{
+  "title": "Täydellinen perunasalaatti",
+  "tags": [],
+  "source_url": null,
+  "yield_text": "4 annosta",
+  "time_text": "Valmistusaika: 30–60 min",
+  "prep_minutes": null,
+  "cook_minutes": null,
+  "total_minutes": null,
+  "passive_minutes": null,
+  "general_notes": null,
+  "content": {
+    "schema_version": 1,
+    "yield": {
+      "quantity": "4",
+      "unit": "servings"
+    },
+    "ingredient_groups": [
+      {
+        "id": "g1",
+        "name": "Kastike",
+        "order": 1
+      },
+      {
+        "id": "g2",
+        "name": "Lisäksi",
+        "order": 2
+      }
+    ],
+    "ingredients": [
+      {
+        "id": "l1",
+        "group_id": null,
+        "display_name": "Pirkka yleisperunoita (keltainen pussi)",
+        "original_quantity_text": "1 kg",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "kg",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l2",
+        "group_id": null,
+        "display_name": "suola- tai maustekurkkua",
+        "original_quantity_text": "1–2 (100 g)",
+        "amount_min": "1",
+        "amount_max": "2",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": [
+          "100 g stated in parentheses (not parsed)"
+        ]
+      },
+      {
+        "id": "l3",
+        "group_id": null,
+        "display_name": "vihreä omena (esim. Granny Smith)",
+        "original_quantity_text": "1 (150 g)",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": [
+          "150 g stated in parentheses (not parsed)"
+        ]
+      },
+      {
+        "id": "l4",
+        "group_id": null,
+        "display_name": "kevätsipulia",
+        "original_quantity_text": "75 g",
+        "amount_min": "75",
+        "amount_max": "75",
+        "original_unit": "g",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l5",
+        "group_id": null,
+        "display_name": "Pirkka kapriksia",
+        "original_quantity_text": "1 prk (50 g/35 g)",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "prk",
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": [
+          "Two weights given (50 g / 35 g), probably total and drained; not parsed"
+        ]
+      },
+      {
+        "id": "l6",
+        "group_id": "g1",
+        "display_name": "Pirkka crème fraîchea (ranskankermaa, 18 %)",
+        "original_quantity_text": "2 prk (à 150 g)",
+        "amount_min": "2",
+        "amount_max": "2",
+        "original_unit": "prk",
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": [
+          "150 g per package stated (not parsed)"
+        ]
+      },
+      {
+        "id": "l7",
+        "group_id": "g1",
+        "display_name": "Pirkka kevytmajoneesia",
+        "original_quantity_text": "1 dl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "dl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l8",
+        "group_id": "g1",
+        "display_name": "Pirkka Dijon-sinappia",
+        "original_quantity_text": "1½ rkl",
+        "amount_min": "1.5",
+        "amount_max": "1.5",
+        "original_unit": "rkl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l9",
+        "group_id": "g1",
+        "display_name": "sitruunanmehua",
+        "original_quantity_text": "1 rkl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "rkl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l10",
+        "group_id": "g1",
+        "display_name": "juoksevaa hunajaa",
+        "original_quantity_text": "1 tl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "tl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l11",
+        "group_id": "g1",
+        "display_name": "mustapippuria",
+        "original_quantity_text": "¼ tl",
+        "amount_min": "0.25",
+        "amount_max": "0.25",
+        "original_unit": "tl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l12",
+        "group_id": "g1",
+        "display_name": "suolaa",
+        "original_quantity_text": "ripaus",
+        "amount_min": null,
+        "amount_max": null,
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "to_taste",
+        "alternatives": [],
+        "uncertainties": [
+          "Vague amount 'ripaus'"
+        ]
+      },
+      {
+        "id": "l13",
+        "group_id": "g2",
+        "display_name": "nakkeja",
+        "original_quantity_text": null,
+        "amount_min": null,
+        "amount_max": null,
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "to_taste",
+        "alternatives": [],
+        "uncertainties": [
+          "No quantity given"
+        ]
+      },
+      {
+        "id": "l14",
+        "group_id": "g2",
+        "display_name": "persiljaa",
+        "original_quantity_text": null,
+        "amount_min": null,
+        "amount_max": null,
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "to_taste",
+        "alternatives": [
+          "ruohosipulia"
+        ],
+        "uncertainties": [
+          "No quantity given"
+        ]
+      }
+    ],
+    "instructions": [
+      {
+        "id": "s1",
+        "order": 1,
+        "text": "Keitä perunat suolalla maustetussa vedessä. Kaada vesi pois ja anna jäähtyä."
+      },
+      {
+        "id": "s2",
+        "order": 2,
+        "text": "Kuori ja kuutioi perunat. Kuutioi suolakurkut ja kuorittu omena. Hienonna kevätsipuli. Valuta kaprikset. Pane salaattiainekset kulhoon."
+      },
+      {
+        "id": "s3",
+        "order": 3,
+        "text": "Sekoita kastikkeen ainekset. Sekoita kastike kahdella lusikalla nostellen salaatin joukkoon. Kaada valmis perunasalaatti tarjoilukulhoon. Anna maustua jääkaapissa ennen tarjoamista. Hienonna pinnalle persiljaa tai ruohosipulia."
+      },
+      {
+        "id": "s4",
+        "order": 4,
+        "text": "Kuumenna nakit pannulla paistamalla tai höyryttämällä. Tarjoa nakit perunasalaatin kanssa."
+      }
+    ]
+  },
+  "_flags": [
+    "Ingredient lists were run-on lines in the source; split. Filename was 't_ydellinen' (encoding); title restored as 'Täydellinen'.",
+    "Three groups in the source: main, Kastike, Lisäksi (main list is ungrouped here)."
+  ]
+}

@@ -1,0 +1,99 @@
+{
+  "title": "Blueberry pancakes",
+  "tags": [],
+  "source_url": null,
+  "yield_text": "4 servings",
+  "time_text": null,
+  "prep_minutes": null,
+  "cook_minutes": null,
+  "total_minutes": null,
+  "passive_minutes": null,
+  "general_notes": null,
+  "content": {
+    "schema_version": 1,
+    "yield": {
+      "quantity": "4",
+      "unit": "servings"
+    },
+    "ingredient_groups": [],
+    "ingredients": [
+      {
+        "id": "l1",
+        "group_id": null,
+        "display_name": "flour",
+        "original_quantity_text": null,
+        "amount_min": null,
+        "amount_max": null,
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l2",
+        "group_id": null,
+        "display_name": "milk",
+        "original_quantity_text": null,
+        "amount_min": null,
+        "amount_max": null,
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l3",
+        "group_id": null,
+        "display_name": "eggs",
+        "original_quantity_text": null,
+        "amount_min": null,
+        "amount_max": null,
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l4",
+        "group_id": null,
+        "display_name": "blueberries",
+        "original_quantity_text": null,
+        "amount_min": null,
+        "amount_max": null,
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l5",
+        "group_id": null,
+        "display_name": "butter",
+        "original_quantity_text": null,
+        "amount_min": null,
+        "amount_max": null,
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      }
+    ],
+    "instructions": [
+      {
+        "id": "s1",
+        "order": 1,
+        "text": "Whisk flour, milk and eggs into a batter."
+      },
+      {
+        "id": "s2",
+        "order": 2,
+        "text": "Fry pancakes in butter and top with blueberries."
+      }
+    ]
+  }
+}

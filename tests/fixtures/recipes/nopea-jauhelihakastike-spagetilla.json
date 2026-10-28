@@ -1,0 +1,229 @@
+{
+  "title": "Nopea jauhelihakastike spagetilla",
+  "tags": [],
+  "source_url": null,
+  "yield_text": "4 annosta",
+  "time_text": null,
+  "prep_minutes": null,
+  "cook_minutes": null,
+  "total_minutes": null,
+  "passive_minutes": null,
+  "general_notes": null,
+  "content": {
+    "schema_version": 1,
+    "yield": {
+      "quantity": "4",
+      "unit": "servings"
+    },
+    "ingredient_groups": [],
+    "ingredients": [
+      {
+        "id": "l1",
+        "group_id": null,
+        "display_name": "Jauhelihaa",
+        "original_quantity_text": "400 g",
+        "amount_min": "400",
+        "amount_max": "400",
+        "original_unit": "g",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l2",
+        "group_id": null,
+        "display_name": "(täysjyvä) spagettia",
+        "original_quantity_text": "300 g",
+        "amount_min": "300",
+        "amount_max": "300",
+        "original_unit": "g",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l3",
+        "group_id": null,
+        "display_name": "Valkosipulinkynttä",
+        "original_quantity_text": "2",
+        "amount_min": "2",
+        "amount_max": "2",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l4",
+        "group_id": null,
+        "display_name": "Rosmariinia",
+        "original_quantity_text": "1 tl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "tl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l5",
+        "group_id": null,
+        "display_name": "Voita",
+        "original_quantity_text": "1 rkl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "rkl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": [
+          "'Voita 1 rkl' appears twice in the source list"
+        ]
+      },
+      {
+        "id": "l6",
+        "group_id": null,
+        "display_name": "Sipuli",
+        "original_quantity_text": "1",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": null,
+        "preparation_note": "hienonnettuna",
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l7",
+        "group_id": null,
+        "display_name": "Mustapippurirouhe",
+        "original_quantity_text": "½ tl",
+        "amount_min": "0.5",
+        "amount_max": "0.5",
+        "original_unit": "tl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l8",
+        "group_id": null,
+        "display_name": "Voita",
+        "original_quantity_text": "1 rkl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "rkl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": [
+          "Second 'Voita 1 rkl' line in the source"
+        ]
+      },
+      {
+        "id": "l9",
+        "group_id": null,
+        "display_name": "Rypsiöljyä",
+        "original_quantity_text": "1 rkl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "rkl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l10",
+        "group_id": null,
+        "display_name": "Ruokakerma",
+        "original_quantity_text": "2 dl",
+        "amount_min": "2",
+        "amount_max": "2",
+        "original_unit": "dl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l11",
+        "group_id": null,
+        "display_name": "Parmesaania",
+        "original_quantity_text": "1 dl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "dl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l12",
+        "group_id": null,
+        "display_name": "Sambal oelekia",
+        "original_quantity_text": "1 tl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "tl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l13",
+        "group_id": null,
+        "display_name": "Tuoretta basilikaa",
+        "original_quantity_text": "½ dl",
+        "amount_min": "0.5",
+        "amount_max": "0.5",
+        "original_unit": "dl",
+        "preparation_note": "hienonnettua",
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l14",
+        "group_id": null,
+        "display_name": "Tomaattikastiketta",
+        "original_quantity_text": "2 dl",
+        "amount_min": "2",
+        "amount_max": "2",
+        "original_unit": "dl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      }
+    ],
+    "instructions": [
+      {
+        "id": "s1",
+        "order": 1,
+        "text": "Aloita valmistamaan nopea jauhelihakastike spagetilla keittämällä ensin spagetti pakkauksen ohjeiden mukaan."
+      },
+      {
+        "id": "s2",
+        "order": 2,
+        "text": "Ruskista jauheliha voissa ja rypsiöljyssä paistinpannulla noin 5 minuuttia. Sekoita joukkoon tomaattikastike ja kiehauta."
+      },
+      {
+        "id": "s3",
+        "order": 3,
+        "text": "Tarjoile spagetin kanssa ja viimeistele annos basilikalla ja mieluiten vastaraastetulla parmesaanilla."
+      }
+    ]
+  },
+  "_flags": [
+    "Source lists quantity AFTER the name ('Jauhelihaa 400 g'); normalized here. Good importer test.",
+    "Butter listed twice; garlic, rosemary, pepper, cream and sambal oelek are not mentioned in the steps. Left as in the source."
+  ]
+}

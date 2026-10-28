@@ -1,0 +1,242 @@
+{
+  "title": "Unkarilainen jauhelihakeitto",
+  "tags": [],
+  "source_url": null,
+  "yield_text": "4 annosta",
+  "time_text": "15 - 30 min",
+  "prep_minutes": null,
+  "cook_minutes": null,
+  "total_minutes": null,
+  "passive_minutes": null,
+  "general_notes": null,
+  "content": {
+    "schema_version": 1,
+    "yield": {
+      "quantity": "4",
+      "unit": "servings"
+    },
+    "ingredient_groups": [],
+    "ingredients": [
+      {
+        "id": "l1",
+        "group_id": null,
+        "display_name": "jauhelihaa",
+        "original_quantity_text": "400 g",
+        "amount_min": "400",
+        "amount_max": "400",
+        "original_unit": "g",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l2",
+        "group_id": null,
+        "display_name": "Sipuli",
+        "original_quantity_text": "1 iso",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": [
+          "Size given as 'iso'"
+        ]
+      },
+      {
+        "id": "l3",
+        "group_id": null,
+        "display_name": "valkosipulin kynttä",
+        "original_quantity_text": "5-6",
+        "amount_min": "5",
+        "amount_max": "6",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l4",
+        "group_id": null,
+        "display_name": "palsternakka",
+        "original_quantity_text": "1",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l5",
+        "group_id": null,
+        "display_name": "perunaa",
+        "original_quantity_text": "3",
+        "amount_min": "3",
+        "amount_max": "3",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l6",
+        "group_id": null,
+        "display_name": "porkkanaa",
+        "original_quantity_text": "2-3",
+        "amount_min": "2",
+        "amount_max": "3",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l7",
+        "group_id": null,
+        "display_name": "kaalia",
+        "original_quantity_text": "pieni pala",
+        "amount_min": null,
+        "amount_max": null,
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "to_taste",
+        "alternatives": [],
+        "uncertainties": [
+          "Vague amount 'pieni pala'"
+        ]
+      },
+      {
+        "id": "l8",
+        "group_id": null,
+        "display_name": "vettä",
+        "original_quantity_text": "1,5 l",
+        "amount_min": "1.5",
+        "amount_max": "1.5",
+        "original_unit": "l",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l9",
+        "group_id": null,
+        "display_name": "lihaliemikuutiota",
+        "original_quantity_text": "2",
+        "amount_min": "2",
+        "amount_max": "2",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [
+          "fondia"
+        ],
+        "uncertainties": []
+      },
+      {
+        "id": "l10",
+        "group_id": null,
+        "display_name": "laakerin lehti",
+        "original_quantity_text": "1",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l11",
+        "group_id": null,
+        "display_name": "paprikajauhetta",
+        "original_quantity_text": "2-3 rkl",
+        "amount_min": "2",
+        "amount_max": "3",
+        "original_unit": "rkl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l12",
+        "group_id": null,
+        "display_name": "mustapippuria myllystä",
+        "original_quantity_text": null,
+        "amount_min": null,
+        "amount_max": null,
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "to_taste",
+        "alternatives": [],
+        "uncertainties": [
+          "No quantity given"
+        ]
+      },
+      {
+        "id": "l13",
+        "group_id": null,
+        "display_name": "tomaatti pyrettä",
+        "original_quantity_text": "1 rkl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "rkl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": [
+          "Source spelling 'pyrettä' (puree)"
+        ]
+      },
+      {
+        "id": "l14",
+        "group_id": null,
+        "display_name": "tuoreita yrttejä",
+        "original_quantity_text": null,
+        "amount_min": null,
+        "amount_max": null,
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "to_taste",
+        "alternatives": [],
+        "uncertainties": [
+          "No quantity given"
+        ]
+      },
+      {
+        "id": "l15",
+        "group_id": null,
+        "display_name": "suolaa",
+        "original_quantity_text": null,
+        "amount_min": null,
+        "amount_max": null,
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "to_taste",
+        "alternatives": [],
+        "uncertainties": [
+          "No quantity given"
+        ]
+      }
+    ],
+    "instructions": [
+      {
+        "id": "s1",
+        "order": 1,
+        "text": "Ruskista jauheliha sekä silputut sipulit öljyssä. Lisää paprikajauhe, sekoittele hetki. Lisää vesi, liemikuutiot ja pieniksi silputut kasvikset sekä mausteet. Anna kiehua hiljalleen, kunnes kasvikset ovat pehmeät. Tarkista maku ja lisää tarvittaessa suolaa."
+      }
+    ]
+  },
+  "_flags": [
+    "Directions are one paragraph in the source; kept as a single step.",
+    "Typo/odd spelling 'tomaatti pyrettä' kept verbatim. Source columns were tab-separated. Oil is used in the step but not listed."
+  ]
+}

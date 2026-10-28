@@ -1,13 +1,490 @@
 {
-  "_note": "TEMPLATE for card A02. Replace the example recipes with 10-15 of your real recipes (tests/fixtures/recipes/*.json) and expand to about 30 query/recipe pairs. Cases marked status=example are placeholders and must not be counted in the pass rate.",
-  "locale": ["fi", "en"],
+  "_note": "Search golden set for card A02, drafted from the 15 real Finnish recipes plus 3 synthetic English fixtures (en-*) in tests/fixtures/recipes (file stem = recipe id). Review the expected sets before trusting them: they were computed from the text with simple patterns, not from a search engine. 'must' cases count toward the pass rate, 'should' are reported separately, 'stretch' is informational.",
+  "how_to_judge": {
+    "expect": "Every listed recipe must appear in the results (any order).",
+    "expectFirst": "The first result must be this recipe.",
+    "expectFirstAny": "The first result must be one of these recipes.",
+    "expectEmpty": "The query must return no results.",
+    "ranking": "Title matches outrank ingredient matches, which outrank directions and notes (ADR-010)."
+  },
+  "locale": [
+    "fi",
+    "en"
+  ],
+  "corpus": {
+    "ainon-nuudelipannu": "Ainon Nuudelipannu",
+    "helppo-moussaka": "Helppo moussaka",
+    "jauheliha-kaalipata": "Jauheliha-kaalipata",
+    "juustoinen-kasviskiusaus": "Juustoinen kasviskiusaus",
+    "kantarellirisotto": "Kantarellirisotto",
+    "kuohuva-valkosipulikeitto": "Kuohuva valkosipulikeitto",
+    "nopea-jauhelihakastike-spagetilla": "Nopea jauhelihakastike spagetilla",
+    "nopea-kanawokki": "Nopea Kanawokki",
+    "parsafrittata": "Parsafrittata eli keväinen uunimunakas",
+    "pasta-primavera": "Pasta primavera",
+    "pizzamaustettu-jauheliha-kukkakaalipelti": "Pizzamaustettu jauheliha-kukkakaalipelti",
+    "punajuurivuoka": "Punajuurivuoka",
+    "ratatouille": "Ratatouille",
+    "taydellinen-perunasalaatti": "Täydellinen perunasalaatti",
+    "unkarilainen-jauhelihakeitto": "Unkarilainen jauhelihakeitto",
+    "en-carrot-ginger-soup": "Carrot and ginger soup",
+    "en-lemon-roast-chicken": "Lemon roast chicken",
+    "en-blueberry-pancakes": "Blueberry pancakes"
+  },
   "cases": [
-    { "id": "inflection-1", "query": "porkkanaa", "expect": ["<recipe-id-containing-porkkana>"], "kind": "inflection", "status": "example" },
-    { "id": "plural-1",     "query": "porkkanat", "expect": ["<recipe-id-containing-porkkana>"], "kind": "inflection", "status": "example" },
-    { "id": "compound-1",   "query": "keitto",    "expect": ["<recipe-id-with-lihakeitto>"],     "kind": "compound",   "status": "example" },
-    { "id": "english-1",    "query": "carrot",    "expect": ["<recipe-id-with-carrot-or-porkkana>"], "kind": "english", "status": "example" },
-    { "id": "typo-1",       "query": "porkana",   "expect": ["<recipe-id-containing-porkkana>"], "kind": "typo",       "status": "example" },
-    { "id": "umlaut-1",     "query": "mansikka",  "expect": ["<recipe-id>"], "mustNotMatch": ["<recipe-id-with-mänsikkä-if-any>"], "kind": "umlaut", "status": "example" },
-    { "id": "ingredient-field-1", "query": "kerma", "expect": ["<recipe-id-with-kerma-only-in-ingredients>"], "kind": "ranking", "status": "example" }
+    {
+      "id": "inflect-porkkana-base",
+      "query": "porkkana",
+      "kind": "inflection",
+      "strength": "must",
+      "expect": [
+        "ainon-nuudelipannu",
+        "jauheliha-kaalipata",
+        "nopea-kanawokki",
+        "unkarilainen-jauhelihakeitto"
+      ],
+      "note": "Base form must match partitive forms (porkkanaa) in ingredients and steps."
+    },
+    {
+      "id": "inflect-porkkana-partitive",
+      "query": "porkkanaa",
+      "kind": "inflection",
+      "strength": "must",
+      "expect": [
+        "ainon-nuudelipannu",
+        "jauheliha-kaalipata",
+        "nopea-kanawokki",
+        "unkarilainen-jauhelihakeitto"
+      ],
+      "note": "Searching an inflected form finds the same recipes."
+    },
+    {
+      "id": "inflect-porkkana-plural",
+      "query": "porkkanat",
+      "kind": "inflection",
+      "strength": "must",
+      "expect": [
+        "ainon-nuudelipannu",
+        "jauheliha-kaalipata",
+        "nopea-kanawokki",
+        "unkarilainen-jauhelihakeitto"
+      ],
+      "note": "Plural nominative; same expected set."
+    },
+    {
+      "id": "inflect-munakoiso",
+      "query": "munakoisot",
+      "kind": "inflection",
+      "strength": "must",
+      "expect": [
+        "helppo-moussaka",
+        "ratatouille"
+      ],
+      "note": "Plural in steps ('munakoisot'), singular/partitive in ingredients."
+    },
+    {
+      "id": "inflect-pinaatti",
+      "query": "pinaatti",
+      "kind": "inflection",
+      "strength": "must",
+      "expect": [
+        "helppo-moussaka"
+      ],
+      "note": "Consonant gradation: pinaattia / pinaatinlehdet / pakastepinaatti."
+    },
+    {
+      "id": "inflect-pesto",
+      "query": "pesto",
+      "kind": "inflection",
+      "strength": "must",
+      "expect": [
+        "pizzamaustettu-jauheliha-kukkakaalipelti"
+      ],
+      "note": "Ingredient and step: 'pestoa' / 'pesto'."
+    },
+    {
+      "id": "inflect-sitruuna",
+      "query": "sitruuna",
+      "kind": "inflection",
+      "strength": "must",
+      "expect": [
+        "pasta-primavera",
+        "taydellinen-perunasalaatti"
+      ],
+      "note": "sitruunanmehua / sitruunankuorta."
+    },
+    {
+      "id": "inflect-parmesaani",
+      "query": "parmesaani",
+      "kind": "inflection",
+      "strength": "must",
+      "expect": [
+        "kantarellirisotto",
+        "nopea-jauhelihakastike-spagetilla",
+        "pasta-primavera",
+        "punajuurivuoka"
+      ],
+      "note": "parmesaania / parmesaanijuustoa / parmesaaniraastetta."
+    },
+    {
+      "id": "inflect-meirami",
+      "query": "meirami",
+      "kind": "inflection",
+      "strength": "must",
+      "expect": [
+        "jauheliha-kaalipata"
+      ],
+      "note": "Single-recipe case (meiramia)."
+    },
+    {
+      "id": "inflect-ricotta",
+      "query": "ricotta",
+      "kind": "inflection",
+      "strength": "must",
+      "expect": [
+        "parsafrittata"
+      ],
+      "note": "Loanword with partitive 'ricottaa' and compound 'ricotta-juusto'."
+    },
+    {
+      "id": "compound-sipuli",
+      "query": "sipuli",
+      "kind": "compound",
+      "strength": "must",
+      "expect": [
+        "ainon-nuudelipannu",
+        "helppo-moussaka",
+        "jauheliha-kaalipata",
+        "juustoinen-kasviskiusaus",
+        "kantarellirisotto",
+        "kuohuva-valkosipulikeitto",
+        "nopea-jauhelihakastike-spagetilla",
+        "nopea-kanawokki",
+        "parsafrittata",
+        "pasta-primavera",
+        "punajuurivuoka",
+        "ratatouille",
+        "taydellinen-perunasalaatti",
+        "unkarilainen-jauhelihakeitto"
+      ],
+      "note": "Stemming alone will not split compounds. Expected set = recipes with an onion: punasipuli, keltasipuli, salottisipulia, kevätsipuli, sipulikuutioita, peruna-sipulisekoitus. Garlic-only recipes (valkosipuli ends in -sipuli) are false friends: they may appear but must rank after real onion recipes. Needs the trigram fallback."
+    },
+    {
+      "id": "compound-valkosipuli",
+      "query": "valkosipuli",
+      "kind": "compound",
+      "strength": "must",
+      "expect": [
+        "ainon-nuudelipannu",
+        "helppo-moussaka",
+        "juustoinen-kasviskiusaus",
+        "kantarellirisotto",
+        "kuohuva-valkosipulikeitto",
+        "nopea-jauhelihakastike-spagetilla",
+        "nopea-kanawokki",
+        "pasta-primavera",
+        "punajuurivuoka",
+        "ratatouille",
+        "unkarilainen-jauhelihakeitto"
+      ],
+      "note": "valkosipulinkynsi, valkosipulimurskaa, valkosipulikeitto (title)."
+    },
+    {
+      "id": "compound-jauheliha",
+      "query": "jauheliha",
+      "kind": "compound",
+      "strength": "must",
+      "expect": [
+        "helppo-moussaka",
+        "jauheliha-kaalipata",
+        "nopea-jauhelihakastike-spagetilla",
+        "pizzamaustettu-jauheliha-kukkakaalipelti",
+        "unkarilainen-jauhelihakeitto"
+      ],
+      "expectFirstAny": [
+        "unkarilainen-jauhelihakeitto",
+        "jauheliha-kaalipata",
+        "nopea-jauhelihakastike-spagetilla",
+        "pizzamaustettu-jauheliha-kukkakaalipelti"
+      ],
+      "note": "Titles with compound 'jauhelihakeitto', 'jauhelihakastike'; title hits should rank in the first results."
+    },
+    {
+      "id": "compound-kasvis",
+      "query": "kasvis",
+      "kind": "compound",
+      "strength": "must",
+      "expect": [
+        "ainon-nuudelipannu",
+        "juustoinen-kasviskiusaus",
+        "kantarellirisotto",
+        "punajuurivuoka",
+        "ratatouille"
+      ],
+      "expectFirst": "juustoinen-kasviskiusaus",
+      "note": "Title contains kasviskiusaus; kasvisfondikapselia, kasvisliemikuutio, kasvislientä, kasvissuikaleita are ingredient hits."
+    },
+    {
+      "id": "compound-munakas",
+      "query": "munakas",
+      "kind": "compound",
+      "strength": "must",
+      "expect": [
+        "parsafrittata"
+      ],
+      "note": "Only inside 'uunimunakas' (title); suffix of a compound."
+    },
+    {
+      "id": "compound-chili",
+      "query": "chili",
+      "kind": "compound",
+      "strength": "must",
+      "expect": [
+        "helppo-moussaka",
+        "nopea-kanawokki"
+      ],
+      "note": "chilitahnaa in two recipes."
+    },
+    {
+      "id": "compound-riisi",
+      "query": "riisi",
+      "kind": "compound",
+      "strength": "should",
+      "expect": [
+        "jauheliha-kaalipata",
+        "kantarellirisotto",
+        "punajuurivuoka"
+      ],
+      "note": "riisiä, plus risottoriisiä (compound), plus 'riisi on kypsää' in steps."
+    },
+    {
+      "id": "title-keitto",
+      "query": "keitto",
+      "kind": "title-ranking",
+      "strength": "must",
+      "expect": [
+        "kuohuva-valkosipulikeitto",
+        "unkarilainen-jauhelihakeitto"
+      ],
+      "expectFirstAny": [
+        "unkarilainen-jauhelihakeitto",
+        "kuohuva-valkosipulikeitto"
+      ],
+      "note": "Both soup titles must outrank any step-only mention."
+    },
+    {
+      "id": "title-vuoka",
+      "query": "vuoka",
+      "kind": "title-ranking",
+      "strength": "should",
+      "expect": [
+        "helppo-moussaka",
+        "juustoinen-kasviskiusaus",
+        "kuohuva-valkosipulikeitto",
+        "punajuurivuoka"
+      ],
+      "expectFirst": "punajuurivuoka",
+      "note": "Title 'Punajuurivuoka' should outrank step mentions (vuokaan, lasagnevuokaan, uunivuokaan)."
+    },
+    {
+      "id": "title-pasta",
+      "query": "pasta",
+      "kind": "title-ranking",
+      "strength": "must",
+      "expect": [
+        "pasta-primavera"
+      ],
+      "expectFirst": "pasta-primavera",
+      "note": "Title match first; 'pastan keitinvettä' and steps follow."
+    },
+    {
+      "id": "title-nuudeli",
+      "query": "nuudeli",
+      "kind": "title-ranking",
+      "strength": "should",
+      "expect": [
+        "ainon-nuudelipannu",
+        "nopea-kanawokki"
+      ],
+      "expectFirst": "ainon-nuudelipannu",
+      "note": "Compound title 'Nuudelipannu' outranks ingredient-only hit."
+    },
+    {
+      "id": "title-wok",
+      "query": "wok",
+      "kind": "title-ranking",
+      "strength": "should",
+      "expect": [
+        "nopea-kanawokki"
+      ],
+      "expectFirst": "nopea-kanawokki",
+      "note": "Kanawokki title; 'wokpannussa' in steps."
+    },
+    {
+      "id": "rank-muna",
+      "query": "muna",
+      "kind": "ranking",
+      "strength": "must",
+      "expect": [
+        "parsafrittata"
+      ],
+      "expectFirst": "parsafrittata",
+      "note": "Egg recipe must come before eggplant recipes. False-friend trap: munakoiso (eggplant) in moussaka and ratatouille contains 'muna'. They may appear, but only after the egg recipe."
+    },
+    {
+      "id": "rank-kana",
+      "query": "kana",
+      "kind": "ranking",
+      "strength": "must",
+      "expect": [
+        "nopea-kanawokki"
+      ],
+      "expectFirst": "nopea-kanawokki",
+      "note": "Chicken recipe first. kananmunaa (parsafrittata) is a compound false friend and must rank after the chicken recipe."
+    },
+    {
+      "id": "rank-kaali",
+      "query": "kaali",
+      "kind": "ranking",
+      "strength": "should",
+      "expect": [
+        "jauheliha-kaalipata",
+        "pizzamaustettu-jauheliha-kukkakaalipelti",
+        "unkarilainen-jauhelihakeitto"
+      ],
+      "expectFirst": "jauheliha-kaalipata",
+      "note": "kaalipata title first; kukkakaali and 'kaalia' in the soup follow."
+    },
+    {
+      "id": "typo-porkana",
+      "query": "porkana",
+      "kind": "typo",
+      "strength": "should",
+      "expect": [
+        "ainon-nuudelipannu",
+        "jauheliha-kaalipata",
+        "nopea-kanawokki",
+        "unkarilainen-jauhelihakeitto"
+      ],
+      "note": "One missing letter; trigram fuzzy match."
+    },
+    {
+      "id": "typo-kantarelli",
+      "query": "kantarelli",
+      "kind": "typo",
+      "strength": "should",
+      "expect": [
+        "kantarellirisotto"
+      ],
+      "note": "Singular vs 'kantarelleja' and title 'Kantarellirisotto'."
+    },
+    {
+      "id": "fold-kesakurpitsa",
+      "query": "kesakurpitsa",
+      "kind": "umlaut-fallback",
+      "strength": "should",
+      "expect": [
+        "pasta-primavera",
+        "ratatouille"
+      ],
+      "note": "ASCII-typed query finds ä spelling. User typed without ä. Folding is allowed only in the trigram fallback, never in the primary index."
+    },
+    {
+      "id": "fold-taydellinen",
+      "query": "taydellinen perunasalaatti",
+      "kind": "umlaut-fallback",
+      "strength": "should",
+      "expect": [
+        "taydellinen-perunasalaatti"
+      ],
+      "expectFirst": "taydellinen-perunasalaatti",
+      "note": "ASCII-typed multi-word title query."
+    },
+    {
+      "id": "gradation-liemi",
+      "query": "kasvisliemi",
+      "kind": "gradation",
+      "strength": "stretch",
+      "expect": [
+        "kantarellirisotto",
+        "punajuurivuoka"
+      ],
+      "note": "liemi/lientä gradation; the Finnish stemmer may not unify these. Informational: do not count toward pass rate."
+    },
+    {
+      "id": "multiword-jauheliha-keitto",
+      "query": "jauheliha keitto",
+      "kind": "multi-word",
+      "strength": "must",
+      "expect": [
+        "unkarilainen-jauhelihakeitto"
+      ],
+      "expectFirst": "unkarilainen-jauhelihakeitto",
+      "note": "Both words must be satisfied; the soup title contains both as a compound."
+    },
+    {
+      "id": "notfound-pitsa",
+      "query": "pitsa",
+      "kind": "no-result",
+      "strength": "should",
+      "expectEmpty": true,
+      "note": "Not a standalone word in the corpus, but it is the tail of kesäkurpitsa, so compound substring matching returns pasta-primavera/ratatouille. Known false friend of the substring fallback; kept as an informational miss."
+    },
+    {
+      "id": "english-carrot",
+      "query": "carrot",
+      "kind": "english",
+      "strength": "must",
+      "expect": [
+        "en-carrot-ginger-soup"
+      ],
+      "expectFirst": "en-carrot-ginger-soup",
+      "note": "Singular query finds plural English ingredient/title. No cross-language: Finnish porkkana recipes must not match.",
+      "mustNotMatch": [
+        "ainon-nuudelipannu",
+        "jauheliha-kaalipata",
+        "nopea-kanawokki",
+        "unkarilainen-jauhelihakeitto"
+      ]
+    },
+    {
+      "id": "english-chicken",
+      "query": "chicken",
+      "kind": "english",
+      "strength": "must",
+      "expect": [
+        "en-lemon-roast-chicken"
+      ],
+      "expectFirst": "en-lemon-roast-chicken",
+      "note": "Title match in English recipe; Finnish kana recipes are not expected."
+    },
+    {
+      "id": "english-lemon",
+      "query": "lemon",
+      "kind": "english",
+      "strength": "must",
+      "expect": [
+        "en-lemon-roast-chicken"
+      ],
+      "note": "English lemon; Finnish sitruuna recipes are not expected."
+    },
+    {
+      "id": "english-blueberries",
+      "query": "blueberries",
+      "kind": "english",
+      "strength": "must",
+      "expect": [
+        "en-blueberry-pancakes"
+      ],
+      "note": "Plural query, plural text."
+    },
+    {
+      "id": "notfound-sushi",
+      "query": "sushi",
+      "kind": "no-result",
+      "strength": "must",
+      "expectEmpty": true,
+      "note": "Absent term; neither the substring nor the fuzzy fallback may return anything."
+    }
   ]
 }

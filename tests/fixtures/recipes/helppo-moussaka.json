@@ -1,0 +1,222 @@
+{
+  "title": "Helppo moussaka",
+  "tags": [],
+  "source_url": null,
+  "yield_text": "5 annosta",
+  "time_text": "Valmistusaika: yli 60 min",
+  "prep_minutes": null,
+  "cook_minutes": null,
+  "total_minutes": null,
+  "passive_minutes": null,
+  "general_notes": null,
+  "content": {
+    "schema_version": 1,
+    "yield": {
+      "quantity": "5",
+      "unit": "servings"
+    },
+    "ingredient_groups": [],
+    "ingredients": [
+      {
+        "id": "l1",
+        "group_id": null,
+        "display_name": "nauta-sikajauhelihaa",
+        "original_quantity_text": "1 rs (400 g)",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "rs",
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": [
+          "400 g stated in parentheses (not parsed)"
+        ]
+      },
+      {
+        "id": "l2",
+        "group_id": null,
+        "display_name": "iso sipuli",
+        "original_quantity_text": "1 (150 g)",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": [
+          "150 g stated in parentheses (not parsed)"
+        ]
+      },
+      {
+        "id": "l3",
+        "group_id": null,
+        "display_name": "Pirkka valkosipulitomaattimurskaa",
+        "original_quantity_text": "2 tlk (à 390 g)",
+        "amount_min": "2",
+        "amount_max": "2",
+        "original_unit": "tlk",
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": [
+          "390 g per can stated (not parsed)"
+        ]
+      },
+      {
+        "id": "l4",
+        "group_id": null,
+        "display_name": "vettä",
+        "original_quantity_text": "2 dl",
+        "amount_min": "2",
+        "amount_max": "2",
+        "original_unit": "dl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l5",
+        "group_id": null,
+        "display_name": "suolaa",
+        "original_quantity_text": "1 tl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "tl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l6",
+        "group_id": null,
+        "display_name": "timjamia",
+        "original_quantity_text": "1 tl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "tl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l7",
+        "group_id": null,
+        "display_name": "sambal oelek chilitahnaa",
+        "original_quantity_text": "1 tl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "tl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [
+          "Pirkka srirachaa"
+        ],
+        "uncertainties": []
+      },
+      {
+        "id": "l8",
+        "group_id": null,
+        "display_name": "mustapippuria",
+        "original_quantity_text": "¼ tl",
+        "amount_min": "0.25",
+        "amount_max": "0.25",
+        "original_unit": "tl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l9",
+        "group_id": null,
+        "display_name": "munakoisoa",
+        "original_quantity_text": "1–2 (n. 600 g)",
+        "amount_min": "1",
+        "amount_max": "2",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": [
+          "Approximately 600 g stated for the whole amount"
+        ]
+      },
+      {
+        "id": "l10",
+        "group_id": null,
+        "display_name": "Pirkka ekstra-neitsytoliiviöljyä",
+        "original_quantity_text": "3 rkl",
+        "amount_min": "3",
+        "amount_max": "3",
+        "original_unit": "rkl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l11",
+        "group_id": null,
+        "display_name": "tuoretta pinaattia",
+        "original_quantity_text": "100 g",
+        "amount_min": "100",
+        "amount_max": "100",
+        "original_unit": "g",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [
+          "½ ps (à 200 g) Pirkka lehtipinaattia (pakaste)"
+        ],
+        "uncertainties": []
+      },
+      {
+        "id": "l12",
+        "group_id": null,
+        "display_name": "Pirkka emmental-mozzarellajuustoraastetta",
+        "original_quantity_text": "250 g",
+        "amount_min": "250",
+        "amount_max": "250",
+        "original_unit": "g",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      }
+    ],
+    "instructions": [
+      {
+        "id": "s1",
+        "order": 1,
+        "text": "Ruskista jauheliha paistokasarissa omassa rasvassaan. Hienonna sipuli, lisää joukkoon ja anna kuullottua."
+      },
+      {
+        "id": "s2",
+        "order": 2,
+        "text": "Sekoita joukkoon tomaattimurskat. Huuhdo tölkit vedellä ja kaada kastikkeeseen. Mausta suolalla, timjamilla, chilitahnalla ja mustapippurilla. Keitä miedolla lämmöllä kannen alla noin 15 minuuttia."
+      },
+      {
+        "id": "s3",
+        "order": 3,
+        "text": "Leikkaa munakoisot pitkittäin noin 1/2 cm:n paksuisiksi viipaleiksi. Voitele ne öljyllä ja paista kuumalla pannulla noin 2 minuuttia/puoli. Huuhdo ja paloittele tuoreet pinaatinlehdet. Käytä pakastepinaatti kohmeisena."
+      },
+      {
+        "id": "s4",
+        "order": 4,
+        "text": "Kokoa moussaka lasagnevuokaan. Levitä pohjalle kerros jauhelihakastiketta. Asettele päälle puolet munakoisoviipaleista ja pinaatista. Ripottele päälle juustoraastetta. Tee toinen kerros samoin. Peitä vuoka jauhelihakastikkeella ja lopulla juustolla."
+      },
+      {
+        "id": "s5",
+        "order": 5,
+        "text": "Kypsennä 200-asteisen uunin alimmalla tasolla 15–20 minuuttia."
+      }
+    ]
+  },
+  "_flags": [
+    "Brand names (Pirkka) kept in display names.",
+    "Spinach has an alternative with its own quantity, stored as alternative text.",
+    "Time given only as 'yli 60 min' (text only, no minutes)."
+  ]
+}

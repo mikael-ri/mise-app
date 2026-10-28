@@ -1,0 +1,153 @@
+{
+  "title": "Parsafrittata eli keväinen uunimunakas",
+  "tags": [],
+  "source_url": null,
+  "yield_text": null,
+  "time_text": null,
+  "prep_minutes": null,
+  "cook_minutes": null,
+  "total_minutes": null,
+  "passive_minutes": null,
+  "general_notes": null,
+  "content": {
+    "schema_version": 1,
+    "yield": null,
+    "ingredient_groups": [],
+    "ingredients": [
+      {
+        "id": "l1",
+        "group_id": null,
+        "display_name": "kananmunaa",
+        "original_quantity_text": "6",
+        "amount_min": "6",
+        "amount_max": "6",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l2",
+        "group_id": null,
+        "display_name": "parsaa",
+        "original_quantity_text": "1 puntti",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "puntti",
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l3",
+        "group_id": null,
+        "display_name": "sipuli",
+        "original_quantity_text": "1",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l4",
+        "group_id": null,
+        "display_name": "ricottaa",
+        "original_quantity_text": "150 g",
+        "amount_min": "150",
+        "amount_max": "150",
+        "original_unit": "g",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l5",
+        "group_id": null,
+        "display_name": "Rypsiöljyä",
+        "original_quantity_text": null,
+        "amount_min": null,
+        "amount_max": null,
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "to_taste",
+        "alternatives": [],
+        "uncertainties": [
+          "No quantity given"
+        ]
+      },
+      {
+        "id": "l6",
+        "group_id": null,
+        "display_name": "Tilliä",
+        "original_quantity_text": null,
+        "amount_min": null,
+        "amount_max": null,
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "to_taste",
+        "alternatives": [
+          "basilikaa",
+          "korianteria",
+          "mitä vain yrttejä löytyy kotoa"
+        ],
+        "uncertainties": [
+          "No quantity given"
+        ]
+      }
+    ],
+    "instructions": [
+      {
+        "id": "s1",
+        "order": 1,
+        "text": "Laita uuni lämpiämään 170 asteeseen."
+      },
+      {
+        "id": "s2",
+        "order": 2,
+        "text": "Laita kattilallinen vettä kiehumaan. Mausta se hyvin suolalla."
+      },
+      {
+        "id": "s3",
+        "order": 3,
+        "text": "Laita parsat kiehuvaan veteen ja anna olla ihan pienen hetken, max. kolme minuuttia."
+      },
+      {
+        "id": "s4",
+        "order": 4,
+        "text": "Ota kattila pois liedeltä ja kaada kuuma vesi pois, laske nopeasti kattilaan jääkylmää vettä, että parsat lakkaavat kypsymästä."
+      },
+      {
+        "id": "s5",
+        "order": 5,
+        "text": "Silppua sipuli ja kuullota se kevyesti rypsiöljyssä valurautapannussa."
+      },
+      {
+        "id": "s6",
+        "order": 6,
+        "text": "Anna paistinpannun jäähtyä sen aikaa kun vatkaat munat kulhossa. Mausta suolalla ja mustapippurilla."
+      },
+      {
+        "id": "s7",
+        "order": 7,
+        "text": "Kaada munamassa paistinpannuun ja asettele esikeitetyy parsat pannuun. Lisää ricotta-juusto nokareina pannulle."
+      },
+      {
+        "id": "s8",
+        "order": 8,
+        "text": "Nosta pannu uuniin ja kypsennä noin 20 minuuttia. Silppua päälle tuoreet yritit ja tarjoile."
+      }
+    ]
+  },
+  "_flags": [
+    "No servings stated, so yield is null.",
+    "Source contains typos ('esikeitetyy', 'yritit'); kept verbatim, useful for the typo search cases.",
+    "Salt and black pepper appear in the steps but not in the ingredient list.",
+    "'puntti' (bunch) unit; steps were unnumbered in the source."
+  ]
+}

@@ -1,0 +1,226 @@
+{
+  "title": "Punajuurivuoka",
+  "tags": [],
+  "source_url": null,
+  "yield_text": "4 hengelle",
+  "time_text": null,
+  "prep_minutes": null,
+  "cook_minutes": null,
+  "total_minutes": null,
+  "passive_minutes": null,
+  "general_notes": null,
+  "content": {
+    "schema_version": 1,
+    "yield": {
+      "quantity": "4",
+      "unit": "servings"
+    },
+    "ingredient_groups": [],
+    "ingredients": [
+      {
+        "id": "l1",
+        "group_id": null,
+        "display_name": "punajuurta",
+        "original_quantity_text": "1 kg",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "kg",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l2",
+        "group_id": null,
+        "display_name": "keltasipuli",
+        "original_quantity_text": "1",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l3",
+        "group_id": null,
+        "display_name": "valkosipulinkynttä",
+        "original_quantity_text": "3",
+        "amount_min": "3",
+        "amount_max": "3",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l4",
+        "group_id": null,
+        "display_name": "oliiviöljyä",
+        "original_quantity_text": "2 rkl",
+        "amount_min": "2",
+        "amount_max": "2",
+        "original_unit": "rkl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l5",
+        "group_id": null,
+        "display_name": "riisiä",
+        "original_quantity_text": "1 1/4 dl",
+        "amount_min": "1.25",
+        "amount_max": "1.25",
+        "original_unit": "dl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l6",
+        "group_id": null,
+        "display_name": "vehnäjauhoja",
+        "original_quantity_text": "2 rkl",
+        "amount_min": "2",
+        "amount_max": "2",
+        "original_unit": "rkl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l7",
+        "group_id": null,
+        "display_name": "Maggi kasvisliemikuutio",
+        "original_quantity_text": "1",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l8",
+        "group_id": null,
+        "display_name": "vettä",
+        "original_quantity_text": "2,5 dl",
+        "amount_min": "2.5",
+        "amount_max": "2.5",
+        "original_unit": "dl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l9",
+        "group_id": null,
+        "display_name": "ananasmurskaa",
+        "original_quantity_text": "1 prk",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "prk",
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": [
+          "Package size not given"
+        ]
+      },
+      {
+        "id": "l10",
+        "group_id": null,
+        "display_name": "suolaa",
+        "original_quantity_text": "2 tl",
+        "amount_min": "2",
+        "amount_max": "2",
+        "original_unit": "tl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l11",
+        "group_id": null,
+        "display_name": "mustapippuria",
+        "original_quantity_text": "muutama rouhaisu",
+        "amount_min": null,
+        "amount_max": null,
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "to_taste",
+        "alternatives": [],
+        "uncertainties": [
+          "Vague amount 'muutama rouhaisu'"
+        ]
+      },
+      {
+        "id": "l12",
+        "group_id": null,
+        "display_name": "raastettua parmesaania",
+        "original_quantity_text": "75 g",
+        "amount_min": "75",
+        "amount_max": "75",
+        "original_unit": "g",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": [
+          "Steps split it: 50 g in the sauce and 25 g on top"
+        ]
+      },
+      {
+        "id": "l13",
+        "group_id": null,
+        "display_name": "voita",
+        "original_quantity_text": "10 g (noin 2 rkl)",
+        "amount_min": "10",
+        "amount_max": "10",
+        "original_unit": "g",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": [
+          "'noin 2 rkl' stated in parentheses"
+        ]
+      }
+    ],
+    "instructions": [
+      {
+        "id": "s1",
+        "order": 1,
+        "text": "Raasta punajuuret karkeaksi raasteeksi. Kaada voideltuun uunivuokaan."
+      },
+      {
+        "id": "s2",
+        "order": 2,
+        "text": "Hienonna keltasipuli ja valkosipulinkynnet. Freesaa sipulit pehmeäksi oliiviöljyssä. Lisää joukkoon riisi ja kuullota hetki. Lisää vehnäjauho ja kypsennä vielä hetki."
+      },
+      {
+        "id": "s3",
+        "order": 3,
+        "text": "Raasta kasvisliemikuutio veden joukkoon ja lisää pannulle. Sekoita tasaiseksi. Lisää ananasmurska ja 50 g parmesaania. Säästä 25 g parmesaania vuoan päälle. Kaada kastike uunivuokaan ja sekoita hyvin punajuuriraasteen kanssa sekaisin."
+      },
+      {
+        "id": "s4",
+        "order": 4,
+        "text": "Paista punajuurivuokaa 180 asteisessa uunissa folion alla noin 1 h 20 min, kunnes punajuuri on pehmeää. Poista folio ja lisää pinnalle loppu 25 g parmesaaniraastetta ja voinokareita. Paista vuokaa vielä 10 minuuttia, kunnes parmesaani on sulanut."
+      }
+    ]
+  },
+  "_flags": [
+    "Title was all caps in the source ('PUNAJUURIVUOKA'); normalised to sentence case. Yield was '(4 hengelle)'.",
+    "Ingredient list was one run-on line; split. Step times (1 h 20 min, 10 min) only in text.",
+    "Source steps contain a tab after the number; removed."
+  ]
+}

@@ -1,0 +1,158 @@
+{
+  "title": "Juustoinen kasviskiusaus",
+  "tags": [],
+  "source_url": null,
+  "yield_text": "4 annosta",
+  "time_text": "Valmistusaika: yli 60 min",
+  "prep_minutes": null,
+  "cook_minutes": null,
+  "total_minutes": null,
+  "passive_minutes": null,
+  "general_notes": null,
+  "content": {
+    "schema_version": 1,
+    "yield": {
+      "quantity": "4",
+      "unit": "servings"
+    },
+    "ingredient_groups": [],
+    "ingredients": [
+      {
+        "id": "l1",
+        "group_id": null,
+        "display_name": "Pirkka peruna-sipulisekoitusta (pakaste)",
+        "original_quantity_text": "1 ps (500 g)",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "ps",
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": [
+          "500 g stated in parentheses (not parsed)"
+        ]
+      },
+      {
+        "id": "l2",
+        "group_id": null,
+        "display_name": "Pirkka kasvissuikaleita (pakaste)",
+        "original_quantity_text": "2 ps (à 250 g)",
+        "amount_min": "2",
+        "amount_max": "2",
+        "original_unit": "ps",
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": [
+          "250 g per package stated (not parsed)"
+        ]
+      },
+      {
+        "id": "l3",
+        "group_id": null,
+        "display_name": "Valio Koskenlaskija-sulatejuustoa, perinteinen",
+        "original_quantity_text": "1 pkt (250 g)",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "pkt",
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": [
+          "250 g stated in parentheses (not parsed)"
+        ]
+      },
+      {
+        "id": "l4",
+        "group_id": null,
+        "display_name": "valkosipulinkynsi",
+        "original_quantity_text": "1",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l5",
+        "group_id": null,
+        "display_name": "maitoa",
+        "original_quantity_text": "2½ dl",
+        "amount_min": "2.5",
+        "amount_max": "2.5",
+        "original_unit": "dl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l6",
+        "group_id": null,
+        "display_name": "suolaa",
+        "original_quantity_text": "1 tl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "tl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l7",
+        "group_id": null,
+        "display_name": "timjamia",
+        "original_quantity_text": "1 tl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "tl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l8",
+        "group_id": null,
+        "display_name": "mustapippuria",
+        "original_quantity_text": "½ tl",
+        "amount_min": "0.5",
+        "amount_max": "0.5",
+        "original_unit": "tl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      }
+    ],
+    "instructions": [
+      {
+        "id": "s1",
+        "order": 1,
+        "text": "Kaada peruna-sipulisekoitus ja kasvissuikaleet laakeaan voideltuun vuokaan."
+      },
+      {
+        "id": "s2",
+        "order": 2,
+        "text": "Hienonna valkosipulinkynsi. Lisää valkosipuli ja mausteet tasaisesti kasvisten joukkoon."
+      },
+      {
+        "id": "s3",
+        "order": 3,
+        "text": "Kuumenna maito pinnoitetussa kattilassa koko ajan sekoittaen. Lisää kattilaan paloiteltu sulatejuusto ja sekoita, kunnes juusto on sulanut maidon joukkoon. Kaada juustokastike tasaisesti vuokaan."
+      },
+      {
+        "id": "s4",
+        "order": 4,
+        "text": "Kypsennä kiusausta uunin alatasolla 200 asteessa noin tunti. Tarjoa esimerkiksi etikkapunajuurien ja raikkaan salaatin kanssa."
+      }
+    ]
+  },
+  "_flags": [
+    "In the source the whole ingredient list was one run-on line; I split it into separate lines.",
+    "Filename used an underscore (juustoinen_kasviskiusaus); title text is unaffected."
+  ]
+}

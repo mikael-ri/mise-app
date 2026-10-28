@@ -1,0 +1,156 @@
+{
+  "title": "Pizzamaustettu jauheliha-kukkakaalipelti",
+  "tags": [],
+  "source_url": null,
+  "yield_text": "4 annosta",
+  "time_text": "Valmistus (Uuni 225°C)",
+  "prep_minutes": null,
+  "cook_minutes": null,
+  "total_minutes": null,
+  "passive_minutes": null,
+  "general_notes": null,
+  "content": {
+    "schema_version": 1,
+    "yield": {
+      "quantity": "4",
+      "unit": "servings"
+    },
+    "ingredient_groups": [],
+    "ingredients": [
+      {
+        "id": "l1",
+        "group_id": null,
+        "display_name": "jauhelihaa",
+        "original_quantity_text": "400 g",
+        "amount_min": "400",
+        "amount_max": "400",
+        "original_unit": "g",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l2",
+        "group_id": null,
+        "display_name": "rypsiöljyä",
+        "original_quantity_text": "2 rkl",
+        "amount_min": "2",
+        "amount_max": "2",
+        "original_unit": "rkl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l3",
+        "group_id": null,
+        "display_name": "pizzamaustetta",
+        "original_quantity_text": "1 tl",
+        "amount_min": "1",
+        "amount_max": "1",
+        "original_unit": "tl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l4",
+        "group_id": null,
+        "display_name": "suolaa",
+        "original_quantity_text": "1/2 tl",
+        "amount_min": "0.5",
+        "amount_max": "0.5",
+        "original_unit": "tl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l5",
+        "group_id": null,
+        "display_name": "kukkakaali",
+        "original_quantity_text": "300 g (1 kpl)",
+        "amount_min": "300",
+        "amount_max": "300",
+        "original_unit": "g",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": [
+          "'1 kpl' stated in parentheses"
+        ]
+      },
+      {
+        "id": "l6",
+        "group_id": null,
+        "display_name": "punaista pestoa",
+        "original_quantity_text": "3 rkl",
+        "amount_min": "3",
+        "amount_max": "3",
+        "original_unit": "rkl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l7",
+        "group_id": null,
+        "display_name": "kirsikkatomaatteja",
+        "original_quantity_text": "250 g (1 rs)",
+        "amount_min": "250",
+        "amount_max": "250",
+        "original_unit": "g",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": [
+          "'1 rs' stated in parentheses"
+        ]
+      },
+      {
+        "id": "l8",
+        "group_id": null,
+        "display_name": "juustoraastetta",
+        "original_quantity_text": "100 g",
+        "amount_min": "100",
+        "amount_max": "100",
+        "original_unit": "g",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      }
+    ],
+    "instructions": [
+      {
+        "id": "s1",
+        "order": 1,
+        "text": "Kuumenna uuni 225 asteeseen. Ruskista jauheliha tilkassa öljyä paistinpannulla. Mausta pizzamausteella ja suolalla."
+      },
+      {
+        "id": "s2",
+        "order": 2,
+        "text": "Huuhtele kukkakaali. Leikkaa se noin 1 cm:n viipaleiksi. Levitä ne ja irronneet palat leivinpaperille uunipellille."
+      },
+      {
+        "id": "s3",
+        "order": 3,
+        "text": "Mittaa pesto kulhoon. Sekoita siihen 1 rkl öljyä. Sivele seos kukkakaalien pinnalle. Levitä jauheliha päälle. Huuhtele ja puolita tomaatit. Levitä ne jauhelihan päälle. Ripottele juustoraaste pinnalle."
+      },
+      {
+        "id": "s4",
+        "order": 4,
+        "text": "Kypsennä uunissa 12–15 minuuttia, kunnes juusto sulaa ja ruskistuu hieman. Kukkakaalit saavat jäädä napakoiksi."
+      }
+    ]
+  },
+  "_flags": [
+    "The oven temperature appears in a heading ('Valmistus (Uuni 225°C)'), stored as time_text only; also in step 1.",
+    "Step 3 uses 1 rkl of the 2 rkl oil without saying so in the ingredient list."
+  ]
+}

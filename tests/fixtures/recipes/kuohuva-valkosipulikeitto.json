@@ -1,0 +1,199 @@
+{
+  "title": "Kuohuva valkosipulikeitto",
+  "tags": [],
+  "source_url": null,
+  "yield_text": null,
+  "time_text": "Aktiivinen aika 10 min, passiivinen aika 40 min",
+  "prep_minutes": 10,
+  "cook_minutes": null,
+  "total_minutes": null,
+  "passive_minutes": 40,
+  "general_notes": null,
+  "content": {
+    "schema_version": 1,
+    "yield": null,
+    "ingredient_groups": [
+      {
+        "id": "g1",
+        "name": "Lisäksi",
+        "order": 1
+      }
+    ],
+    "ingredients": [
+      {
+        "id": "l1",
+        "group_id": null,
+        "display_name": "kokonaista valkosipulia",
+        "original_quantity_text": "2–3",
+        "amount_min": "2",
+        "amount_max": "3",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l2",
+        "group_id": null,
+        "display_name": "salottisipulia",
+        "original_quantity_text": "4",
+        "amount_min": "4",
+        "amount_max": "4",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l3",
+        "group_id": null,
+        "display_name": "cashewpähkinöitä",
+        "original_quantity_text": "2 dl (125 g)",
+        "amount_min": "2",
+        "amount_max": "2",
+        "original_unit": "dl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": [
+          "125 g stated in parentheses (not parsed)"
+        ]
+      },
+      {
+        "id": "l4",
+        "group_id": null,
+        "display_name": "timjamin oksaa",
+        "original_quantity_text": "4",
+        "amount_min": "4",
+        "amount_max": "4",
+        "original_unit": null,
+        "preparation_note": null,
+        "scale_policy": "round_to_whole",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l5",
+        "group_id": null,
+        "display_name": "oliiviöljyä",
+        "original_quantity_text": "2 rkl",
+        "amount_min": "2",
+        "amount_max": "2",
+        "original_unit": "rkl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l6",
+        "group_id": null,
+        "display_name": "vaahterasiirappia",
+        "original_quantity_text": "2 rkl",
+        "amount_min": "2",
+        "amount_max": "2",
+        "original_unit": "rkl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l7",
+        "group_id": null,
+        "display_name": "suolaa",
+        "original_quantity_text": "1/2 tl",
+        "amount_min": "0.5",
+        "amount_max": "0.5",
+        "original_unit": "tl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l8",
+        "group_id": null,
+        "display_name": "mustapippuria",
+        "original_quantity_text": "1/2 tl",
+        "amount_min": "0.5",
+        "amount_max": "0.5",
+        "original_unit": "tl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l9",
+        "group_id": "g1",
+        "display_name": "vettä",
+        "original_quantity_text": "4 dl",
+        "amount_min": "4",
+        "amount_max": "4",
+        "original_unit": "dl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      },
+      {
+        "id": "l10",
+        "group_id": "g1",
+        "display_name": "kuivaa kuohuviiniä",
+        "original_quantity_text": "2 dl",
+        "amount_min": "2",
+        "amount_max": "2",
+        "original_unit": "dl",
+        "preparation_note": null,
+        "scale_policy": "linear",
+        "alternatives": [],
+        "uncertainties": []
+      }
+    ],
+    "instructions": [
+      {
+        "id": "s1",
+        "order": 1,
+        "text": "Kuori valkosipulit (kuorittuna 150 g). Kuori salottisipulit ja leikkaa ne puoliksi. Siirrä sipulit uunivuokaan. Lisää pähkinät, timjami, öljy, vaahterasiirappi, suola ja mustapippuri. Sekoita hieman. Paahda 200-asteisessa uunissa noin 35– 45 minuuttia."
+      },
+      {
+        "id": "s2",
+        "order": 2,
+        "text": "Lusikoi keiton ainekset puhtaaseen lasipurkkiin. Koristele tuoreella timjamilla halutessasi ja sulje purkki."
+      },
+      {
+        "id": "s3",
+        "order": 3,
+        "text": "Koristele purkki nauhalla ja kiinnitä siihen kortti alla olevan ohjetekstin kera. Anna lahjaksi kuohuviinipullon kanssa."
+      },
+      {
+        "id": "s4",
+        "order": 4,
+        "text": "Vesi ja kuohuviini lisätään keiton valmistusvaiheessa:"
+      },
+      {
+        "id": "s5",
+        "order": 5,
+        "text": "Kiehauta 4 dl vettä kattilassa ja lisää purkin sisältö. Anna kiehua 1–2 minuuttia."
+      },
+      {
+        "id": "s6",
+        "order": 6,
+        "text": "Soseuta keitto sauvasekoittimella."
+      },
+      {
+        "id": "s7",
+        "order": 7,
+        "text": "Lisää kuohuviini ja tarjoa keitto heti!"
+      }
+    ]
+  },
+  "_flags": [
+    "No servings stated, so yield is null.",
+    "Gift-jar recipe with two phases: steps 1-3 prepare the jar, step 4 is the heading for the second phase (steps 5-7). Good test for non-linear instructions.",
+    "Two time values (active and passive)."
+  ]
+}
