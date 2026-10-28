@@ -1,0 +1,34 @@
+{
+  "title": "Uunilohi ja perunat",
+  "tags": ["kala", "arki"],
+  "source_url": null,
+  "prep_minutes": 15,
+  "cook_minutes": 35,
+  "general_notes": "Sopii myös taimenelle.",
+  "content": {
+    "schema_version": 1,
+    "yield": { "quantity": "4", "unit": "servings" },
+    "ingredient_groups": [
+      { "id": "g1", "name": "Kala", "order": 1 },
+      { "id": "g2", "name": "Kastike", "order": 2 }
+    ],
+    "ingredients": [
+      { "id": "l1", "group_id": "g1", "display_name": "lohifilettä",
+        "original_quantity_text": "600 g", "amount_min": "600", "amount_max": "600",
+        "original_unit": "g", "scale_policy": "linear" },
+      { "id": "l2", "group_id": "g2", "display_name": "ruokakermaa",
+        "original_quantity_text": "1,5 dl", "amount_min": "1.5", "amount_max": "1.5",
+        "original_unit": "dl", "scale_policy": "linear" },
+      { "id": "l3", "group_id": "g2", "display_name": "sitruunaa",
+        "original_quantity_text": "1-2 kpl", "amount_min": "1", "amount_max": "2",
+        "original_unit": "kpl", "scale_policy": "round_to_whole" },
+      { "id": "l4", "group_id": "g2", "display_name": "suolaa",
+        "original_quantity_text": "maun mukaan", "amount_min": null, "amount_max": null,
+        "original_unit": null, "scale_policy": "to_taste" }
+    ],
+    "instructions": [
+      { "id": "s1", "order": 1, "text": "Lämmitä uuni 200 asteeseen." },
+      { "id": "s2", "order": 2, "text": "Kuori ja viipaloi perunat." }
+    ]
+  }
+}
