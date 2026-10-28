@@ -1,0 +1,10 @@
+import { t } from '../i18n/index.js';
+
+export function App() {
+  return (
+    <main>
+      <h1>{t('app.title')}</h1>
+      <p>{t('app.tagline')}</p>
+    </main>
+  );
+}

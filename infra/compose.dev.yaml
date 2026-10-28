@@ -1,0 +1,19 @@
+name: mise-dev
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: mise
+      POSTGRES_PASSWORD: mise_dev_only
+      POSTGRES_DB: mise
+    ports:
+      - '127.0.0.1:5433:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U mise']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+volumes:
+  pgdata:
