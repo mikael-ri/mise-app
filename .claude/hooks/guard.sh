@@ -3,6 +3,8 @@
 # Requires jq.
 set -uo pipefail
 input="$(cat)"
+# Fail closed: without jq this guard cannot work, so refuse rather than silently allow.
+command -v jq >/dev/null 2>&1 || { echo "BLOCKED: jq is not installed, so the safety guard cannot run. Install it (sudo apt install jq) and retry." >&2; exit 2; }
 file="$(printf '%s' "$input" | jq -r '.tool_input.file_path // empty')"
 [ -n "$file" ] || exit 0
 proj="${CLAUDE_PROJECT_DIR:-$(pwd)}"
