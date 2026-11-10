@@ -1,0 +1,20 @@
+// Throwaway: is the SSO session still authenticated after N idle seconds? (one probe only: probing refreshes activity)
+import { readFileSync } from 'node:fs';
+import { chromium } from '@playwright/test';
+import { BROWSER_ARGS, OUT, PUBLIC, drive, newSession, startCallbackServer } from './portal.ts';
+import { completeAuth, startAuth } from './rp.ts';
+const secret = Buffer.from(readFileSync(`${OUT}alice-totp.hex`, 'utf8'), 'hex');
+const probeAt = Number(process.env.PROBE_AT ?? 60);
+const browser = await chromium.launch({ args: BROWSER_ARGS });
+const cb = await startCallbackServer();
+const s = await newSession(browser);
+const first = startAuth({ prompt: 'login' });
+await s.page.goto(first.url);
+const o = await drive(s.page, { user: 'alice', method: 'password-totp', totpSecret: secret });
+await completeAuth(o.url, first);
+const t0 = Date.now();
+console.log('logged in; idling', probeAt, 's');
+await s.page.waitForTimeout(probeAt * 1000);
+const r = await s.page.goto(`${PUBLIC}/api/state`);
+console.log(`PROBE idle=${Math.round((Date.now() - t0) / 1000)}s status=${r?.status()} body=${((await r?.text()) ?? '').slice(0, 140)}`);
+await browser.close(); await cb.close();

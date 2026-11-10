@@ -8,3 +8,11 @@ test-results
 .env*
 !.env.example
 .claude/settings.local.json
+
+# Authelia stack runtime state (secrets, DB, rendered config, users, TLS)
+infra/authelia/secrets/
+infra/authelia/data/
+infra/authelia/tls/
+infra/authelia/configuration.yml
+infra/authelia/users.yml
+infra/authelia/spike/.out/

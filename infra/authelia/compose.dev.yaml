@@ -1,0 +1,14 @@
+# DEV OVERRIDE (spike only): adds an nginx container standing in for the proxy Pi.
+# Use:  docker compose -f compose.yaml -f compose.dev.yaml up -d   (after scripts/setup.sh and scripts/dev-proxy.sh)
+# Public dev URL: https://auth.mydomain.test:9443 (browser maps *.mydomain.test to 127.0.0.1).
+services:
+  proxy:
+    image: nginx:1.29-alpine
+    ports:
+      - '127.0.0.1:9443:443'
+    volumes:
+      - ./tls/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./tls/nginx/snippets:/etc/nginx/snippets:ro
+      - ./tls/cert.pem:/etc/nginx/tls/cert.pem:ro
+      - ./tls/key.pem:/etc/nginx/tls/key.pem:ro
+    depends_on: [authelia]

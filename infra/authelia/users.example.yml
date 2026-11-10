@@ -1,0 +1,11 @@
+# Copy to users.yml (gitignored). Only provisioned users can sign in; Mise additionally maps
+# `iss` + `sub` to a provisioned household member (DB design section 3).
+# Generate a digest:
+#   docker run --rm authelia/authelia:4.39.28 authelia crypto hash generate argon2 --password '<pw>'
+users:
+  alice:
+    disabled: false
+    displayname: 'Alice'
+    password: '$argon2id$REPLACE_WITH_DIGEST'
+    email: 'alice@mydomain.com'
+    groups: ['mise']

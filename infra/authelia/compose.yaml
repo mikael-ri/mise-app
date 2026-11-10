@@ -1,0 +1,42 @@
+# Authelia stack for Mise (card A03). Separate Compose project from the app (ADR-012).
+# Image is pinned by exact version tag; digest recorded for audit:
+#   authelia/authelia:4.39.28 = sha256:bd97cff4fcbf715b5ff1f9ae286afbe6033afce385302520b0368122d43a6f54
+# Override any ${VAR} from your shell or a private env file passed with `--env-file` (never commit it).
+name: mise-authelia
+
+services:
+  authelia:
+    image: authelia/authelia:4.39.28
+    restart: unless-stopped
+    read_only: true
+    user: '${AUTHELIA_UID:-1000}:${AUTHELIA_GID:-1000}'
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    tmpfs: ['/tmp']
+    ports:
+      # LAN address of the Mise host only (ADR-012); firewall it to the proxy Pi.
+      - '${AUTHELIA_BIND_ADDRESS:-127.0.0.1}:${AUTHELIA_BIND_PORT:-9091}:9091'
+    environment:
+      X_AUTHELIA_CONFIG_FILTERS: 'template'
+      AUTHELIA_LOG_LEVEL: '${AUTHELIA_LOG_LEVEL:-info}'
+      MISE_COOKIE_DOMAIN: '${MISE_COOKIE_DOMAIN:-mydomain.com}'
+      MISE_AUTH_PUBLIC_URL: '${MISE_AUTH_PUBLIC_URL:-https://auth.mydomain.com}'
+      MISE_AUTH_PUBLIC_HOST: '${MISE_AUTH_PUBLIC_HOST:-auth.mydomain.com}'
+      MISE_OIDC_REDIRECT_URI: '${MISE_OIDC_REDIRECT_URI:-https://mise.mydomain.com/auth/callback}'
+      MISE_AUTH_SSO_EXPIRATION: '${MISE_AUTH_SSO_EXPIRATION:-1h}'
+      MISE_AUTH_SSO_INACTIVITY: '${MISE_AUTH_SSO_INACTIVITY:-15m}'
+      MISE_AUTH_SSO_REMEMBER_ME: '${MISE_AUTH_SSO_REMEMBER_ME:--1}'
+      AUTHELIA_SESSION_SECRET_FILE: /secrets/session-secret
+      AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE: /secrets/storage-encryption-key
+      AUTHELIA_IDENTITY_PROVIDERS_OIDC_HMAC_SECRET_FILE: /secrets/oidc-hmac-secret
+    volumes:
+      - ./configuration.yml:/config/configuration.yml:ro
+      - ./users.yml:/config/users.yml:ro
+      - ./secrets:/secrets:ro
+      - ./data:/data
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://127.0.0.1:9091/api/health']
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 15s

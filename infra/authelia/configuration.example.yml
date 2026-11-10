@@ -1,0 +1,113 @@
+# Authelia 4.39.28 configuration for Mise (spike A03 / ADR-003 addendum).
+# Rendered with the `template` filter: values come from the environment (see compose.yaml / .env.example).
+# No secrets in this file. Secrets are injected as AUTHELIA_*_FILE environment variables.
+theme: 'auto'
+
+server:
+  address: 'tcp://0.0.0.0:9091/'
+  # The image's built-in healthcheck writes /app/.healthcheck.env, which breaks `read_only: true`
+  # (verified on 4.39.28). compose.yaml uses an HTTP healthcheck on /api/health instead.
+  disable_healthcheck: true
+
+log:
+  level: 'info'
+  format: 'text'
+
+authentication_backend:
+  # Passwords are managed by Authelia only. Mise stores none.
+  password_reset:
+    disable: true # lost passwords are reset by the operator (runbook), not by e-mail
+  file:
+    path: '/config/users.yml'
+    watch: false
+    password:
+      algorithm: 'argon2'
+
+access_control:
+  default_policy: 'two_factor' # no forward-auth rules; the OIDC client policy is what gates Mise
+
+session:
+  # secret: AUTHELIA_SESSION_SECRET_FILE
+  cookies:
+    - name: 'authelia_session'
+      domain: '{{ env "MISE_COOKIE_DOMAIN" }}'
+      authelia_url: '{{ env "MISE_AUTH_PUBLIC_URL" }}'
+      # SSO session lifetime. Mise device sessions are separate and long-lived (ADR-003 addendum).
+      expiration: '{{ env "MISE_AUTH_SSO_EXPIRATION" }}'
+      inactivity: '{{ env "MISE_AUTH_SSO_INACTIVITY" }}'
+      # `-1` disables Remember Me; `0` does NOT (it falls back to the 30-day default, measured on 4.39.28).
+      # Rendered unquoted on purpose: a quoted '-1' is rejected as a duration.
+      # prettier-ignore
+      remember_me: {{ env "MISE_AUTH_SSO_REMEMBER_ME" }}
+
+regulation:
+  max_retries: 3
+  find_time: '2m'
+  ban_time: '10m'
+
+storage:
+  # encryption_key: AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE
+  local:
+    path: '/data/db.sqlite3'
+
+notifier:
+  # Delivers identity-verification codes (needed to register TOTP / passkeys).
+  # Spike/dev: codes are written to a file. Production: replace with an `smtp:` block.
+  filesystem:
+    filename: '/data/notification.txt'
+
+webauthn:
+  disable: false
+  display_name: 'Mise'
+  attestation_conveyance_preference: 'indirect'
+  timeout: '60s'
+  selection_criteria:
+    user_verification: 'required'
+  # Passkey login is enabled; whether it satisfies `two_factor` is the spike question.
+  # `experimental_enable_passkey_uv_two_factor` is deliberately NOT set (tech section 12).
+  enable_passkey_login: true
+
+totp:
+  disable: false
+  issuer: '{{ env "MISE_AUTH_PUBLIC_HOST" }}'
+  algorithm: 'SHA1'
+  digits: 6
+  period: 30
+  skew: 1
+
+identity_providers:
+  oidc:
+    # hmac_secret: AUTHELIA_IDENTITY_PROVIDERS_OIDC_HMAC_SECRET_FILE
+    # jwks private key: mounted file, see compose.yaml / the jwks block below
+    lifespans:
+      access_token: '5m'
+      authorize_code: '1m'
+      id_token: '5m'
+      refresh_token: '5m'
+    enforce_pkce: 'always'
+    jwks:
+      - key_id: 'mise-rs256-1'
+        algorithm: 'RS256'
+        use: 'sig'
+        # prettier-ignore
+        key: {{ secret "/secrets/oidc-jwks-rsa.pem" | mindent 10 "|" | msquote }}
+    clients:
+      - client_id: 'mise'
+        client_name: 'Mise'
+        # PBKDF2 digest of the client secret; plaintext lives only in the Mise server env.
+        client_secret: '{{ secret "/secrets/oidc-client-secret.digest" }}'
+        public: false
+        authorization_policy: 'two_factor'
+        # `implicit` still showed the consent screen with two_factor on 4.39.28 (spike A03).
+        consent_mode: 'pre-configured'
+        pre_configured_consent_duration: '1y'
+        require_pkce: true
+        pkce_challenge_method: 'S256'
+        redirect_uris:
+          - '{{ env "MISE_OIDC_REDIRECT_URI" }}'
+        scopes: ['openid', 'profile', 'email']
+        response_types: ['code']
+        grant_types: ['authorization_code']
+        response_modes: ['query']
+        token_endpoint_auth_method: 'client_secret_basic'
+        userinfo_signed_response_alg: 'none'
