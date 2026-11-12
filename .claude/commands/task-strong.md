@@ -4,10 +4,10 @@ argument-hint: "[card id, e.g. A07]"
 allowed-tools: Bash(cat docs/milestone-a/tasks/:*), Bash(./scripts/doc-section.sh:*), Bash(./scripts/req.sh:*), Bash(git status:*), Bash(git diff:*), Bash(git log:*)
 model: opus
 ---
-Work on task card **$1** only. This is a high-risk card: correctness matters more than speed. Closed decisions and `.claude/rules/security.md` are not negotiable; never weaken a control to make something pass.
+Work on task card **$ARGUMENTS** only. This is a high-risk card: correctness matters more than speed. Closed decisions and `.claude/rules/security.md` are not negotiable; never weaken a control to make something pass.
 
 Card:
-!`cat docs/milestone-a/tasks/$1-*.md`
+!`cat docs/milestone-a/tasks/$ARGUMENTS-*.md`
 
 Recent history:
 !`git log --oneline -15`

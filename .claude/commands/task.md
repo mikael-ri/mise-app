@@ -4,10 +4,10 @@ argument-hint: "[card id, e.g. A09]"
 allowed-tools: Bash(cat docs/milestone-a/tasks/:*), Bash(./scripts/doc-section.sh:*), Bash(./scripts/req.sh:*), Bash(git status:*), Bash(git diff:*), Bash(git log:*)
 model: sonnet
 ---
-Work on task card **$1** only.
+Work on task card **$ARGUMENTS** only.
 
 Card:
-!`cat docs/milestone-a/tasks/$1-*.md`
+!`cat docs/milestone-a/tasks/$ARGUMENTS-*.md`
 
 Recent history (to see which dependency cards are done):
 !`git log --oneline -15`
