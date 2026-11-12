@@ -14,11 +14,12 @@ own Compose stack (`infra/authelia/`), dev nginx standing in for the proxy Pi, t
 23 passing). Evidence lines are written to the gitignored `infra/authelia/spike/.out/evidence.jsonl`; the idle and absolute expiry probe is
 `infra/authelia/spike/idle-probe.ts` (`PROBE_AT=<seconds>`).
 
-**Caveat on evidence:** all dev measurements and the 23 unit tests were taken with the earlier SQLite dev stack. Afterwards the owner moved
-Authelia storage to PostgreSQL (section 10) and the dev stack to a standalone `compose.dev.yaml`. The Postgres dev stack could not be started
-on the dev machine (Authelia's NTP startup check failed on 2026-11-12), so the Playwright suite has **not been re-run** against it.
-Storage should not change the behaviours measured here, but that is unproven (**pending**). The production `compose.yaml` parses
-(`docker compose config`) and runs on the owner's real host, where the owner's checks were done.
+**Caveat on evidence:** the measurements in sections 1 to 5 were taken with the earlier SQLite dev stack. Afterwards the owner moved
+Authelia storage to PostgreSQL (section 10) and the dev stack to a standalone `compose.dev.yaml`. On 2026-11-12 the Playwright suite was
+**re-run once against the Postgres dev stack: 9 passed, 8 skipped** (the passkey tests need `PASSKEY=1`; the SSO-inactivity test needs `SSO_SHORT=1`).
+The passing tests cover the issuer/network behaviour, the config guard, the live-SSO reuse variants (control, `prompt=login`, `max_age=1`,
+`max_age=30`), the full login after portal logout, stale/forged token rejection, and cookie attributes. The passkey measurements remain from the SQLite run.
+The production `compose.yaml` parses (`docker compose config`) and runs on the owner's real host, where the owner's checks were done.
 
 ### 1. Enabled login method (decision D1)
 - **P0: password + TOTP only.** Steps seen: `first-factor, totp, consent`. ID token has `auth_time`, `aud`, `nonce`, `exp`;
@@ -60,7 +61,7 @@ Storage should not change the behaviours measured here, but that is unproven (**
 ### 5. SSO lifetimes (decision D5)
 | Setting | Value | Evidence |
 | --- | --- | --- |
-| `expiration` | **15m** (enforcement under `remember_me: -1` **pending**) | Absolute expiry was observed only with `remember_me=1M`, not with the production `-1`, and the probe printed to the console only (no evidence line saved): with `expiration=5m`, `remember_me=1M`, a probe after 320 s idle returned `authentication_level: 0`. 15 m exceeds a full login (15 to 35 s, up to about 1 min). |
+| `expiration` | **15m** | Absolute expiry is enforced under the production setting: with `expiration=5m`, `inactivity=15m`, `remember_me=-1`, one probe after 320 s returned `authentication_level: 0` (evidence line `sso-expiry-probe`, 2026-11-12, Postgres dev stack). It was also observed earlier with `remember_me=1M`: with `expiration=5m`, `remember_me=1M`, a probe after 320 s idle returned `authentication_level: 0`. 15 m exceeds a full login (15 to 35 s, up to about 1 min). |
 | `inactivity` | **Not relied on** (kept at 15m, equal to `expiration`, so it has no extra effect) | Not enforced on 4.39.28 in two configurations: `inactivity=90s`, `expiration=5m`, `remember_me=-1` (60 s and 130 s idle, still level 2); and `remember_me=1M` (130 s idle, still level 2). Cause not found. A 20 s limit expired in the middle of a login, so inactivity values below a full login are unusable anyway. |
 | `remember_me` | `-1` | section 4 |
 
@@ -112,7 +113,6 @@ Regulation: 3 retries / 2 min / 10 min ban. Image healthcheck disabled (it write
 - Not reported: the `authelia_session` cookie lifetime check. **pending.**
 
 **Still to verify:**
-- **pending (needs a working dev stack):** a suite test with `expiration=5m`, `remember_me=-1`, probe after 320 s, writing an evidence line. Until then `expiration` is not proven under the production settings, and the logout-after-callback mitigation carries the weight.
 - **pending:** whether Authelia's legacy `/api/verify` endpoint (and other `server.endpoints.authz` defaults) is reachable through the proxy; the proxy only blocks `/api/authz/`. If reachable, restrict `server.endpoints.authz` and block it at nginx. Not changed here because it was not tested.
 - **pending (owner/A07):** a working post-callback logout on the real host (`/logout?rd=` gave a 404 from the portal; does the next visit require a full login?), and cookie expiry on the real host.
 - **pending (A07):** a same-browser second login with a live Authelia SSO session on the real host (expected: password only for `prompt=login`).

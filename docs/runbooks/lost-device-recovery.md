@@ -9,7 +9,7 @@ There are three separate things an attacker may hold. Treat them separately and 
 | Asset | Where it lives | Who can end it |
 | --- | --- | --- |
 | Mise device session (long-lived: 180 days absolute, 90 days idle) | Cookie on the device, hashed row in `device_sessions` | The other household member in the Mise UI, or the operator **(A07)** |
-| Authelia SSO session (configured 15 minutes, **enforcement under the production settings is pending**; Mise must also log it out right after login, mechanism pending in A07) | Cookie `authelia_session` on the device, server-side session store | Operator: restart Authelia; user: log out of Authelia |
+| Authelia SSO session (15 minutes, enforced; Mise must also log it out right after login, mechanism pending in A07) | Cookie `authelia_session` on the device, server-side session store | Operator: restart Authelia; user: log out of Authelia |
 | Credentials: password, TOTP secret | Authelia storage / users file / the device itself | Operator with host access |
 
 ## Rule 0: do not create a bypass

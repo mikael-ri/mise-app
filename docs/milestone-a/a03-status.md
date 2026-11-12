@@ -6,5 +6,4 @@ The earlier handoff text here was superseded. The results, decisions and the "St
 [docs/adr/0012-exposure-model.md](../adr/0012-exposure-model.md). Recovery procedure: `docs/runbooks/lost-device-recovery.md`.
 Setup and checks: `infra/authelia/README.md`.
 
-Open at hand-over: Playwright suite not re-run on the Postgres dev stack (NTP startup check failed on the dev machine);
-post-callback logout mechanism on the real host; same-browser SSO reuse test (needs card A07).
+Open at hand-over: post-callback logout mechanism on the real host; same-browser SSO reuse test (needs card A07).

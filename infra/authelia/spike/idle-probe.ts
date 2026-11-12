@@ -1,7 +1,15 @@
 // Throwaway: is the SSO session still authenticated after N idle seconds? (one probe only: probing refreshes activity)
 import { readFileSync } from 'node:fs';
 import { chromium } from '@playwright/test';
-import { BROWSER_ARGS, OUT, PUBLIC, drive, newSession, startCallbackServer } from './portal.ts';
+import {
+  BROWSER_ARGS,
+  OUT,
+  PUBLIC,
+  drive,
+  evidence,
+  newSession,
+  startCallbackServer,
+} from './portal.ts';
 import { completeAuth, startAuth } from './rp.ts';
 const secret = Buffer.from(readFileSync(`${OUT}alice-totp.hex`, 'utf8'), 'hex');
 const probeAt = Number(process.env.PROBE_AT ?? 60);
@@ -16,8 +24,16 @@ const t0 = Date.now();
 console.log('logged in; idling', probeAt, 's');
 await s.page.waitForTimeout(probeAt * 1000);
 const r = await s.page.goto(`${PUBLIC}/api/state`);
-console.log(
-  `PROBE idle=${Math.round((Date.now() - t0) / 1000)}s status=${r?.status()} body=${((await r?.text()) ?? '').slice(0, 140)}`,
-);
+const body = ((await r?.text()) ?? '').slice(0, 140);
+const idleSeconds = Math.round((Date.now() - t0) / 1000);
+console.log(`PROBE idle=${idleSeconds}s status=${r?.status()} body=${body}`);
+evidence('sso-expiry-probe', {
+  idleSeconds,
+  status: r?.status(),
+  body,
+  expiration: process.env.MISE_AUTH_SSO_EXPIRATION ?? 'unset',
+  inactivity: process.env.MISE_AUTH_SSO_INACTIVITY ?? 'unset',
+  rememberMe: process.env.MISE_AUTH_SSO_REMEMBER_ME ?? 'unset (default -1)',
+});
 await browser.close();
 await cb.close();
