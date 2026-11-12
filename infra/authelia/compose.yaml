@@ -7,6 +7,7 @@ name: mise-authelia
 services:
   authelia:
     image: authelia/authelia:4.39.28
+    container_name: authelia
     restart: unless-stopped
     read_only: true
     user: '${AUTHELIA_UID:-1000}:${AUTHELIA_GID:-1000}'
@@ -23,20 +24,76 @@ services:
       MISE_AUTH_PUBLIC_URL: '${MISE_AUTH_PUBLIC_URL:-https://auth.mydomain.com}'
       MISE_AUTH_PUBLIC_HOST: '${MISE_AUTH_PUBLIC_HOST:-auth.mydomain.com}'
       MISE_OIDC_REDIRECT_URI: '${MISE_OIDC_REDIRECT_URI:-https://mise.mydomain.com/auth/callback}'
-      MISE_AUTH_SSO_EXPIRATION: '${MISE_AUTH_SSO_EXPIRATION:-1h}'
+      MISE_AUTH_SSO_EXPIRATION: '${MISE_AUTH_SSO_EXPIRATION:-15m}'
       MISE_AUTH_SSO_INACTIVITY: '${MISE_AUTH_SSO_INACTIVITY:-15m}'
+      MISE_AUTH_WEBAUTHN_DISABLE: '${MISE_AUTH_WEBAUTHN_DISABLE:-true}'
       MISE_AUTH_SSO_REMEMBER_ME: '${MISE_AUTH_SSO_REMEMBER_ME:--1}'
-      AUTHELIA_SESSION_SECRET_FILE: /secrets/session-secret
-      AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE: /secrets/storage-encryption-key
-      AUTHELIA_IDENTITY_PROVIDERS_OIDC_HMAC_SECRET_FILE: /secrets/oidc-hmac-secret
+      AUTHELIA_SESSION_SECRET_FILE: /run/secrets/session-secret
+      AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE: /run/secrets/storage-encryption-key
+      AUTHELIA_IDENTITY_PROVIDERS_OIDC_HMAC_SECRET_FILE: /run/secrets/oidc-hmac-secret
     volumes:
       - ./configuration.yml:/config/configuration.yml:ro
       - ./users.yml:/config/users.yml:ro
-      - ./secrets:/secrets:ro
-      - ./data:/data
+      - authelia_data:/data
+    networks:
+      - authelia
+    secrets:
+      - session-secret
+      - storage-encryption-key
+      - oidc-hmac-secret
+      - oidc-jwks-rsa
+      - oidc-client-secret
+      - pg_password
+    depends_on:
+      authelia_db:
+        condition: service_healthy
     healthcheck:
       test: ['CMD', 'wget', '--spider', '-q', 'http://127.0.0.1:9091/api/health']
       interval: 10s
       timeout: 3s
       retries: 6
       start_period: 15s
+
+  authelia_db:
+    container_name: authelia_db
+    image: postgres:18.6-alpine
+    volumes:
+      - authelia_db:/var/lib/postgresql
+    environment:
+      POSTGRES_DB: authelia
+      POSTGRES_USER: authelia
+      POSTGRES_PASSWORD_FILE: /run/secrets/pg_password
+    secrets:
+      - pg_password
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U authelia']
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - authelia
+
+volumes:
+  authelia_data:
+    external: true
+  authelia_db:
+    external: true
+
+networks:
+  authelia:
+    external: true
+
+secrets:
+  pg_password:
+    file: .secrets/postgres_pw
+  session-secret:
+    file: .secrets/session-secret
+  storage-encryption-key:
+    file: .secrets/storage-encryption-key
+  oidc-hmac-secret:
+    file: .secrets/oidc-hmac-secret
+  oidc-jwks-rsa:
+    file: .secrets/oidc-jwks-rsa.pem
+  oidc-client-secret:
+    file: .secrets/oidc-client-secret.digest

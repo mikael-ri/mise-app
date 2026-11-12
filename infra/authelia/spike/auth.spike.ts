@@ -73,11 +73,15 @@ test('issuer/network: tokens and keys via internal URL, iss validated against th
   });
 });
 
-test('config: two_factor client policy, no experimental keys, passkey UV required (tech 12)', () => {
+test('config: two_factor client policy, no experimental keys, passkey UV required, passkeys off by default (tech 12)', () => {
   const cfg = readFileSync(new URL('../configuration.example.yml', import.meta.url), 'utf8');
   expect(cfg).toMatch(/authorization_policy: 'two_factor'/);
   expect(cfg).not.toMatch(/^\s*experimental_/m); // commented mentions are allowed only inside comments
   expect(cfg).toMatch(/user_verification: 'required'/);
+  expect(cfg).toMatch(/disable: \{\{ env "MISE_AUTH_WEBAUTHN_DISABLE" \}\}/);
+  expect(readFileSync(new URL('../compose.yaml', import.meta.url), 'utf8')).toMatch(
+    /MISE_AUTH_WEBAUTHN_DISABLE:-true/,
+  );
 });
 
 interface Variant {
@@ -268,7 +272,9 @@ test('NFR-01 cookie attributes of the Authelia session cookie', async () => {
   await s.ctx.close();
 });
 
+// Passkeys are disabled in P0 (ADR-003 addendum). Run with PASSKEY=1 and MISE_AUTH_WEBAUTHN_DISABLE=false.
 test.describe('passkey (bob)', () => {
+  test.skip(process.env.PASSKEY !== '1', 'passkeys disabled by default; set PASSKEY=1');
   const bobOpts = { user: 'bob', method: 'passkey' } as const;
   // One long-lived virtual authenticator for the whole suite: Chromium's virtual authenticator does not
   // honour an imported sign count, so a re-imported credential is (correctly) rejected by Authelia as cloned.

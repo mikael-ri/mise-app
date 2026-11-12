@@ -1,7 +1,71 @@
-# DEV OVERRIDE (spike only): adds an nginx container standing in for the proxy Pi.
-# Use:  docker compose -f compose.yaml -f compose.dev.yaml up -d   (after scripts/setup.sh and scripts/dev-proxy.sh)
-# Public dev URL: https://auth.mydomain.test:9443 (browser maps *.mydomain.test to 127.0.0.1).
+# DEV ONLY (spike A03): a complete, self-contained stack for this machine. Use scripts/dev-up.sh.
+# It mirrors compose.yaml (same image, same configuration.example.yml, Postgres storage, secrets at /run/secrets)
+# but has no external networks or volumes and reads local throwaway secrets from ./secrets (made by scripts/setup.sh).
+# It also adds an nginx container standing in for the proxy Pi.
+# Public dev URL: https://auth.mydomain.test:9443 (the browser maps *.mydomain.test to 127.0.0.1).
+name: mise-authelia
+
 services:
+  authelia:
+    image: authelia/authelia:4.39.28
+    restart: unless-stopped
+    read_only: true
+    user: '${AUTHELIA_UID:-1000}:${AUTHELIA_GID:-1000}'
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    tmpfs: ['/tmp']
+    ports:
+      - '127.0.0.1:9091:9091'
+    environment:
+      X_AUTHELIA_CONFIG_FILTERS: 'template'
+      AUTHELIA_LOG_LEVEL: '${AUTHELIA_LOG_LEVEL:-info}'
+      MISE_COOKIE_DOMAIN: '${MISE_COOKIE_DOMAIN:-mydomain.test}'
+      MISE_AUTH_PUBLIC_URL: '${MISE_AUTH_PUBLIC_URL:-https://auth.mydomain.test:9443}'
+      MISE_AUTH_PUBLIC_HOST: '${MISE_AUTH_PUBLIC_HOST:-auth.mydomain.test}'
+      MISE_OIDC_REDIRECT_URI: '${MISE_OIDC_REDIRECT_URI:-http://localhost:8765/callback}'
+      MISE_AUTH_SSO_EXPIRATION: '${MISE_AUTH_SSO_EXPIRATION:-15m}'
+      MISE_AUTH_SSO_INACTIVITY: '${MISE_AUTH_SSO_INACTIVITY:-15m}'
+      MISE_AUTH_WEBAUTHN_DISABLE: '${MISE_AUTH_WEBAUTHN_DISABLE:-true}'
+      MISE_AUTH_SSO_REMEMBER_ME: '${MISE_AUTH_SSO_REMEMBER_ME:--1}'
+      AUTHELIA_SESSION_SECRET_FILE: /run/secrets/session-secret
+      AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE: /run/secrets/storage-encryption-key
+      AUTHELIA_IDENTITY_PROVIDERS_OIDC_HMAC_SECRET_FILE: /run/secrets/oidc-hmac-secret
+    volumes:
+      - ./configuration.yml:/config/configuration.yml:ro
+      - ./users.yml:/config/users.yml:ro
+      - ./data:/data
+      - ./secrets/session-secret:/run/secrets/session-secret:ro
+      - ./secrets/storage-encryption-key:/run/secrets/storage-encryption-key:ro
+      - ./secrets/oidc-hmac-secret:/run/secrets/oidc-hmac-secret:ro
+      - ./secrets/oidc-jwks-rsa.pem:/run/secrets/oidc-jwks-rsa:ro
+      - ./secrets/oidc-client-secret.digest:/run/secrets/oidc-client-secret:ro
+      - ./secrets/postgres_pw:/run/secrets/pg_password:ro
+    depends_on:
+      authelia_db:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://127.0.0.1:9091/api/health']
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 15s
+
+  authelia_db:
+    image: postgres:18.6-alpine
+    restart: unless-stopped
+    volumes:
+      - authelia_db_dev:/var/lib/postgresql
+      - ./secrets/postgres_pw:/run/secrets/pg_password:ro
+    environment:
+      POSTGRES_DB: authelia
+      POSTGRES_USER: authelia
+      POSTGRES_PASSWORD_FILE: /run/secrets/pg_password
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U authelia']
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   proxy:
     image: nginx:1.29-alpine
     ports:
@@ -12,3 +76,6 @@ services:
       - ./tls/cert.pem:/etc/nginx/tls/cert.pem:ro
       - ./tls/key.pem:/etc/nginx/tls/key.pem:ro
     depends_on: [authelia]
+
+volumes:
+  authelia_db_dev:

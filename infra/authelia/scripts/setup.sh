@@ -21,6 +21,7 @@ gen() { # gen <file> <length>
 gen session-secret 64
 gen storage-encryption-key 64
 gen oidc-hmac-secret 64
+gen postgres_pw 32 # dev Postgres password for compose.dev.yaml (production uses .secrets/postgres_pw)
 
 if [ ! -f secrets/oidc-jwks-rsa.pem ]; then
   docker run --rm -v "$PWD/secrets:/out" -u "$(id -u):$(id -g)" "$IMAGE" \

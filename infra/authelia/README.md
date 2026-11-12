@@ -7,42 +7,49 @@ No secrets are committed. Everything generated lives in gitignored paths: `secre
 
 ## What is here
 
-| Path                                   | Purpose                                                                           |
-| -------------------------------------- | --------------------------------------------------------------------------------- |
-| `compose.yaml`                         | Authelia only, image pinned to `authelia/authelia:4.39.28` (digest in the header) |
-| `configuration.example.yml`            | Config template; values come from environment variables, secrets from `/secrets`  |
-| `users.example.yml`                    | Provisioned users (file backend). Only these users can sign in                    |
-| `nginx/`                               | Server blocks and proxy snippets for the proxy Pi (`auth.mydomain.com`, `mise.…`) |
-| `scripts/setup.sh`                     | Generates secrets and the OIDC client secret (plain + PBKDF2 digest)              |
-| `scripts/validate-config.sh`           | Validates the rendered config with the pinned image                               |
-| `compose.dev.yaml`, `scripts/dev-*.sh` | **Dev only**: local nginx, throwaway CA, `*.mydomain.test`                        |
-| `spike/`                               | Throwaway relying party and Playwright evidence suite (not production code)       |
+| Path                                   | Purpose                                                                                                           |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `compose.yaml`                         | Production: Authelia + Postgres, image pinned to `authelia/authelia:4.39.28` (digest in the header)               |
+| `configuration.example.yml`            | Config template; values come from environment variables, secrets from `/run/secrets`                              |
+| `users.example.yml`                    | Provisioned users (file backend). Only these users can sign in                                                    |
+| `nginx/`                               | Server blocks and proxy snippets for the proxy Pi (`auth.mydomain.com`, `mise.…`)                                 |
+| `scripts/setup.sh`                     | Generates secrets and the OIDC client secret (plain + PBKDF2 digest)                                              |
+| `scripts/validate-config.sh`           | Validates the rendered config with the pinned image                                                               |
+| `compose.dev.yaml`, `scripts/dev-*.sh` | **Dev only**: self-contained stack (Authelia, Postgres, local nginx), throwaway CA and secrets, `*.mydomain.test` |
+| `spike/`                               | Throwaway relying party and Playwright evidence suite (not production code)                                       |
 
 ## Deploy on the Mise host
 
 1. Copy this folder to the host. Needs Docker with the compose plugin.
-2. Generate secrets: `./scripts/setup.sh` (creates `secrets/`, `data/`, copies `configuration.example.yml` to `configuration.yml`).
+2. Production layout (`compose.yaml`): Authelia stores its data in Postgres (`authelia_db`, chosen for operator familiarity
+   and to avoid SQLite file corruption). It needs, created once beforehand: the external network and volumes
+   (`docker network create authelia`, `docker volume create authelia_data`, `docker volume create authelia_db`) and the files
+   `.secrets/{postgres_pw,session-secret,storage-encryption-key,oidc-hmac-secret,oidc-jwks-rsa.pem,oidc-client-secret.digest}`
+   (gitignore them; `scripts/setup.sh` makes the same set under `secrets/` for the dev stack only). Copy
+   `configuration.example.yml` to `configuration.yml`. Make the data volume writable for the container user (Docker creates it root-owned):
+   `docker run --rm -v authelia_data:/data alpine chown 1000:1000 /data` (use your `AUTHELIA_UID:GID`). Validate with `./scripts/validate-config.sh` (it reads `.secrets/`).
 3. Create users: `cp users.example.yml users.yml`, then for each user generate a digest and paste it in:
-   `docker run --rm authelia/authelia:4.39.28 authelia crypto hash generate argon2 --password '<password>'`
+   `docker run --rm authelia/authelia:4.39.28 authelia crypto hash generate argon2` (prompts for the password; keeps it out of shell history; use `docker run -it`)
 4. Set the environment. Either `export` the variables in your shell or put them in a private file outside git and
    pass `docker compose --env-file <file> …`. Defaults in `compose.yaml` use `mydomain.com`:
 
-   | Variable                    | Example / default                            | Meaning                                        |
-   | --------------------------- | -------------------------------------------- | ---------------------------------------------- |
-   | `MISE_COOKIE_DOMAIN`        | `mydomain.com`                               | Parent domain of both hosts                    |
-   | `MISE_AUTH_PUBLIC_URL`      | `https://auth.mydomain.com`                  | Public URL = OIDC issuer (no trailing slash)   |
-   | `MISE_AUTH_PUBLIC_HOST`     | `auth.mydomain.com`                          | Used as TOTP issuer label                      |
-   | `MISE_OIDC_REDIRECT_URI`    | `https://mise.mydomain.com/auth/callback`    | Must equal the callback route A07 implements   |
-   | `AUTHELIA_BIND_ADDRESS`     | LAN IP of the Mise host, e.g. `192.168.1.20` | Never `0.0.0.0`; firewall to the proxy Pi only |
-   | `AUTHELIA_BIND_PORT`        | `9091`                                       |                                                |
-   | `AUTHELIA_UID/GID`          | `1000`                                       | Owner of `data/` and `secrets/`                |
-   | `MISE_AUTH_SSO_EXPIRATION`  | see ADR addendum                             | Authelia SSO session absolute lifetime         |
-   | `MISE_AUTH_SSO_INACTIVITY`  | see ADR addendum                             | Authelia SSO session idle lifetime             |
-   | `MISE_AUTH_SSO_REMEMBER_ME` | `-1`                                         | `-1` disables Remember Me. **`0` does not.**   |
-   | `AUTHELIA_LOG_LEVEL`        | `info`                                       | `debug` while diagnosing                       |
+   | Variable                     | Example / default                            | Meaning                                        |
+   | ---------------------------- | -------------------------------------------- | ---------------------------------------------- |
+   | `MISE_COOKIE_DOMAIN`         | `mydomain.com`                               | Parent domain of both hosts                    |
+   | `MISE_AUTH_PUBLIC_URL`       | `https://auth.mydomain.com`                  | Public URL = OIDC issuer (no trailing slash)   |
+   | `MISE_AUTH_PUBLIC_HOST`      | `auth.mydomain.com`                          | Used as TOTP issuer label                      |
+   | `MISE_OIDC_REDIRECT_URI`     | `https://mise.mydomain.com/auth/callback`    | Must equal the callback route A07 implements   |
+   | `AUTHELIA_BIND_ADDRESS`      | LAN IP of the Mise host, e.g. `192.168.1.20` | Never `0.0.0.0`; firewall to the proxy Pi only |
+   | `AUTHELIA_BIND_PORT`         | `9091`                                       |                                                |
+   | `AUTHELIA_UID/GID`           | `1000`                                       | Must own the `authelia_data` volume            |
+   | `MISE_AUTH_SSO_EXPIRATION`   | `15m`                                        | Authelia SSO session absolute lifetime         |
+   | `MISE_AUTH_SSO_INACTIVITY`   | `15m` (not relied on, see ADR addendum)      | Authelia SSO session idle lifetime             |
+   | `MISE_AUTH_WEBAUTHN_DISABLE` | `true`                                       | Passkeys off in P0; `false` only for PASSKEY=1 |
+   | `MISE_AUTH_SSO_REMEMBER_ME`  | `-1`                                         | `-1` disables Remember Me. **`0` does not.**   |
+   | `AUTHELIA_LOG_LEVEL`         | `info`                                       | `debug` while diagnosing                       |
 
-5. `./scripts/validate-config.sh` (same environment), then `docker compose up -d`. Wait for `healthy`.
-6. One-time codes for registering TOTP or a passkey are written to `data/notification.txt` (filesystem notifier,
+5. `./scripts/validate-config.sh` (same environment, `.secrets/`), then `docker compose up -d`. Wait for `healthy`.
+6. One-time codes for registering TOTP or a passkey are written to `/data/notification.txt` in the `authelia_data` volume (production: `docker exec authelia cat /data/notification.txt`; dev: `data/notification.txt`; filesystem notifier,
    file is overwritten on every message). Replace the `notifier:` block with `smtp:` if you prefer e-mail.
 
 ## Proxy Pi (nginx)
@@ -70,23 +77,31 @@ curl -s -H 'X-Forwarded-Proto: https' -H 'X-Forwarded-Host: auth.mydomain.com' \
   http://<host-lan-ip>:9091/.well-known/openid-configuration | grep -o '"issuer":"[^"]*"'                      # public issuer
 ```
 
-## Real-device checks (passkey, phone, password manager)
+## Real-host checks (password + TOTP, phone, password manager)
 
-The automated evidence uses Chromium's virtual authenticator. Please also verify on real hardware and record the result
-in the ADR addendum (section "Still to verify"):
+P0 login is password + TOTP (ADR-003 addendum). Passkeys are off (`MISE_AUTH_WEBAUTHN_DISABLE=true`). Run these on the
+final host over the real https domains and record the results in the ADR addendum ("Still to verify"):
 
-1. Sign in at `https://auth.mydomain.com`, open **Settings → WebAuthn Credentials → Add**, enter the one-time code
-   from `data/notification.txt`, and register your passkey (platform authenticator or security key).
-2. Sign out. Sign in with **Sign in with a passkey**. Record what Authelia asks for next (the ADR addendum says
-   what we expect; note any difference).
-3. With the Authelia SSO session still open, start a new login from another browser profile and confirm you are
-   asked for credentials again (see ADR addendum for the exact expectation).
-4. Confirm the Remember Me checkbox is absent and the session cookie is a normal session (not persistent).
-5. Try the passkey on a second device (cloud-synced passkey) if you intend to use one.
+1. Sign in at `https://auth.mydomain.com` (first login uses the password only), open **Settings, One-Time Password**, enter
+   the one-time code from `data/notification.txt`, scan the QR code with your authenticator app (and the password manager
+   if you use it for TOTP).
+2. Sign out, then sign in again with password + TOTP code from the phone. Note the screens in order.
+3. Remember Me: confirm the checkbox is absent, and in the browser dev tools that `authelia_session` has no long expiry
+   (a session cookie, or at most the 15 minute `expiration`).
+4. SSO reuse (needs a Mise login route, so card A07): in the **same browser** with the SSO session open, start a new
+   authorization request with `prompt=login`. Expected (accepted limitation): only the password is asked, not TOTP. A different
+   browser or profile has no SSO cookie and proves nothing here.
+5. Logout redirect: while signed in, open
+   `https://auth.mydomain.com/logout?rd=https%3A%2F%2Fmise.mydomain.com%2F` and record where the browser lands, and whether
+   the next visit to `https://auth.mydomain.com` asks for password + TOTP again. Note which server shows any 404 (the target
+   `rd` host must exist and be reachable for this test).
+6. Password manager: check that autofill fills the password on the portal and that TOTP autofill (if used) is accepted.
+7. Optional, only for a later passkey pilot: set `MISE_AUTH_WEBAUTHN_DISABLE=false`, restart, and follow the
+   "Optional: passkeys" notes in `docs/runbooks/lost-device-recovery.md`.
 
 ## Dev stack (this machine)
 
-`./scripts/setup.sh && ./scripts/dev-proxy.sh && ./scripts/dev-up.sh` brings up Authelia plus a local nginx on
+`./scripts/setup.sh && ./scripts/dev-proxy.sh && ./scripts/dev-up.sh` brings up Authelia, its Postgres and a local nginx (`compose.dev.yaml`, standalone, secrets from `secrets/`; run `scripts/validate-config.sh` for dev as `SECRETS_DIR=secrets ./scripts/validate-config.sh`) on
 `https://auth.mydomain.test:9443`. The browser maps `*.mydomain.test` to `127.0.0.1` through a Chromium flag; no
 `/etc/hosts` change is needed. Evidence suite:
-`pnpm exec playwright test -c infra/authelia/spike`.
+`pnpm exec playwright test -c infra/authelia/spike` (add `PASSKEY=1` with `MISE_AUTH_WEBAUTHN_DISABLE=false` to include the passkey tests).

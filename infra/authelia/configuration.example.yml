@@ -47,8 +47,17 @@ regulation:
 
 storage:
   # encryption_key: AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE
-  local:
-    path: '/data/db.sqlite3'
+  #  local:
+  #    path: '/data/db.sqlite3'
+  postgres:
+    address: 'tcp://authelia_db:5432'
+    servers: []
+    database: 'authelia'
+    schema: 'public'
+    username: 'authelia'
+    # prettier-ignore
+    password: {{secret "/run/secrets/pg_password" }}
+    timeout: '5s'
 
 notifier:
   # Delivers identity-verification codes (needed to register TOTP / passkeys).
@@ -57,15 +66,20 @@ notifier:
     filename: '/data/notification.txt'
 
 webauthn:
-  disable: false
+  # P0 login method is password + TOTP only (ADR-003 addendum). Passkeys are off by default; set
+  # MISE_AUTH_WEBAUTHN_DISABLE=false only to run the passkey tests (PASSKEY=1) or a later passkey pilot.
+  # prettier-ignore
+  disable: {{ env "MISE_AUTH_WEBAUTHN_DISABLE" }}
   display_name: 'Mise'
   attestation_conveyance_preference: 'indirect'
   timeout: '60s'
   selection_criteria:
     user_verification: 'required'
-  # Passkey login is enabled; whether it satisfies `two_factor` is the spike question.
+  # Measured on 4.39.28: passkey (user-verified) + password satisfies `two_factor`; passwordless does not.
+  # MISE_AUTH_WEBAUTHN_DISABLE must be exactly `true` or `false` (lowercase); anything else renders invalid config.
   # `experimental_enable_passkey_uv_two_factor` is deliberately NOT set (tech section 12).
-  enable_passkey_login: true
+  # prettier-ignore
+  enable_passkey_login: {{ ne (env "MISE_AUTH_WEBAUTHN_DISABLE") "true" }}
 
 totp:
   disable: false
@@ -78,7 +92,7 @@ totp:
 identity_providers:
   oidc:
     # hmac_secret: AUTHELIA_IDENTITY_PROVIDERS_OIDC_HMAC_SECRET_FILE
-    # jwks private key: mounted file, see compose.yaml / the jwks block below
+    # jwks private key: mounted file, see compose.yaml (production) or compose.dev.yaml (dev)
     lifespans:
       access_token: '5m'
       authorize_code: '1m'
@@ -90,12 +104,12 @@ identity_providers:
         algorithm: 'RS256'
         use: 'sig'
         # prettier-ignore
-        key: {{ secret "/secrets/oidc-jwks-rsa.pem" | mindent 10 "|" | msquote }}
+        key: {{ secret "/run/secrets/oidc-jwks-rsa" | mindent 10 "|" | msquote }}
     clients:
       - client_id: 'mise'
         client_name: 'Mise'
         # PBKDF2 digest of the client secret; plaintext lives only in the Mise server env.
-        client_secret: '{{ secret "/secrets/oidc-client-secret.digest" }}'
+        client_secret: '{{ secret "/run/secrets/oidc-client-secret" }}'
         public: false
         authorization_policy: 'two_factor'
         # `implicit` still showed the consent screen with two_factor on 4.39.28 (spike A03).

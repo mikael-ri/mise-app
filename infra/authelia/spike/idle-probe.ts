@@ -16,5 +16,8 @@ const t0 = Date.now();
 console.log('logged in; idling', probeAt, 's');
 await s.page.waitForTimeout(probeAt * 1000);
 const r = await s.page.goto(`${PUBLIC}/api/state`);
-console.log(`PROBE idle=${Math.round((Date.now() - t0) / 1000)}s status=${r?.status()} body=${((await r?.text()) ?? '').slice(0, 140)}`);
-await browser.close(); await cb.close();
+console.log(
+  `PROBE idle=${Math.round((Date.now() - t0) / 1000)}s status=${r?.status()} body=${((await r?.text()) ?? '').slice(0, 140)}`,
+);
+await browser.close();
+await cb.close();

@@ -11,6 +11,7 @@ test-results
 
 # Authelia stack runtime state (secrets, DB, rendered config, users, TLS)
 infra/authelia/secrets/
+infra/authelia/.secrets/
 infra/authelia/data/
 infra/authelia/tls/
 infra/authelia/configuration.yml
