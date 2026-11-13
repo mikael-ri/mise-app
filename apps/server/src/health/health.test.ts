@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { afterEach, describe, expect, it } from 'vitest';
 import { buildApp } from '../app.js';
+import { testConfig } from '../platform/test-support.js';
 
 describe('health routes', () => {
   let app: FastifyInstance;
@@ -9,14 +10,14 @@ describe('health routes', () => {
   });
 
   it('live returns 200', async () => {
-    app = buildApp({ checkReady: async () => {} });
+    app = buildApp({ checkReady: async () => {}, config: testConfig });
     const res = await app.inject({ method: 'GET', url: '/api/v1/health/live' });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({ status: 'ok' });
   });
 
   it('ready returns 200 when the check passes', async () => {
-    app = buildApp({ checkReady: async () => {} });
+    app = buildApp({ checkReady: async () => {}, config: testConfig });
     const res = await app.inject({ method: 'GET', url: '/api/v1/health/ready' });
     expect(res.statusCode).toBe(200);
   });
@@ -26,6 +27,7 @@ describe('health routes', () => {
       checkReady: async () => {
         throw new Error('down');
       },
+      config: testConfig,
     });
     const res = await app.inject({ method: 'GET', url: '/api/v1/health/ready' });
     expect(res.statusCode).toBe(503);

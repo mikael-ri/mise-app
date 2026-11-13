@@ -17,7 +17,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
 
-  # A04 gate: migrations apply to an empty database, roll back, re-apply; integration tests and
+  # A04/A06 gate: migrations apply to an empty database, roll back, re-apply; integration tests and
   # schema drift check run against real PostgreSQL. Round-trip first: it requires an empty database.
   database:
     runs-on: ubuntu-latest
@@ -44,4 +44,5 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @mise/database db:roundtrip
       - run: pnpm --filter @mise/database test:int
+      - run: pnpm --filter @mise/server test:int
       - run: pnpm --filter @mise/database db:drift

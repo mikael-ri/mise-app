@@ -1,21 +1,21 @@
-import pg from 'pg';
 import { buildApp } from './app.js';
+import { ConfigError, checkDatabaseReady, createPool, loadConfig } from './platform/index.js';
 
-const databaseUrl = process.env.DATABASE_URL;
-const pool = databaseUrl ? new pg.Pool({ connectionString: databaseUrl, max: 2 }) : undefined;
+let config;
+try {
+  config = loadConfig(process.env);
+} catch (err) {
+  if (err instanceof ConfigError) {
+    console.error(err.message); // names variables only, never values
+    process.exit(1);
+  }
+  throw err;
+}
 
-const app = buildApp({
-  checkReady: async () => {
-    if (!pool) throw new Error('database not configured');
-    await pool.query('select 1');
-  },
-});
-
-const port = Number(process.env.PORT ?? 3000);
-const host = process.env.HOST ?? '127.0.0.1';
-
+const pool = createPool(config.databaseUrl, config.databasePoolMax);
+const app = buildApp({ checkReady: () => checkDatabaseReady(pool), config });
 app.addHook('onClose', async () => {
-  await pool?.end();
+  await pool.end();
 });
 
-await app.listen({ port, host });
+await app.listen({ port: config.port, host: config.host });

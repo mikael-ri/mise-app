@@ -21,3 +21,8 @@ Put it on the internet safely and use it.
 - Both of you pass the Milestone A exit test on your phones. Start the friction list for B–D.
 
 Finish with: what changed, FR/AC IDs covered, test results, open questions.
+
+## Carry-over from A06 (platform)
+- Set `TRUST_PROXY` for the production proxy (hop count or `true` for one hop; never without a proxy) and verify rate limits key on the real client IP.
+- Schedule `sweepExpiredKeys` (idempotency expiry sweep, ADR-013 "still to verify"): timer in `main.ts` or an admin CLI command. Expired keys are already treated as absent, so this is housekeeping.
+- Set `PUBLIC_ORIGIN`, `CSRF_SECRET` (>= 32 chars, may use `CSRF_SECRET_FILE`) and `DATABASE_URL` in the production env.

@@ -21,3 +21,7 @@ The app frame and the sign-in and device screens.
 - Sign-in, sign-out and revoke work from the UI; a lint rule or test flags hard-coded strings; accessibility check on the shell.
 
 Finish with: what changed, FR/AC IDs covered, test results, open questions.
+
+## Carry-over from A06 (platform)
+- The server CSP (`platform/security.ts`, `buildCsp`) has `style-src 'self'` only. Check what the Vite/React build and the chosen component library emit (inline styles, style attributes); relax with a nonce or hash rather than `'unsafe-inline'` if needed, and add a test.
+- Mutations from the client must send the CSRF token header and rely on same-origin requests (no CORS is ever sent).
