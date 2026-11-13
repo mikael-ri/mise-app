@@ -5,22 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1793214990958,
-      "tag": "0000_extensions",
+      "when": 1794519741370,
+      "tag": "0000_prerequisites",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1793214991266,
-      "tag": "0001_recipes",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1793214991571,
-      "tag": "0002_recipe_versions_immutable",
+      "when": 1794553178812,
+      "tag": "0001_milestone_a",
       "breakpoints": true
     }
   ]

@@ -1,9 +1,362 @@
 {
-  "id": "756e907f-0a07-4251-ba21-78624e98fe4e",
-  "prevId": "f2db8be3-0bb6-479f-aaf0-4962541e5cb4",
+  "id": "2a4aefc3-3989-48cf-9e2e-a269a3a4e552",
+  "prevId": "440df812-9b26-42aa-836b-a187db22be72",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "public.device_sessions": {
+      "name": "device_sessions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token_hash": {
+          "name": "token_hash",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "device_label": {
+          "name": "device_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "last_seen_at": {
+          "name": "last_seen_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "authenticated_at": {
+          "name": "authenticated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "idle_expires_at": {
+          "name": "idle_expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "absolute_expires_at": {
+          "name": "absolute_expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "device_sessions_user_idx": {
+          "name": "device_sessions_user_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "device_sessions_user_id_users_id_fk": {
+          "name": "device_sessions_user_id_users_id_fk",
+          "tableFrom": "device_sessions",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "device_sessions_token_hash_uq": {
+          "name": "device_sessions_token_hash_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "token_hash"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "device_sessions_token_hash_len_ck": {
+          "name": "device_sessions_token_hash_len_ck",
+          "value": "octet_length(\"device_sessions\".\"token_hash\") = 32"
+        },
+        "device_sessions_expiry_order_ck": {
+          "name": "device_sessions_expiry_order_ck",
+          "value": "\"device_sessions\".\"idle_expires_at\" <= \"device_sessions\".\"absolute_expires_at\""
+        },
+        "device_sessions_absolute_after_created_ck": {
+          "name": "device_sessions_absolute_after_created_ck",
+          "value": "\"device_sessions\".\"absolute_expires_at\" > \"device_sessions\".\"created_at\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.household_members": {
+      "name": "household_members",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "household_id": {
+          "name": "household_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "joined_at": {
+          "name": "joined_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "household_members_household_id_households_id_fk": {
+          "name": "household_members_household_id_households_id_fk",
+          "tableFrom": "household_members",
+          "tableTo": "households",
+          "columnsFrom": [
+            "household_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "household_members_user_id_users_id_fk": {
+          "name": "household_members_user_id_users_id_fk",
+          "tableFrom": "household_members",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "household_members_household_user_uq": {
+          "name": "household_members_household_user_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "household_id",
+            "user_id"
+          ]
+        },
+        "household_members_user_uq": {
+          "name": "household_members_user_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "user_id"
+          ]
+        },
+        "household_members_household_id_uq": {
+          "name": "household_members_household_id_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "household_id",
+            "id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "household_members_role_ck": {
+          "name": "household_members_role_ck",
+          "value": "\"household_members\".\"role\" IN ('owner', 'member')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.households": {
+      "name": "households",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "timezone": {
+          "name": "timezone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'Europe/Helsinki'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "households_timezone_nonempty_ck": {
+          "name": "households_timezone_nonempty_ck",
+          "value": "\"households\".\"timezone\" <> ''"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "oidc_issuer": {
+          "name": "oidc_issuer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "oidc_subject": {
+          "name": "oidc_subject",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "display_name": {
+          "name": "display_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "users_oidc_identity_uq": {
+          "name": "users_oidc_identity_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "oidc_issuer",
+            "oidc_subject"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "users_oidc_nonempty_ck": {
+          "name": "users_oidc_nonempty_ck",
+          "value": "\"users\".\"oidc_issuer\" <> '' AND \"users\".\"oidc_subject\" <> ''"
+        }
+      },
+      "isRLSEnabled": false
+    },
     "public.recipe_versions": {
       "name": "recipe_versions",
       "schema": "",
@@ -71,7 +424,20 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "recipe_versions_created_by_member_id_household_members_id_fk": {
+          "name": "recipe_versions_created_by_member_id_household_members_id_fk",
+          "tableFrom": "recipe_versions",
+          "tableTo": "household_members",
+          "columnsFrom": [
+            "created_by_member_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
           "onUpdate": "no action"
         }
       },
@@ -95,7 +461,20 @@
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "recipe_versions_version_no_ck": {
+          "name": "recipe_versions_version_no_ck",
+          "value": "\"recipe_versions\".\"version_no\" >= 1"
+        },
+        "recipe_versions_schema_version_ck": {
+          "name": "recipe_versions_schema_version_ck",
+          "value": "\"recipe_versions\".\"schema_version\" >= 1"
+        },
+        "recipe_versions_content_schema_version_ck": {
+          "name": "recipe_versions_content_schema_version_ck",
+          "value": "jsonb_typeof(\"recipe_versions\".\"content\") = 'object' AND (\"recipe_versions\".\"content\" -> 'schema_version') IS NOT DISTINCT FROM to_jsonb(\"recipe_versions\".\"schema_version\")"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.recipes": {
@@ -127,6 +506,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "tags": {
           "name": "tags",
           "type": "text[]",
@@ -134,14 +519,52 @@
           "notNull": true,
           "default": "'{}'::text[]"
         },
+        "general_notes": {
+          "name": "general_notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "archived_at": {
           "name": "archived_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
-        "search_text": {
-          "name": "search_text",
+        "source_type": {
+          "name": "source_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_url": {
+          "name": "source_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_by_member_id": {
+          "name": "created_by_member_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "search_title": {
+          "name": "search_title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "search_ingredients": {
+          "name": "search_ingredients",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "search_body": {
+          "name": "search_body",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -151,9 +574,19 @@
           "name": "search_document",
           "type": "tsvector",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "generated": {
-            "as": "to_tsvector('finnish'::regconfig, search_text)",
+            "as": "setweight(to_tsvector('finnish'::regconfig, search_title), 'A') || setweight(to_tsvector('simple'::regconfig, search_title), 'A') || setweight(to_tsvector('finnish'::regconfig, search_ingredients), 'B') || setweight(to_tsvector('simple'::regconfig, search_ingredients), 'B') || setweight(to_tsvector('finnish'::regconfig, search_body), 'C') || setweight(to_tsvector('simple'::regconfig, search_body), 'C')",
+            "type": "stored"
+          }
+        },
+        "search_fold": {
+          "name": "search_fold",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "generated": {
+            "as": "fold(search_title || ' ' || search_ingredients || ' ' || search_body)",
             "type": "stored"
           }
         },
@@ -163,6 +596,20 @@
           "primaryKey": false,
           "notNull": true,
           "default": 1
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {
@@ -181,11 +628,11 @@
           "method": "gin",
           "with": {}
         },
-        "recipes_search_text_trgm": {
-          "name": "recipes_search_text_trgm",
+        "recipes_search_fold_trgm": {
+          "name": "recipes_search_fold_trgm",
           "columns": [
             {
-              "expression": "search_text",
+              "expression": "search_fold",
               "isExpression": false,
               "asc": true,
               "nulls": "last",
@@ -199,6 +646,19 @@
         }
       },
       "foreignKeys": {
+        "recipes_household_id_households_id_fk": {
+          "name": "recipes_household_id_households_id_fk",
+          "tableFrom": "recipes",
+          "tableTo": "households",
+          "columnsFrom": [
+            "household_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
         "recipes_current_version_same_recipe_fk": {
           "name": "recipes_current_version_same_recipe_fk",
           "tableFrom": "recipes",
@@ -211,14 +671,871 @@
             "recipe_id",
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "recipes_creator_same_household_fk": {
+          "name": "recipes_creator_same_household_fk",
+          "tableFrom": "recipes",
+          "tableTo": "household_members",
+          "columnsFrom": [
+            "household_id",
+            "created_by_member_id"
+          ],
+          "columnsTo": [
+            "household_id",
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "recipes_household_id_uq": {
+          "name": "recipes_household_id_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "household_id",
+            "id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "recipes_title_nonempty_ck": {
+          "name": "recipes_title_nonempty_ck",
+          "value": "btrim(\"recipes\".\"title\") <> ''"
+        },
+        "recipes_revision_ck": {
+          "name": "recipes_revision_ck",
+          "value": "\"recipes\".\"revision\" >= 1"
+        },
+        "recipes_source_type_ck": {
+          "name": "recipes_source_type_ck",
+          "value": "\"recipes\".\"source_type\" IS NULL OR \"recipes\".\"source_type\" IN ('manual', 'url', 'text', 'photo')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.household_ingredient_settings": {
+      "name": "household_ingredient_settings",
+      "schema": "",
+      "columns": {
+        "household_id": {
+          "name": "household_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "normalized_key": {
+          "name": "normalized_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_staple": {
+          "name": "is_staple",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "shopping_category_id": {
+          "name": "shopping_category_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "preferred_label": {
+          "name": "preferred_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revision": {
+          "name": "revision",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "household_ingredient_settings_household_id_households_id_fk": {
+          "name": "household_ingredient_settings_household_id_households_id_fk",
+          "tableFrom": "household_ingredient_settings",
+          "tableTo": "households",
+          "columnsFrom": [
+            "household_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "household_ingredient_settings_shopping_category_id_shopping_categories_id_fk": {
+          "name": "household_ingredient_settings_shopping_category_id_shopping_categories_id_fk",
+          "tableFrom": "household_ingredient_settings",
+          "tableTo": "shopping_categories",
+          "columnsFrom": [
+            "shopping_category_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "household_ingredient_settings_pk": {
+          "name": "household_ingredient_settings_pk",
+          "columns": [
+            "household_id",
+            "normalized_key"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "household_ingredient_settings_key_ck": {
+          "name": "household_ingredient_settings_key_ck",
+          "value": "\"household_ingredient_settings\".\"normalized_key\" <> '' AND \"household_ingredient_settings\".\"normalized_key\" = btrim(\"household_ingredient_settings\".\"normalized_key\")"
+        },
+        "household_ingredient_settings_revision_ck": {
+          "name": "household_ingredient_settings_revision_ck",
+          "value": "\"household_ingredient_settings\".\"revision\" >= 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.shopping_categories": {
+      "name": "shopping_categories",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "household_id": {
+          "name": "household_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "system_code": {
+          "name": "system_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_system_default": {
+          "name": "is_system_default",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "shopping_categories_household_id_households_id_fk": {
+          "name": "shopping_categories_household_id_households_id_fk",
+          "tableFrom": "shopping_categories",
+          "tableTo": "households",
+          "columnsFrom": [
+            "household_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "shopping_categories_system_code_uq": {
+          "name": "shopping_categories_system_code_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "system_code"
+          ]
+        },
+        "shopping_categories_household_name_uq": {
+          "name": "shopping_categories_household_name_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "household_id",
+            "name"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "shopping_categories_scope_ck": {
+          "name": "shopping_categories_scope_ck",
+          "value": "(\"shopping_categories\".\"is_system_default\" AND \"shopping_categories\".\"household_id\" IS NULL AND \"shopping_categories\".\"system_code\" IS NOT NULL) OR (NOT \"shopping_categories\".\"is_system_default\" AND \"shopping_categories\".\"household_id\" IS NOT NULL AND \"shopping_categories\".\"system_code\" IS NULL)"
+        },
+        "shopping_categories_system_code_ck": {
+          "name": "shopping_categories_system_code_ck",
+          "value": "\"shopping_categories\".\"system_code\" IS NULL OR \"shopping_categories\".\"system_code\" IN ('vegetables', 'fruit', 'dairy', 'meat', 'dry_goods', 'household_supplies', 'other')"
+        },
+        "shopping_categories_name_nonempty_ck": {
+          "name": "shopping_categories_name_nonempty_ck",
+          "value": "btrim(\"shopping_categories\".\"name\") <> ''"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.shopping_items": {
+      "name": "shopping_items",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "household_id": {
+          "name": "household_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "shopping_list_id": {
+          "name": "shopping_list_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "origin": {
+          "name": "origin",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "normalized_key": {
+          "name": "normalized_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "amount_min": {
+          "name": "amount_min",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "amount_max": {
+          "name": "amount_max",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "unit_code": {
+          "name": "unit_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "original_quantity_text": {
+          "name": "original_quantity_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "category_id": {
+          "name": "category_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "picked": {
+          "name": "picked",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "picked_at": {
+          "name": "picked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "picked_by_member_id": {
+          "name": "picked_by_member_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_modified": {
+          "name": "user_modified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "revision": {
+          "name": "revision",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "shopping_items_list_idx": {
+          "name": "shopping_items_list_idx",
+          "columns": [
+            {
+              "expression": "shopping_list_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "shopping_items_category_id_shopping_categories_id_fk": {
+          "name": "shopping_items_category_id_shopping_categories_id_fk",
+          "tableFrom": "shopping_items",
+          "tableTo": "shopping_categories",
+          "columnsFrom": [
+            "category_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "shopping_items_list_same_household_fk": {
+          "name": "shopping_items_list_same_household_fk",
+          "tableFrom": "shopping_items",
+          "tableTo": "shopping_lists",
+          "columnsFrom": [
+            "household_id",
+            "shopping_list_id"
+          ],
+          "columnsTo": [
+            "household_id",
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "shopping_items_picker_same_household_fk": {
+          "name": "shopping_items_picker_same_household_fk",
+          "tableFrom": "shopping_items",
+          "tableTo": "household_members",
+          "columnsFrom": [
+            "household_id",
+            "picked_by_member_id"
+          ],
+          "columnsTo": [
+            "household_id",
+            "id"
+          ],
+          "onDelete": "restrict",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "shopping_items_origin_ck": {
+          "name": "shopping_items_origin_ck",
+          "value": "\"shopping_items\".\"origin\" IN ('user', 'generated')"
+        },
+        "shopping_items_name_nonempty_ck": {
+          "name": "shopping_items_name_nonempty_ck",
+          "value": "btrim(\"shopping_items\".\"name\") <> ''"
+        },
+        "shopping_items_normalized_key_ck": {
+          "name": "shopping_items_normalized_key_ck",
+          "value": "\"shopping_items\".\"normalized_key\" IS NULL OR (\"shopping_items\".\"normalized_key\" <> '' AND \"shopping_items\".\"normalized_key\" = btrim(\"shopping_items\".\"normalized_key\"))"
+        },
+        "shopping_items_amounts_ck": {
+          "name": "shopping_items_amounts_ck",
+          "value": "(\"shopping_items\".\"amount_min\" IS NULL OR \"shopping_items\".\"amount_min\" >= 0) AND (\"shopping_items\".\"amount_max\" IS NULL OR (\"shopping_items\".\"amount_min\" IS NOT NULL AND \"shopping_items\".\"amount_max\" >= \"shopping_items\".\"amount_min\"))"
+        },
+        "shopping_items_picked_ck": {
+          "name": "shopping_items_picked_ck",
+          "value": "(\"shopping_items\".\"picked\" AND \"shopping_items\".\"picked_at\" IS NOT NULL AND \"shopping_items\".\"picked_by_member_id\" IS NOT NULL) OR (NOT \"shopping_items\".\"picked\" AND \"shopping_items\".\"picked_at\" IS NULL AND \"shopping_items\".\"picked_by_member_id\" IS NULL)"
+        },
+        "shopping_items_revision_ck": {
+          "name": "shopping_items_revision_ck",
+          "value": "\"shopping_items\".\"revision\" >= 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.shopping_lists": {
+      "name": "shopping_lists",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "household_id": {
+          "name": "household_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "change_seq": {
+          "name": "change_seq",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_by_member_id": {
+          "name": "created_by_member_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "revision": {
+          "name": "revision",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "shopping_lists_household_status_idx": {
+          "name": "shopping_lists_household_status_idx",
+          "columns": [
+            {
+              "expression": "household_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "shopping_lists_household_id_households_id_fk": {
+          "name": "shopping_lists_household_id_households_id_fk",
+          "tableFrom": "shopping_lists",
+          "tableTo": "households",
+          "columnsFrom": [
+            "household_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "shopping_lists_creator_same_household_fk": {
+          "name": "shopping_lists_creator_same_household_fk",
+          "tableFrom": "shopping_lists",
+          "tableTo": "household_members",
+          "columnsFrom": [
+            "household_id",
+            "created_by_member_id"
+          ],
+          "columnsTo": [
+            "household_id",
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "shopping_lists_household_id_uq": {
+          "name": "shopping_lists_household_id_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "household_id",
+            "id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "shopping_lists_status_ck": {
+          "name": "shopping_lists_status_ck",
+          "value": "\"shopping_lists\".\"status\" IN ('active', 'archived')"
+        },
+        "shopping_lists_change_seq_ck": {
+          "name": "shopping_lists_change_seq_ck",
+          "value": "\"shopping_lists\".\"change_seq\" >= 0"
+        },
+        "shopping_lists_revision_ck": {
+          "name": "shopping_lists_revision_ck",
+          "value": "\"shopping_lists\".\"revision\" >= 1"
+        },
+        "shopping_lists_name_nonempty_ck": {
+          "name": "shopping_lists_name_nonempty_ck",
+          "value": "btrim(\"shopping_lists\".\"name\") <> ''"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.audit_events": {
+      "name": "audit_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "household_id": {
+          "name": "household_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_member_id": {
+          "name": "actor_member_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "action": {
+          "name": "action",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entity_type": {
+          "name": "entity_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entity_id": {
+          "name": "entity_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "summary": {
+          "name": "summary",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "audit_events_household_created_idx": {
+          "name": "audit_events_household_created_idx",
+          "columns": [
+            {
+              "expression": "household_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "audit_events_household_id_households_id_fk": {
+          "name": "audit_events_household_id_households_id_fk",
+          "tableFrom": "audit_events",
+          "tableTo": "households",
+          "columnsFrom": [
+            "household_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "audit_events_actor_same_household_fk": {
+          "name": "audit_events_actor_same_household_fk",
+          "tableFrom": "audit_events",
+          "tableTo": "household_members",
+          "columnsFrom": [
+            "household_id",
+            "actor_member_id"
+          ],
+          "columnsTo": [
+            "household_id",
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "audit_events_summary_object_ck": {
+          "name": "audit_events_summary_object_ck",
+          "value": "jsonb_typeof(\"audit_events\".\"summary\") = 'object'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.idempotency_keys": {
+      "name": "idempotency_keys",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "household_id": {
+          "name": "household_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_member_id": {
+          "name": "actor_member_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "operation": {
+          "name": "operation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "request_key": {
+          "name": "request_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "request_hash": {
+          "name": "request_hash",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "result_ref": {
+          "name": "result_ref",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "idempotency_keys_expires_idx": {
+          "name": "idempotency_keys_expires_idx",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "idempotency_keys_actor_same_household_fk": {
+          "name": "idempotency_keys_actor_same_household_fk",
+          "tableFrom": "idempotency_keys",
+          "tableTo": "household_members",
+          "columnsFrom": [
+            "household_id",
+            "actor_member_id"
+          ],
+          "columnsTo": [
+            "household_id",
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "idempotency_keys_scope_uq": {
+          "name": "idempotency_keys_scope_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "household_id",
+            "actor_member_id",
+            "operation",
+            "request_key"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "idempotency_keys_operation_ck": {
+          "name": "idempotency_keys_operation_ck",
+          "value": "\"idempotency_keys\".\"operation\" ~ '^[a-z][a-z0-9_.]{0,63}$'"
+        },
+        "idempotency_keys_request_key_ck": {
+          "name": "idempotency_keys_request_key_ck",
+          "value": "\"idempotency_keys\".\"request_key\" ~ '^[A-Za-z0-9_-]{16,128}$'"
+        },
+        "idempotency_keys_request_hash_len_ck": {
+          "name": "idempotency_keys_request_hash_len_ck",
+          "value": "octet_length(\"idempotency_keys\".\"request_hash\") = 32"
+        },
+        "idempotency_keys_expiry_ck": {
+          "name": "idempotency_keys_expiry_ck",
+          "value": "\"idempotency_keys\".\"expires_at\" > \"idempotency_keys\".\"created_at\""
+        }
+      },
       "isRLSEnabled": false
     }
   },

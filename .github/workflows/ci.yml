@@ -16,3 +16,32 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
+
+  # A04 gate: migrations apply to an empty database, roll back, re-apply; integration tests and
+  # schema drift check run against real PostgreSQL. Round-trip first: it requires an empty database.
+  database:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: mise
+          POSTGRES_PASSWORD: mise_ci_only
+          POSTGRES_DB: mise
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U mise" --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      DATABASE_URL: postgres://mise:mise_ci_only@localhost:5432/mise
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @mise/database db:roundtrip
+      - run: pnpm --filter @mise/database test:int
+      - run: pnpm --filter @mise/database db:drift

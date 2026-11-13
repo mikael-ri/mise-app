@@ -5,7 +5,8 @@
   "main": "src/index.ts",
   "scripts": {
     "typecheck": "tsc -p .",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "openapi:generate": "MISE_WRITE_OPENAPI=1 vitest run src/openapi.test.ts"
   },
   "dependencies": {
     "zod": "^4.6.7"

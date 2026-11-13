@@ -9,7 +9,11 @@ const databaseUrl = process.env['DATABASE_URL'];
 if (!databaseUrl)
   throw new Error('DATABASE_URL is required (the test drops and recreates schema spike_a02)');
 const pool = new pg.Pool({ connectionString: databaseUrl });
-afterAll(() => pool.end());
+// Drop the scratch schema afterwards: it depends on pg_trgm and would block rolling back migration 0000.
+afterAll(async () => {
+  await pool.query(`DROP SCHEMA IF EXISTS ${SCHEMA} CASCADE`);
+  await pool.end();
+});
 
 interface Ingredient {
   display_name: string;

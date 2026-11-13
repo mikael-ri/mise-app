@@ -40,3 +40,22 @@ Use `text` columns with `CHECK (col IN (...))`, not PostgreSQL enums. `ALTER TYP
 
 ## Reusable snippets for A04
 `database/schema/recipes.ts` (composite FK, generated tsvector, trigram index), `database/src/transaction.ts` (`createDb`, `withTransaction`), `database/src/create-recipe.ts` (atomic create), `database/migrations/0002_*.sql` (immutability trigger).
+
+## Addendum (2026-11-12): migration baseline for Milestone A (card A04)
+**Evidence:** `database/migrations/0000_prerequisites.sql`, `0001_milestone_a.sql`, `down/`; `database/scripts/migration-roundtrip.sh` (empty DB -> migrate -> roll back all -> no tables and no `pg_trgm` left -> migrate again; passed on PostgreSQL 17); `database/test/schema.int.test.ts`; `pnpm --filter @mise/database db:drift`.
+**Finding:** The spike migrations `0000`-`0002` were applied only to scratch/dev databases, and their `search_text` design was superseded by the A02 search design.
+**Decision / change (approved by the owner in A04):**
+1. **Migration baseline reset.** The spike migrations were deleted and replaced by `0000_prerequisites` (hand-written: `pg_trgm` and the `fold()` function) and `0001_milestone_a` (generated A tables; the hand-written immutability trigger and the system-default shopping categories are appended below a marker line). From now on these are applied migrations: never edit them, only add new ones. Dev databases that hold the old spike migrations must reset the volume (`docker compose -f infra/compose.dev.yaml down -v`) before migrating.
+2. **Search columns now, not in A10.** `recipes` uses the A02 design from the start: `search_title`, `search_ingredients`, `search_body` (written by the service), plus generated `search_document` (weighted `finnish` + `simple`) and `search_fold` with GIN and trigram indexes. A10 needs no search migration. It implements the query and the flattening.
+3. **Household consistency.** Composite FKs `(household_id, member_id) -> household_members(household_id, id)` for every member reference on household-scoped tables. `shopping_items` carries a denormalised `household_id` so that its list and picker are tied to the same household. `recipe_versions.created_by_member_id` is a plain FK because the table has no `household_id`; the service always uses the session member.
+4. **Shopping category scope.** That a household's settings or items reference only system categories or the household's own categories is enforced in the A13 service, not by a trigger (owner decision).
+5. **Staples.** `household_ingredient_settings` exists in A, but there are no endpoints until generation needs them (owner decision; FR-05 staples matter for Milestone D generated rows).
+6. **Enums.** `text` + CHECK, with values imported from `@mise/contracts` (`database` now depends on the contracts workspace package).
+7. **Additions beyond the DB-design columns:** `shopping_items.note` (FR-35 notes); `recipes.created_by_member_id`, `created_at`, `updated_at` (tech §5); `shopping_categories.system_code`, which the web maps to i18n keys (hard rule 5).
+8. **After the A04 security review (owner decisions):**
+   - `household_members` has `UNIQUE(user_id)`, so in P0 a user belongs to exactly one household and the session resolves to one membership.
+   - `recipes` has `UNIQUE(household_id, id)`, the target for later household-scoped composite FKs. It also replaces the plain `household_id` index.
+   - `src/rollback.ts` refuses to run unless `MISE_ALLOW_DESTRUCTIVE=1` is set. The round-trip script sets it only after checking that the schema was empty.
+   - The A02 search spike test drops its `spike_a02` schema after it runs.
+**Consequences:** CI now runs the round-trip, the integration tests and the drift check against a PostgreSQL 17 service. `database/spike/recipes.int.test.ts` is superseded by `database/test/schema.int.test.ts`.
+**Still to verify:** the composite-FK and immutability behaviour under the real services (A09, A13).
