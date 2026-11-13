@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/main.ts",
+    "cli:provision-household": "tsx src/cli/provision-household.ts",
     "typecheck": "tsc -p .",
     "test": "vitest run --exclude \"**/*.int.test.ts\"",
     "test:int": "vitest run --config vitest.int.config.ts"

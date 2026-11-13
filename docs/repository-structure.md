@@ -110,6 +110,12 @@ mise/
 
 Other modules import a module only through its `index.ts`, never its repository.
 
+**Household scoping (A08).** Repositories run household-owned queries through `scopedQuery` (`platform/scoped.ts`): `$1` is always the actor's household ID and the SQL must contain `household_id = $1`, or the call throws. Inserts that reference a member use `assertMemberInHousehold` plus the composite FKs on `(household_id, member_id)`. Cross-household access looks like "not found". The actor comes from `households` `resolveActor(userId)` (user from the validated session, never from client input); A07 adds the device session ID. Module tests reuse `createTwoHouseholds` (`platform/isolation-harness.ts`) to prove isolation. `households/` has no `routes.ts` yet: Milestone A defines no household endpoint (`/auth/me` is A07).
+
+**Integration tests.** Run against the dev PostgreSQL from `infra/compose.dev.yaml` (`docker compose -f infra/compose.dev.yaml up -d`, migrations applied with `pnpm db:migrate`): `DATABASE_URL=postgres://mise:mise_dev_only@127.0.0.1:5433/mise pnpm --filter @mise/server test:int`. The credentials are dev-only; tests delete the rows they create.
+
+**Admin CLI.** `pnpm --filter @mise/server cli:provision-household --name <name> --issuer <issuer URL> --owner-subject <sub> --owner-name <name> --member-subject <sub> --member-name <name> [--timezone Europe/Helsinki]` creates the household, the two provisioned users and their memberships in one transaction. It reads only the database settings (`DATABASE_URL` or `DATABASE_URL_FILE`, via `loadDatabaseConfig`), not the rest of the server environment, and never mints sessions.
+
 **Naming.** Files are kebab-case. TypeScript identifiers are camelCase, database columns snake_case. Test names carry the FR/AC ID when one applies. E2E specs are named after the AC they prove.
 
 **Dependency direction.** `apps/*` may import `packages/*` and `database`. `packages/domain` imports nothing from this repository. `packages/contracts` may import `packages/domain` types only. `apps/web` never imports `apps/server` or `database`; it uses `packages/contracts` and the generated API client.

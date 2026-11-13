@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ConfigError, loadConfig } from './config.js';
+import { ConfigError, loadConfig, loadDatabaseConfig } from './config.js';
 
 const base = {
   DATABASE_URL: 'postgres://u:topsecret@localhost:5432/mise',
@@ -70,5 +70,29 @@ describe('loadConfig (NFR-01)', () => {
       expect((e as Error).message).not.toContain('short-secret-value');
       expect((e as Error).message).not.toContain('topsecret');
     }
+  });
+});
+
+describe('loadDatabaseConfig', () => {
+  it('needs only the database settings and applies the pool default', () => {
+    expect(loadDatabaseConfig({ DATABASE_URL: 'postgres://x/y' })).toEqual({
+      databaseUrl: 'postgres://x/y',
+      databasePoolMax: 10,
+    });
+  });
+
+  it('validates like loadConfig: missing URL, bad pool size, NAME with NAME_FILE', () => {
+    expect(() => loadDatabaseConfig({})).toThrow(ConfigError);
+    expect(() => loadDatabaseConfig({ DATABASE_URL: 'x', DATABASE_POOL_MAX: '0' })).toThrow(
+      ConfigError,
+    );
+    expect(() => loadDatabaseConfig({ DATABASE_URL: 'x', DATABASE_URL_FILE: '/f' })).toThrow(
+      /both set/,
+    );
+  });
+
+  it('reads DATABASE_URL_FILE and trims one trailing newline', () => {
+    const cfg = loadDatabaseConfig({ DATABASE_URL_FILE: '/f' }, () => 'postgres://x/y\n');
+    expect(cfg.databaseUrl).toBe('postgres://x/y');
   });
 });

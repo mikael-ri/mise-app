@@ -3,13 +3,17 @@ import { z } from 'zod';
 
 const LOG_LEVELS = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'] as const;
 
-const ConfigSchema = z.object({
+// Shared by the full loader and loadDatabaseConfig so the CLI and the server validate identically.
+const DatabaseSchema = z.object({
+  DATABASE_URL: z.string().min(1),
+  DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(100).default(10),
+});
+
+const ConfigSchema = DatabaseSchema.extend({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   HOST: z.string().min(1).default('127.0.0.1'),
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   LOG_LEVEL: z.enum(LOG_LEVELS).default('info'),
-  DATABASE_URL: z.string().min(1),
-  DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(100).default(10),
   /** Exact browser origin of the UI, e.g. https://mise.example.com (no path, no trailing slash). */
   PUBLIC_ORIGIN: z
     .url()
@@ -45,16 +49,16 @@ export class ConfigError extends Error {}
 
 type Env = Readonly<Record<string, string | undefined>>;
 
-/**
- * Loads and validates configuration. Secrets may come from `NAME` or `NAME_FILE` (not both).
- * Error messages name the variables only, never their values.
- */
-export function loadConfig(
+type ReadFile = (path: string) => string;
+
+/** Applies `NAME_FILE` indirection for the given secret names; errors name variables only. */
+function mergeSecretFiles(
   env: Env,
-  readFile: (path: string) => string = (p) => readFileSync(p, 'utf8'),
-): AppConfig {
+  names: readonly string[],
+  readFile: ReadFile,
+): Record<string, string | undefined> {
   const merged: Record<string, string | undefined> = { ...env };
-  for (const name of SECRET_NAMES) {
+  for (const name of names) {
     const filePath = env[`${name}_FILE`];
     if (filePath === undefined || filePath === '') continue;
     if (env[name] !== undefined && env[name] !== '') {
@@ -66,12 +70,40 @@ export function loadConfig(
       throw new ConfigError(`${name}_FILE could not be read`);
     }
   }
-  const parsed = ConfigSchema.safeParse(merged);
+  return merged;
+}
+
+function parseOrThrow<S extends z.ZodType>(schema: S, input: unknown): z.output<S> {
+  const parsed = schema.safeParse(input);
   if (!parsed.success) {
     const problems = parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`);
     throw new ConfigError(`invalid configuration: ${problems.join('; ')}`);
   }
-  const c = parsed.data;
+  return parsed.data;
+}
+
+const defaultReadFile: ReadFile = (p) => readFileSync(p, 'utf8');
+
+export interface DatabaseConfig {
+  databaseUrl: string;
+  databasePoolMax: number;
+}
+
+/**
+ * Database settings only, for admin CLI commands that must not need the rest of the server
+ * environment. Same rules as `loadConfig` (including `DATABASE_URL_FILE`).
+ */
+export function loadDatabaseConfig(env: Env, readFile: ReadFile = defaultReadFile): DatabaseConfig {
+  const c = parseOrThrow(DatabaseSchema, mergeSecretFiles(env, ['DATABASE_URL'], readFile));
+  return { databaseUrl: c.DATABASE_URL, databasePoolMax: c.DATABASE_POOL_MAX };
+}
+
+/**
+ * Loads and validates configuration. Secrets may come from `NAME` or `NAME_FILE` (not both).
+ * Error messages name the variables only, never their values.
+ */
+export function loadConfig(env: Env, readFile: ReadFile = defaultReadFile): AppConfig {
+  const c = parseOrThrow(ConfigSchema, mergeSecretFiles(env, SECRET_NAMES, readFile));
   return {
     nodeEnv: c.NODE_ENV,
     host: c.HOST,

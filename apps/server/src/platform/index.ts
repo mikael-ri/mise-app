@@ -3,10 +3,10 @@ import type { AppConfig } from './config.js';
 import { registerErrorHandling } from './errors.js';
 import { registerCsrfProtection, registerSecurityHeaders } from './security.js';
 
-export { ConfigError, loadConfig } from './config.js';
-export type { AppConfig } from './config.js';
+export { ConfigError, loadConfig, loadDatabaseConfig } from './config.js';
+export type { AppConfig, DatabaseConfig } from './config.js';
 export { checkDatabaseReady, createPool, withTransaction } from './db.js';
-export type { Pool, Tx } from './db.js';
+export type { Pool, Queryable, Tx } from './db.js';
 export { AppError, errorBody, generateCorrelationId, toErrorBody } from './errors.js';
 export { buildLoggerOptions, REDACT_PATHS } from './logging.js';
 export {
@@ -17,6 +17,7 @@ export {
   sweepExpiredKeys,
 } from './idempotency.js';
 export type { IdempotencyScope, IdempotentOutcome } from './idempotency.js';
+export { assertMemberInHousehold, scopedQuery } from './scoped.js';
 export { requireActor } from './request-context.js';
 export type { RequestContext } from './request-context.js';
 export {

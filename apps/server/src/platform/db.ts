@@ -2,6 +2,8 @@ import pg from 'pg';
 
 export type Pool = pg.Pool;
 export type Tx = pg.PoolClient;
+/** Anything that can run a query: the pool or a transaction client. */
+export type Queryable = Pick<pg.Pool, 'query'>;
 
 export function createPool(databaseUrl: string, max: number): Pool {
   const pool = new pg.Pool({ connectionString: databaseUrl, max });
