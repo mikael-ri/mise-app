@@ -12,7 +12,7 @@ afterEach(async () => {
 });
 
 function makeApp(): FastifyInstance {
-  app = buildApp({ checkReady: async () => {}, config: testConfig });
+  app = buildApp({ checkReady: async () => {}, config: testConfig, auth: null });
   app.get('/boom', async () => {
     throw new Error('secret stack detail: password=hunter2');
   });

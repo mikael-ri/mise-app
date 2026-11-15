@@ -15,6 +15,13 @@
       "when": 1794553178812,
       "tag": "0001_milestone_a",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794761010769,
+      "tag": "0002_device_session_user_agent",
+      "breakpoints": true
     }
   ]
 }

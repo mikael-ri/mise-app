@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { isIP } from 'node:net';
 import { z } from 'zod';
 
 const LOG_LEVELS = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'] as const;
@@ -8,6 +9,42 @@ const DatabaseSchema = z.object({
   DATABASE_URL: z.string().min(1),
   DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(100).default(10),
 });
+
+/** `a.b.c.d, 10.0.0.0/8, ::1` -> list, or null if any entry is not an IP or CIDR. */
+function parseProxyAddresses(value: string): string[] | null {
+  const items = value.split(',').map((x) => x.trim());
+  for (const item of items) {
+    const [addr = '', prefix, extra] = item.split('/');
+    const family = isIP(addr);
+    if (family === 0 || extra !== undefined) return null;
+    if (prefix !== undefined) {
+      const max = family === 4 ? 32 : 128;
+      if (!/^\d{1,3}$/.test(prefix) || Number(prefix) > max) return null;
+    }
+  }
+  return items;
+}
+
+/**
+ * Startup safeguard: in production the rate limiter keys on `request.ip`, so `false` behind nginx
+ * makes every client share one key, and `true` trusts any X-Forwarded-For. Returns a warning or null.
+ */
+export function trustProxyWarning(c: Pick<AppConfig, 'nodeEnv' | 'trustProxy'>): string | null {
+  if (c.nodeEnv !== 'production') return null;
+  if (c.trustProxy === false) {
+    return 'TRUST_PROXY is false: behind the reverse proxy all clients share one rate-limit key; set it to the proxy address';
+  }
+  if (c.trustProxy === true) {
+    return 'TRUST_PROXY is true: X-Forwarded-For is trusted from any sender; set it to the proxy address';
+  }
+  return null;
+}
+
+const HttpOrigin = z
+  .url({ protocol: /^https?$/ })
+  .refine((v) => new URL(v).origin === v, 'must be an origin without path or trailing slash');
+// Authelia serves OIDC only over HTTPS; the issuer is always the public https origin.
+const HttpsOrigin = HttpOrigin.refine((v) => v.startsWith('https://'), 'must use https');
 
 const ConfigSchema = DatabaseSchema.extend({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -19,15 +56,35 @@ const ConfigSchema = DatabaseSchema.extend({
     .url()
     .refine((v) => new URL(v).origin === v, 'must be an origin without path or trailing slash'),
   /**
-   * Fastify `trustProxy`: off by default. Behind the reverse proxy set `true` (single trusted hop)
-   * or a hop count. Never `true` without a proxy: X-Forwarded-For becomes spoofable.
+   * Fastify `trustProxy`: off by default. Behind the reverse proxy set the proxy's address
+   * (comma-separated IPs/CIDRs, e.g. `192.168.1.10`), or a hop count. `true` trusts any sender of
+   * X-Forwarded-For and is spoofable unless the app is reachable only through the proxy.
    */
   TRUST_PROXY: z
     .string()
-    .regex(/^(true|false|[1-9]\d?)$/, 'must be true, false or a hop count')
+    .refine(
+      (v) => /^(true|false|[1-9]\d?)$/.test(v) || parseProxyAddresses(v) !== null,
+      'must be true, false, a hop count or comma-separated IPs/CIDRs',
+    )
     .default('false'),
   /** HMAC key for CSRF tokens. */
   CSRF_SECRET: z.string().min(32, 'must be at least 32 characters'),
+  /** Key material for the encrypted OIDC login-state cookie. Separate from CSRF_SECRET. */
+  SESSION_SECRET: z.string().min(32, 'must be at least 32 characters'),
+  /** Public OIDC issuer exactly as Authelia reports it; `iss` is validated against it (ADR-012 addendum). */
+  OIDC_ISSUER: HttpsOrigin,
+  /** Internal Authelia base URL for discovery, token and JWKS calls. Defaults to OIDC_ISSUER. */
+  OIDC_INTERNAL_URL: HttpOrigin.optional(),
+  OIDC_CLIENT_ID: z.string().min(1).max(255),
+  OIDC_CLIENT_SECRET: z.string().min(1),
+  /**
+   * Authelia portal logout the browser is sent to right after a successful callback, so no SSO
+   * session outlives the login (ADR-003 addendum D4). `rd=<app url>` is appended.
+   */
+  OIDC_POST_LOGIN_LOGOUT_URL: z.url({ protocol: /^https$/ }),
+}).refine((c) => new URL(c.OIDC_POST_LOGIN_LOGOUT_URL).origin === c.OIDC_ISSUER, {
+  path: ['OIDC_POST_LOGIN_LOGOUT_URL'],
+  message: 'must be on the OIDC_ISSUER origin',
 });
 
 export interface AppConfig {
@@ -38,12 +95,28 @@ export interface AppConfig {
   databaseUrl: string;
   databasePoolMax: number;
   publicOrigin: string;
-  trustProxy: boolean | number;
+  /** Fastify trustProxy: off, all, hop count, or trusted proxy addresses. */
+  trustProxy: boolean | number | string[];
   csrfSecret: string;
+  sessionSecret: string;
+  oidc: OidcConfig;
+}
+
+export interface OidcConfig {
+  issuer: string;
+  internalUrl: string;
+  clientId: string;
+  clientSecret: string;
+  postLoginLogoutUrl: string;
 }
 
 /** Names that may be supplied as `<NAME>_FILE` (path to a file holding the value). */
-const SECRET_NAMES = ['DATABASE_URL', 'CSRF_SECRET'] as const;
+const SECRET_NAMES = [
+  'DATABASE_URL',
+  'CSRF_SECRET',
+  'SESSION_SECRET',
+  'OIDC_CLIENT_SECRET',
+] as const;
 
 export class ConfigError extends Error {}
 
@@ -113,7 +186,21 @@ export function loadConfig(env: Env, readFile: ReadFile = defaultReadFile): AppC
     databasePoolMax: c.DATABASE_POOL_MAX,
     publicOrigin: c.PUBLIC_ORIGIN,
     trustProxy:
-      c.TRUST_PROXY === 'true' ? true : c.TRUST_PROXY === 'false' ? false : Number(c.TRUST_PROXY),
+      c.TRUST_PROXY === 'true'
+        ? true
+        : c.TRUST_PROXY === 'false'
+          ? false
+          : /^\d+$/.test(c.TRUST_PROXY)
+            ? Number(c.TRUST_PROXY)
+            : parseProxyAddresses(c.TRUST_PROXY)!,
     csrfSecret: c.CSRF_SECRET,
+    sessionSecret: c.SESSION_SECRET,
+    oidc: {
+      issuer: c.OIDC_ISSUER,
+      internalUrl: c.OIDC_INTERNAL_URL ?? c.OIDC_ISSUER,
+      clientId: c.OIDC_CLIENT_ID,
+      clientSecret: c.OIDC_CLIENT_SECRET,
+      postLoginLogoutUrl: c.OIDC_POST_LOGIN_LOGOUT_URL,
+    },
   };
 }

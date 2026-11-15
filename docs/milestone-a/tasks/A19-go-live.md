@@ -23,6 +23,10 @@ Put it on the internet safely and use it.
 Finish with: what changed, FR/AC IDs covered, test results, open questions.
 
 ## Carry-over from A06 (platform)
-- Set `TRUST_PROXY` for the production proxy (hop count or `true` for one hop; never without a proxy) and verify rate limits key on the real client IP.
+- TRUST_PROXY set to the Pi's address (e.g. `TRUST_PROXY=192.168.1.10`; comma-separated IPs/CIDRs are accepted), not a blanket `true`. Verify rate limits key on the real client IP. The server logs a warning at startup in production when it is `false` or `true`.
 - Schedule `sweepExpiredKeys` (idempotency expiry sweep, ADR-013 "still to verify"): timer in `main.ts` or an admin CLI command. Expired keys are already treated as absent, so this is housekeeping.
 - Set `PUBLIC_ORIGIN`, `CSRF_SECRET` (>= 32 chars, may use `CSRF_SECRET_FILE`) and `DATABASE_URL` in the production env.
+
+## Carry-over from A07 (auth)
+- Set `SESSION_SECRET` (>= 32 chars, may use `_FILE`), `OIDC_ISSUER`, `OIDC_INTERNAL_URL`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` (may use `_FILE`) and `OIDC_POST_LOGIN_LOGOUT_URL` in the production env.
+- Verify on the real host that the post-login Authelia logout (`OIDC_POST_LOGIN_LOGOUT_URL?rd=...`) ends the SSO session and returns to Mise (ADR-003 addendum D4, still pending).

@@ -1,5 +1,18 @@
 import { buildApp } from './app.js';
-import { ConfigError, checkDatabaseReady, createPool, loadConfig } from './platform/index.js';
+import {
+  createAuthService,
+  createIdpClient,
+  createRevocationHub,
+  loginStateKey,
+} from './auth/index.js';
+import { createHouseholdsService } from './households/index.js';
+import {
+  ConfigError,
+  checkDatabaseReady,
+  createPool,
+  loadConfig,
+  trustProxyWarning,
+} from './platform/index.js';
 
 let config;
 try {
@@ -13,7 +26,29 @@ try {
 }
 
 const pool = createPool(config.databaseUrl, config.databasePoolMax);
-const app = buildApp({ checkReady: () => checkDatabaseReady(pool), config });
+// A14 subscribes SSE streams to this hub to close them on revocation.
+const revocations = createRevocationHub();
+const authService = createAuthService({
+  pool,
+  households: createHouseholdsService(pool),
+  idp: createIdpClient(config.oidc),
+  revocations,
+  oidc: config.oidc,
+  publicOrigin: config.publicOrigin,
+  csrfSecret: config.csrfSecret,
+});
+const app = buildApp({
+  checkReady: () => checkDatabaseReady(pool),
+  config,
+  auth: {
+    service: authService,
+    publicOrigin: config.publicOrigin,
+    postLoginLogoutUrl: config.oidc.postLoginLogoutUrl,
+    loginStateKey: loginStateKey(config.sessionSecret),
+  },
+});
+const proxyWarning = trustProxyWarning(config);
+if (proxyWarning !== null) app.log.warn(proxyWarning);
 app.addHook('onClose', async () => {
   await pool.end();
 });

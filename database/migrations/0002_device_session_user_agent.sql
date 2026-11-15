@@ -1,0 +1,2 @@
+ALTER TABLE "device_sessions" ADD COLUMN "user_agent" text;--> statement-breakpoint
+ALTER TABLE "device_sessions" ADD CONSTRAINT "device_sessions_user_agent_len_ck" CHECK ("device_sessions"."user_agent" IS NULL OR char_length("device_sessions"."user_agent") <= 200);

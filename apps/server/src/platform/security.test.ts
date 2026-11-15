@@ -28,7 +28,7 @@ afterEach(async () => {
 
 /** Test stand-in for the A07 auth hook: an `x-test-actor` header means "authenticated". */
 function makeApp(): FastifyInstance {
-  app = buildApp({ checkReady: async () => {}, config: testConfig });
+  app = buildApp({ checkReady: async () => {}, config: testConfig, auth: null });
   app.addHook('onRequest', async (req) => {
     if (req.headers['x-test-actor'] === '1') req.actor = actor;
   });

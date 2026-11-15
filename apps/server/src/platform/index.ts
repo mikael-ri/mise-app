@@ -3,8 +3,8 @@ import type { AppConfig } from './config.js';
 import { registerErrorHandling } from './errors.js';
 import { registerCsrfProtection, registerSecurityHeaders } from './security.js';
 
-export { ConfigError, loadConfig, loadDatabaseConfig } from './config.js';
-export type { AppConfig, DatabaseConfig } from './config.js';
+export { ConfigError, loadConfig, loadDatabaseConfig, trustProxyWarning } from './config.js';
+export type { AppConfig, DatabaseConfig, OidcConfig } from './config.js';
 export { checkDatabaseReady, createPool, withTransaction } from './db.js';
 export type { Pool, Queryable, Tx } from './db.js';
 export { AppError, errorBody, generateCorrelationId, toErrorBody } from './errors.js';

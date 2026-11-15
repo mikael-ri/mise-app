@@ -76,12 +76,19 @@ export const deviceSessions = pgTable(
     idleExpiresAt: timestamp('idle_expires_at', { withTimezone: true }).notNull(),
     absoluteExpiresAt: timestamp('absolute_expires_at', { withTimezone: true }).notNull(),
     revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    // Raw User-Agent at login, truncated to 200 characters; the device list derives a label from it
+    // (e.g. "Firefox on Android") unless the user has set `device_label`.
+    userAgent: text('user_agent'),
   },
   (t) => [
     unique('device_sessions_token_hash_uq').on(t.tokenHash),
     index('device_sessions_user_idx').on(t.userId),
     check('device_sessions_token_hash_len_ck', sql`octet_length(${t.tokenHash}) = 32`),
     check('device_sessions_expiry_order_ck', sql`${t.idleExpiresAt} <= ${t.absoluteExpiresAt}`),
+    check(
+      'device_sessions_user_agent_len_ck',
+      sql`${t.userAgent} IS NULL OR char_length(${t.userAgent}) <= 200`,
+    ),
     check(
       'device_sessions_absolute_after_created_ck',
       sql`${t.absoluteExpiresAt} > ${t.createdAt}`,

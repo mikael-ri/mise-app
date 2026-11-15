@@ -34,14 +34,20 @@ export const MeResponse = z
     household: z.strictObject({ id: HouseholdId, name: z.string(), timezone: z.string() }),
     member: z.strictObject({ id: MemberId, role: z.enum(MEMBER_ROLES) }),
     session: z.strictObject({ id: DeviceSessionId, authenticatedAt: Instant }),
+    /** Session-bound token for the `X-CSRF-Token` header on mutations. */
+    csrfToken: z.string().min(1).max(128),
   })
   .meta({ id: 'MeResponse' });
 export type MeResponse = z.infer<typeof MeResponse>;
 
-/** A device session as shown to its owner. Never includes the token or its digest. */
+/**
+ * An active device session of the actor's household, so either member can revoke a lost device
+ * (lost-device runbook). Never includes the token or its digest.
+ */
 export const DeviceSession = z
   .strictObject({
     id: DeviceSessionId,
+    member: z.strictObject({ id: MemberId, displayName: z.string() }),
     deviceLabel: z.string().nullable(),
     createdAt: Instant,
     lastSeenAt: Instant,

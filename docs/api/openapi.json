@@ -376,7 +376,7 @@
         "tags": [
           "auth"
         ],
-        "summary": "List the current user's device sessions",
+        "summary": "List the household's active device sessions",
         "security": [
           {
             "sessionCookie": []
@@ -432,7 +432,7 @@
         "tags": [
           "auth"
         ],
-        "summary": "Revoke one of the current user's device sessions",
+        "summary": "Revoke one of the household's device sessions",
         "security": [
           {
             "sessionCookie": []
@@ -2404,6 +2404,24 @@
             "format": "uuid",
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
           },
+          "member": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "displayName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "displayName"
+            ],
+            "additionalProperties": false
+          },
           "deviceLabel": {
             "type": [
               "string",
@@ -2441,6 +2459,7 @@
         },
         "required": [
           "id",
+          "member",
           "deviceLabel",
           "createdAt",
           "lastSeenAt",
@@ -2676,13 +2695,19 @@
               "authenticatedAt"
             ],
             "additionalProperties": false
+          },
+          "csrfToken": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
           }
         },
         "required": [
           "user",
           "household",
           "member",
-          "session"
+          "session",
+          "csrfToken"
         ],
         "additionalProperties": false
       },

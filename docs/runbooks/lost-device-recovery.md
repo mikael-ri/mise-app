@@ -2,14 +2,14 @@
 
 **Status:** draft from spike A03 (NFR-01, AC-11). Authelia-side commands were exercised against Authelia 4.39.28 in the dev stack
 (see `docs/adr/0003-addendum-authelia-spike.md`). The drills for restart, TOTP, password and bans were run by the owner on 2026-11-10 and matched this text. Mise-side steps depend on the device-session UI/admin
-command delivered by card A07 and are marked **(A07)**; no command names are invented here.
+commands delivered by card A07 (see "Mise operator commands" below).
 
 There are three separate things an attacker may hold. Treat them separately and in this order.
 
 | Asset | Where it lives | Who can end it |
 | --- | --- | --- |
-| Mise device session (long-lived: 180 days absolute, 90 days idle) | Cookie on the device, hashed row in `device_sessions` | The other household member in the Mise UI, or the operator **(A07)** |
-| Authelia SSO session (15 minutes, enforced; Mise must also log it out right after login, mechanism pending in A07) | Cookie `authelia_session` on the device, server-side session store | Operator: restart Authelia; user: log out of Authelia |
+| Mise device session (long-lived: 180 days absolute, 90 days idle) | Cookie on the device, hashed row in `device_sessions` | Either household member in the Mise UI (Settings, Devices), or the operator with `revoke-sessions` |
+| Authelia SSO session (15 minutes, enforced; Mise sends the browser to the Authelia logout right after login, `OIDC_POST_LOGIN_LOGOUT_URL`; real-host check pending, A19) | Cookie `authelia_session` on the device, server-side session store | Operator: restart Authelia; user: log out of Authelia |
 | Credentials: password, TOTP secret | Authelia storage / users file / the device itself | Operator with host access |
 
 ## Rule 0: do not create a bypass
@@ -20,8 +20,10 @@ route to shortcut this.
 
 ## A. Device lost or stolen, credentials probably safe (most common)
 
-1. **Revoke the Mise device session** from another signed-in device (Settings, Devices) **(A07)**. Revocation takes effect on the
-   next API request and closes that device's open live-list (SSE) stream **(A07/A14)**.
+1. **Revoke the Mise device session** from another signed-in device (Settings, Devices; either member can revoke any of the
+   household's devices, API `DELETE /api/v1/auth/devices/:sessionId`). If no device is signed in, the operator runs
+   `revoke-sessions --member <memberId>` (below). Revocation takes effect on the next API request. A revocation from the UI closes
+   that device's open live-list (SSE) stream at once; one from the CLI closes it at the stream's next heartbeat check (A14).
 2. **End any Authelia SSO session.** The thief's browser may still hold a live SSO cookie. On a live SSO session, Authelia
    re-asks only for the **password** for a new login (spike finding), so this step matters:
    `docker compose restart authelia` (run in the Authelia folder on the Mise host; the container is named `authelia`) on the Mise host. Sessions are held in memory and are all
@@ -48,17 +50,27 @@ All `authelia storage …` commands run inside the container, from the Authelia 
 The operator has host access; the user does not need to prove anything to a machine, only to you in person.
 
 1. Confirm identity out of band (it is a two-person household: in person).
-2. Remove the old factor (section B), remove the old Mise device sessions **(A07)**.
+2. Remove the old factor (section B), remove the old Mise device sessions (`revoke-sessions --member <memberId>`).
 3. Have the user sign in with their password; register a new TOTP using the one-time code from the notification file (production: `docker exec authelia cat /data/notification.txt`; dev: `infra/authelia/data/notification.txt`).
 4. Complete a normal Mise login. A new device session is created only by that login.
 
 ## D. Operator checklist after any incident
 
-- Restart Authelia (drops all SSO sessions); revoke all Mise device sessions that are not recognised **(A07)**.
+- Restart Authelia (drops all SSO sessions); revoke all Mise device sessions that are not recognised (Settings, Devices; or `revoke-sessions --all`, which signs everyone out).
 - Review `docker compose logs authelia` for unusual sign-ins; rotate `.secrets/session-secret` only if the host itself was exposed
   (rotating invalidates all sessions).
 - If the OIDC client secret may have leaked: generate a new secret and digest (`docker run --rm authelia/authelia:4.39.28 authelia crypto hash generate pbkdf2 --variant sha512 --random --random.length 48 --random.charset alphanumeric`), put the digest in `.secrets/oidc-client-secret.digest`, put the plain value in the Mise server env, then recreate Authelia (`docker compose up -d --force-recreate authelia`) and restart Mise. Production uses `.secrets/`; `scripts/setup.sh` and `secrets/` are for the dev stack only.
 - Note date, device, actions taken.
+
+## Mise operator commands
+
+Run on the Mise host with the server's `DATABASE_URL` (or `DATABASE_URL_FILE`) set; A19 adds the container form. Neither
+command creates a session: every new session still needs a fresh Authelia login (Rule 0).
+
+- Find member IDs (read-only): `psql "$DATABASE_URL" -c "SELECT m.id, u.display_name, m.role FROM household_members m JOIN users u ON u.id = m.user_id"`
+- Revoke sessions: `pnpm --filter @mise/server cli:revoke-sessions --member <memberId>` (repeatable), or `--all`.
+- Relink a member to a new Authelia identity (for example after renaming the Authelia user); also revokes that member's
+  sessions: `pnpm --filter @mise/server cli:provision-user --member <memberId> --issuer <OIDC_ISSUER> --subject <sub>`.
 
 ## Optional: passkeys (not enabled in P0)
 

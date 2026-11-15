@@ -10,14 +10,14 @@ describe('health routes', () => {
   });
 
   it('live returns 200', async () => {
-    app = buildApp({ checkReady: async () => {}, config: testConfig });
+    app = buildApp({ checkReady: async () => {}, config: testConfig, auth: null });
     const res = await app.inject({ method: 'GET', url: '/api/v1/health/live' });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({ status: 'ok' });
   });
 
   it('ready returns 200 when the check passes', async () => {
-    app = buildApp({ checkReady: async () => {}, config: testConfig });
+    app = buildApp({ checkReady: async () => {}, config: testConfig, auth: null });
     const res = await app.inject({ method: 'GET', url: '/api/v1/health/ready' });
     expect(res.statusCode).toBe(200);
   });
@@ -28,6 +28,7 @@ describe('health routes', () => {
         throw new Error('down');
       },
       config: testConfig,
+      auth: null,
     });
     const res = await app.inject({ method: 'GET', url: '/api/v1/health/ready' });
     expect(res.statusCode).toBe(503);
