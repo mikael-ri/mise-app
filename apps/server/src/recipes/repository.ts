@@ -306,3 +306,88 @@ export async function insertAuditEvent(
     [householdId, actorMemberId, action, recipeId, JSON.stringify(summary)],
   );
 }
+
+export interface RecipeSearchParams {
+  /** Query words; every word must match. Empty lists by title. */
+  words: readonly string[];
+  tags: readonly string[];
+  maxTime: number | undefined;
+  includeArchived: boolean;
+  limit: number;
+  offset: number;
+}
+
+/**
+ * Search per the ADR-010 addendum (A02): strict tier (weighted finnish/simple full text OR folded
+ * substring, every word must hit) followed by a fuzzy typo tier (word_similarity >= 0.6) for recipes
+ * the strict tier did not return. The base CTE carries all filters, so both tiers are household-scoped.
+ * `maxTime` is prep + cook minutes of the current version; unknown times count as 0, so recipes
+ * without time data are included (they can be flagged as untimed later).
+ */
+export async function searchRecipes(
+  q: Queryable,
+  householdId: string,
+  p: RecipeSearchParams,
+): Promise<RecipeRow[]> {
+  const params: unknown[] = [];
+  const bind = (v: unknown): string => `$${params.push(v) + 1}`; // $1 is the household
+  const filters: string[] = [];
+  if (!p.includeArchived) filters.push('r.archived_at IS NULL');
+  if (p.tags.length > 0) filters.push(`r.tags @> ${bind(p.tags)}::text[]`);
+  if (p.maxTime !== undefined) {
+    filters.push(
+      `coalesce((v.content ->> 'prep_minutes')::int, 0)
+         + coalesce((v.content ->> 'cook_minutes')::int, 0) <= ${bind(p.maxTime)}`,
+    );
+  }
+  const where = ['r.household_id = $1', ...filters].join(' AND ');
+  const base = `base AS NOT MATERIALIZED (
+    SELECT r.id, r.search_title, r.search_ingredients, r.search_body, r.search_document, r.search_fold
+      FROM recipes r
+      JOIN recipe_versions v ON v.recipe_id = r.id AND v.id = r.current_version_id
+     WHERE ${where})`;
+
+  let sql: string;
+  if (p.words.length === 0) {
+    sql = `WITH ${base}
+      SELECT ${RECIPE_COLUMNS} FROM base JOIN recipes r ON r.id = base.id
+       ORDER BY lower(r.title), r.id LIMIT ${bind(p.limit)} OFFSET ${bind(p.offset)}`;
+  } else {
+    sql = `WITH ${base},
+      q AS (
+        SELECT w,
+               ARRAY(SELECT DISTINCT '%' || replace(replace(replace(fold(x), '\\', '\\\\'), '%', '\\%'), '_', '\\_') || '%'
+                       FROM unnest(ARRAY[w, (tsvector_to_array(to_tsvector('finnish', w)))[1]]) AS x
+                      WHERE x IS NOT NULL AND (x = w OR length(x) >= 5)) AS pats,
+               plainto_tsquery('finnish', w) AS fi,
+               plainto_tsquery('simple', w) AS si,
+               fold(w) AS f
+          FROM unnest(${bind(p.words)}::text[]) AS w),
+      scored AS (
+        SELECT b.id, q.w,
+               greatest(ts_rank_cd('{0.02,0.1,0.3,1.0}', b.search_document, q.fi, 32),
+                        ts_rank_cd('{0.02,0.1,0.3,1.0}', b.search_document, q.si, 32))
+               + CASE WHEN fold(b.search_title)       LIKE ANY (q.pats) THEN 0.6  ELSE 0 END
+               + CASE WHEN fold(b.search_ingredients) LIKE ANY (q.pats) THEN 0.2  ELSE 0 END
+               + CASE WHEN fold(b.search_body)        LIKE ANY (q.pats) THEN 0.05 ELSE 0 END AS score
+          FROM base b CROSS JOIN q
+         WHERE b.search_document @@ q.fi OR b.search_document @@ q.si OR b.search_fold LIKE ANY (q.pats)),
+      strict AS (
+        SELECT id, sum(score) AS score FROM scored
+         GROUP BY id HAVING count(*) = (SELECT count(*) FROM q)),
+      fuzzy AS (
+        SELECT b.id, sum(word_similarity(q.f, b.search_fold)) AS score
+          FROM base b CROSS JOIN q
+         WHERE q.f <% b.search_fold AND word_similarity(q.f, b.search_fold) >= 0.6
+           AND NOT EXISTS (SELECT 1 FROM strict s WHERE s.id = b.id)
+         GROUP BY b.id HAVING count(*) = (SELECT count(*) FROM q)),
+      hits AS (
+        SELECT id, 0 AS tier, score FROM strict
+        UNION ALL SELECT id, 1, score FROM fuzzy)
+      SELECT ${RECIPE_COLUMNS} FROM hits JOIN recipes r ON r.id = hits.id
+       ORDER BY hits.tier, hits.score DESC, lower(r.title), r.id
+       LIMIT ${bind(p.limit)} OFFSET ${bind(p.offset)}`;
+  }
+  const { rows } = await scopedQuery<RawRecipe>(q, householdId, sql, params);
+  return rows.map(toRecipe);
+}

@@ -4,6 +4,7 @@ import {
   CreateRecipeRequest,
   PatchRecipeRequest,
   RecipeParams,
+  RecipeSearchQuery,
   RecipeVersionParams,
   RestoreRecipeRequest,
   HEADER_IDEMPOTENCY_KEY,
@@ -34,6 +35,11 @@ const send = (reply: FastifyReply, { recipe, status }: RecipeResult) =>
 /** Handlers only parse, authenticate, call one service method and map the result (server rules). */
 export function registerRecipeRoutes(app: FastifyInstance, service: RecipesService): void {
   const base = `${API_PREFIX}/recipes`;
+
+  app.get(base, async (request) => {
+    const query = RecipeSearchQuery.parse(request.query);
+    return service.searchRecipes(requireActor(request), query);
+  });
 
   app.post(base, async (request, reply) => {
     const actor = requireActor(request);

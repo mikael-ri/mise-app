@@ -180,17 +180,34 @@ export const RecipeSummary = z
 export type RecipeSummary = z.infer<typeof RecipeSummary>;
 
 export const RecipeList = z
-  .strictObject({ items: z.array(RecipeSummary) })
+  .strictObject({
+    items: z.array(RecipeSummary),
+    /** Offset for the next page; null when this was the last one. */
+    nextOffset: z.int().min(0).nullable(),
+  })
   .meta({ id: 'RecipeList' });
 export type RecipeList = z.infer<typeof RecipeList>;
 
 const QueryBoolean = z.enum(['true', 'false']).transform((v) => v === 'true');
 
 export const RecipeSearchQuery = z.strictObject({
-  q: z.string().trim().min(1).max(200).optional(),
-  tag: z.union([Tag, z.array(Tag).max(10)]).optional(), // repeatable: ?tag=a&tag=b
+  q: z
+    .string()
+    .trim()
+    .min(1)
+    .max(200)
+    .refine((q) => q.split(/\s+/).length <= 8, 'at most 8 words')
+    .optional(),
+  // Repeatable (?tags=a&tags=b); a recipe must carry every listed tag.
+  tags: z
+    .union([Tag, z.array(Tag).max(10)])
+    .transform((t) => (typeof t === 'string' ? [t] : t))
+    .optional(),
+  /** Maximum prep + cook minutes. Recipes without any time data are included. */
+  maxTime: z.coerce.number().int().min(0).max(20_000).optional(),
   includeArchived: QueryBoolean.optional(),
   limit: z.coerce.number().int().min(1).max(50).optional(),
+  offset: z.coerce.number().int().min(0).max(100_000).optional(),
 });
 export type RecipeSearchQuery = z.infer<typeof RecipeSearchQuery>;
 

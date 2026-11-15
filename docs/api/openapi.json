@@ -531,7 +531,7 @@
             }
           },
           {
-            "name": "tag",
+            "name": "tags",
             "in": "query",
             "required": false,
             "schema": {
@@ -556,6 +556,16 @@
             }
           },
           {
+            "name": "maxTime",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 20000
+            }
+          },
+          {
             "name": "includeArchived",
             "in": "query",
             "required": false,
@@ -575,6 +585,16 @@
               "type": "integer",
               "minimum": 1,
               "maximum": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100000
             }
           }
         ],
@@ -3229,10 +3249,23 @@
             "items": {
               "$ref": "#/components/schemas/RecipeSummary"
             }
+          },
+          "nextOffset": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
-          "items"
+          "items",
+          "nextOffset"
         ],
         "additionalProperties": false
       },

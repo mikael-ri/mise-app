@@ -171,14 +171,22 @@ describe('RecipeSearchQuery (FR-02, FR-07)', () => {
         q: 'porkkana',
         includeArchived: 'true',
         limit: '5',
-        tag: ['a', 'b'],
+        offset: '10',
+        maxTime: '30',
+        tags: ['a', 'b'],
       }),
     ).toEqual({
       q: 'porkkana',
       includeArchived: true,
       limit: 5,
-      tag: ['a', 'b'],
+      offset: 10,
+      maxTime: 30,
+      tags: ['a', 'b'],
     });
+  });
+
+  it('normalises a single tag to a list', () => {
+    expect(RecipeSearchQuery.parse({ tags: 'a' }).tags).toEqual(['a']);
   });
 
   it.each([
@@ -186,6 +194,10 @@ describe('RecipeSearchQuery (FR-02, FR-07)', () => {
     { limit: '51' },
     { includeArchived: 'yes' },
     { q: '' },
+    { q: 'a b c d e f g h i' },
+    { offset: '-1' },
+    { maxTime: 'x' },
+    { tag: 'a' },
     { householdId: G1 },
   ])('rejects %o', (value) => {
     expect(RecipeSearchQuery.safeParse(value).success).toBe(false);

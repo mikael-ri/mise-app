@@ -2,12 +2,14 @@ import {
   RECIPE_CONTENT_SCHEMA_VERSION,
   Recipe,
   RecipeContent,
+  RecipeList,
   RecipeVersion,
   RecipeVersionList,
 } from '@mise/contracts';
 import type {
   CreateRecipeRequest,
   PatchRecipeRequest,
+  RecipeSearchQuery,
   RestoreRecipeRequest,
 } from '@mise/contracts';
 import { AppError, canonicalJson, runIdempotent, withTransaction } from '../platform/index.js';
@@ -39,6 +41,8 @@ export interface RecipesService {
     expectedRevision: number,
     input: PatchRecipeRequest,
   ): Promise<Recipe>;
+  /** FR-02/FR-07: household-scoped search and filters; archived excluded unless asked for. */
+  searchRecipes(actor: RecipeActor, query: RecipeSearchQuery): Promise<RecipeList>;
   listVersions(actor: RecipeActor, id: string): Promise<RecipeVersionList>;
   getVersion(actor: RecipeActor, id: string, versionId: string): Promise<RecipeVersion>;
   restoreRecipe(
@@ -294,6 +298,28 @@ export function createRecipesService(pool: Pool): RecipesService {
         }
       });
       return toRecipeDto(await load(actor, id));
+    },
+
+    async searchRecipes(actor, query) {
+      const limit = query.limit ?? 20;
+      const offset = query.offset ?? 0;
+      const rows = await repo.searchRecipes(pool, actor.householdId, {
+        words: (query.q ?? '').split(/\s+/).filter(Boolean),
+        tags: query.tags ?? [],
+        maxTime: query.maxTime,
+        includeArchived: query.includeArchived ?? false,
+        limit: limit + 1, // one extra row tells whether another page exists
+        offset,
+      });
+      const items = rows.slice(0, limit).map((r) => ({
+        id: r.id,
+        title: r.title,
+        tags: r.tags,
+        archivedAt: r.archivedAt ? iso(r.archivedAt) : null,
+        revision: r.revision,
+        updatedAt: iso(r.updatedAt),
+      }));
+      return RecipeList.parse({ items, nextOffset: rows.length > limit ? offset + limit : null });
     },
 
     async listVersions(actor, id) {
