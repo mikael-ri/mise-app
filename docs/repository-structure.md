@@ -112,7 +112,7 @@ Other modules import a module only through its `index.ts`, never its repository.
 
 **Household scoping (A08).** Repositories run household-owned queries through `scopedQuery` (`platform/scoped.ts`): `$1` is always the actor's household ID and the SQL must contain `household_id = $1`, or the call throws. Inserts that reference a member use `assertMemberInHousehold` plus the composite FKs on `(household_id, member_id)`. Cross-household access looks like "not found". The actor comes from `households` `resolveActor(userId)` (user from the validated session, never from client input); A07 adds the device session ID. Module tests reuse `createTwoHouseholds` (`platform/isolation-harness.ts`) to prove isolation. `households/` has no `routes.ts` yet: Milestone A defines no household endpoint (`/auth/me` is A07).
 
-**Integration tests.** Run against the dev PostgreSQL from `infra/compose.dev.yaml` (`docker compose -f infra/compose.dev.yaml up -d`, migrations applied with `pnpm db:migrate`): `DATABASE_URL=postgres://mise:mise_dev_only@127.0.0.1:5433/mise pnpm --filter @mise/server test:int`. The credentials are dev-only; tests delete the rows they create.
+**Integration tests.** Run against the dev PostgreSQL from `infra/compose.dev.yaml`; see "Test database and roles" below. `pnpm --filter @mise/server test:int` and `pnpm --filter @mise/database test:int` need only that service to be up. Tests get the database from the shared test config (`tests/support/test-database-config.ts`), never from `DATABASE_URL`.
 
 **Admin CLI.** `pnpm --filter @mise/server cli:provision-household --name <name> --issuer <issuer URL> --owner-subject <sub> --owner-name <name> --member-subject <sub> --member-name <name> [--timezone Europe/Helsinki]` creates the household, the two provisioned users and their memberships in one transaction. It reads only the database settings (`DATABASE_URL` or `DATABASE_URL_FILE`, via `loadDatabaseConfig`), not the rest of the server environment, and never mints sessions.
 
@@ -120,7 +120,7 @@ Other modules import a module only through its `index.ts`, never its repository.
 
 **Dependency direction.** `apps/*` may import `packages/*` and `database`. `packages/domain` imports nothing from this repository. `packages/contracts` may import `packages/domain` types only. `apps/web` never imports `apps/server` or `database`; it uses `packages/contracts` and the generated API client.
 
-**Migrations.** Only the current milestone's tables exist in `database/schema/`. Hand-written SQL (extensions, generated or trigger-maintained search columns, partial indexes, composite foreign keys) lives next to generated migrations and is never edited once applied.
+**Migrations.** The migrate command (`pnpm db:migrate`) connects as the migrator role through `MIGRATION_DATABASE_URL`; the server and CLIs use the app role through `DATABASE_URL` (ADR-018). After migrating, `pnpm --filter @mise/database db:grants` (needs `APP_DB_ROLE` and `MIGRATION_DATABASE_URL`) applies the app role's privileges. Only the current milestone's tables exist in `database/schema/`. Hand-written SQL (extensions, generated or trigger-maintained search columns, partial indexes, composite foreign keys) lives next to generated migrations and is never edited once applied.
 
 ## How the rule files map to this layout
 
@@ -133,3 +133,24 @@ Other modules import a module only through its `index.ts`, never its repository.
 | `security.md` | `apps/server/src/auth/**`, `assets/**`, `recipe-import/**`, `ai/**`, `platform/http/**`, `infra/**` |
 | `ai.md` | `apps/server/src/ai/**`, `recipe-import/**`, `conversations/**` |
 | `testing.md` | `**/*.test.ts`, `**/*.test.tsx`, `tests/**` |
+
+## Test database and roles
+
+Integration tests (`*.int.test.ts`) run on a real PostgreSQL with the same two-role layout as production (ADR-018), so a missing grant fails a test instead of production.
+
+**Start it.** `docker compose -f infra/compose.dev.yaml up -d` starts PostgreSQL on `127.0.0.1:5433` and runs the one-shot `db-provision` service (`infra/postgres/provision-roles.sql`, idempotent, throwaway credentials). It creates:
+
+| Database | Owner / migrator role | App role | Used for |
+|---|---|---|---|
+| `mise` | `mise_migrator` (`MIGRATION_DATABASE_URL`) | `mise_app` (`DATABASE_URL`) | development data |
+| `mise_test` | `mise_test_owner` (`TEST_MIGRATION_DATABASE_URL`) | `mise_test_app` (`TEST_DATABASE_URL`) | integration tests |
+
+An existing dev volume created before the roles existed has tables owned by the bootstrap superuser: recreate it with `docker compose -f infra/compose.dev.yaml down -v`. For the dev database run `pnpm db:migrate` with `MIGRATION_DATABASE_URL` set, then `APP_DB_ROLE=mise_app pnpm --filter @mise/database db:grants`.
+
+**How a run works.** The Vitest global setup (`database/test/global-setup.ts`) loads the config, applies the safety guard, creates the database if missing and migrates it as the owner. For the server's integration tests, `database/test/setup-reset.ts` drops and re-migrates the schema before every test file, so files never see each other's rows. This is a schema reset and not `TRUNCATE ... CASCADE` on purpose: migration 0001 puts a `BEFORE TRUNCATE` trigger on `recipe_versions`, and a cascade from `households`, members or `recipes` fires it. Tests never disable that trigger. Repository, API and service tests connect as the app role; the database package's schema tests connect as the owner.
+
+**Safety guard.** One implementation (`assertSafeTestDatabase`, called by the global setup and by the reset): both URLs must name the same database, whose name ends in `_test` or `_test_<suffix>`, on `localhost`, `127.0.0.1` or `::1`, with different roles. Otherwise the run stops with a message that never prints the URLs.
+
+**Parallel lanes and worktrees.** `MISE_TEST_DB_SUFFIX=a` appends `_a` to the database name (`mise_test_a`); the owner role creates it on first use. Use one suffix per lane. Two runs on the same database at the same time will reset each other.
+
+**Overrides.** Defaults are `postgres://mise_test_app:mise_test@localhost:5433/mise_test` and `postgres://mise_test_owner:mise_test@localhost:5433/mise_test`. Set `TEST_DATABASE_URL` and `TEST_MIGRATION_DATABASE_URL` to use another loopback server (CI uses port 5432). Their names are listed in `.env.example`; values are never committed.

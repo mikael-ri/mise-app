@@ -1,21 +1,15 @@
-// Runs the real CLI logic against PostgreSQL (DATABASE_URL, migrations applied).
+// Runs the real CLI logic against PostgreSQL as the app role (shared test config, freshly migrated).
 import { randomUUID } from 'node:crypto';
 import { afterAll, describe, expect, it } from 'vitest';
 import { createPool } from '../platform/index.js';
+import { loadTestDatabaseConfig } from '../platform/test-support.js';
 import { runProvisionHousehold } from './provision-household-run.js';
 
-const url = process.env['DATABASE_URL'];
-if (!url) throw new Error('DATABASE_URL is required for integration tests');
+const url = loadTestDatabaseConfig().appUrl;
 const pool = createPool(url, 2);
 const issuer = `https://cli-${randomUUID()}.test`;
 
 afterAll(async () => {
-  await pool.query(
-    `DELETE FROM household_members WHERE user_id IN (SELECT id FROM users WHERE oidc_issuer = $1)`,
-    [issuer],
-  );
-  await pool.query(`DELETE FROM households WHERE name = $1`, [issuer]);
-  await pool.query('DELETE FROM users WHERE oidc_issuer = $1', [issuer]);
   await pool.end();
 });
 

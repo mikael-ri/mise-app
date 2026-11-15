@@ -4,14 +4,14 @@ import { readdirSync, readFileSync } from 'node:fs';
 import pg from 'pg';
 
 if (process.env['NODE_ENV'] === 'production') throw new Error('rollback is dev/scratch only');
-// Down files DROP every table. Require an explicit opt-in so a stray DATABASE_URL cannot wipe data.
+// Down files DROP every table. Require an explicit opt-in so a stray MIGRATION_DATABASE_URL cannot wipe data.
 if (process.env['MISE_ALLOW_DESTRUCTIVE'] !== '1') {
   throw new Error(
     'rollback drops data: set MISE_ALLOW_DESTRUCTIVE=1 to confirm this is a scratch database',
   );
 }
 const count = Number(process.argv[2] ?? '1');
-const client = new pg.Client({ connectionString: process.env['DATABASE_URL'] });
+const client = new pg.Client({ connectionString: process.env['MIGRATION_DATABASE_URL'] });
 await client.connect();
 try {
   const downs = readdirSync(new URL('../migrations/down/', import.meta.url))

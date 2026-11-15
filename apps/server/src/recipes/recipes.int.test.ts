@@ -1,4 +1,4 @@
-// FR-01, FR-03, FR-05, AC-02, AC-03 against real PostgreSQL (a fresh per-run database, see test/global-db.ts).
+// FR-01, FR-03, FR-05, AC-02, AC-03 against real PostgreSQL as the app role (shared test config, freshly migrated).
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -15,15 +15,12 @@ import { CSRF_HEADER, createPool, issueCsrfToken } from '../platform/index.js';
 import type { RequestContext } from '../platform/index.js';
 import { createTwoHouseholds } from '../platform/isolation-harness.js';
 import type { TwoHouseholds } from '../platform/isolation-harness.js';
-import { testConfig } from '../platform/test-support.js';
+import { loadTestDatabaseConfig, testConfig } from '../platform/test-support.js';
 import { createRecipesService, registerRecipeRoutes } from './index.js';
 import type { RecipeActor } from './index.js';
 import { soupContent } from './test-fixtures.js';
-import { assertConnectedToTestDatabase } from '../../test/test-database.js';
 
-const url = process.env['DATABASE_URL'];
-if (!url) throw new Error('DATABASE_URL is required for integration tests');
-const pool = createPool(url, 6);
+const pool = createPool(loadTestDatabaseConfig().appUrl, 6);
 const service = createRecipesService(pool);
 
 let h: TwoHouseholds;
@@ -39,7 +36,6 @@ const actorA = (): RecipeActor => actor(h.a);
 const actorB = (): RecipeActor => actor(h.b);
 
 beforeAll(async () => {
-  await assertConnectedToTestDatabase(pool); // this suite leaves data behind; never run it elsewhere
   h = await createTwoHouseholds(pool);
   app = buildApp({ checkReady: async () => {}, config: testConfig, auth: null });
   // Test-only stand-in for the session hook (the real one is covered in auth/*.int.test.ts):
@@ -56,8 +52,8 @@ beforeAll(async () => {
   registerRecipeRoutes(app, service);
 });
 
-// No row cleanup: the run database is dropped by the global setup. recipe_versions is immutable by
-// trigger, so tests must never try to delete from it.
+// No row cleanup: every test file starts from a freshly migrated database (setup-reset.ts), and
+// recipe_versions is immutable, so tests never try to delete from it.
 afterAll(async () => {
   await app.close();
   await pool.end();
@@ -490,21 +486,41 @@ describe('restore request contract', () => {
   });
 });
 
-describe('DB §5.1: recipe_versions immutability, as the application connection', () => {
-  // The app connection must not be able to alter history. UPDATE/DELETE are stopped by a row trigger
-  // and TRUNCATE by a statement trigger (migration 0001), both SQLSTATE 23000.
+describe('DB §5.1 + ADR-018: recipe_versions immutability, as the app role', () => {
+  // Two layers: a row trigger stops UPDATE (SQLSTATE 23000, the app role does hold UPDATE on the table),
+  // and the app role lacks DELETE, TRUNCATE and ownership, so it can neither delete nor switch the
+  // trigger off (42501). Only the owner/migrator role could, and the server never connects as it.
   const INTEGRITY = '23000';
+  const INSUFFICIENT_PRIVILEGE = '42501';
   it.each([
-    ['UPDATE', `UPDATE recipe_versions SET change_reason = 'x' WHERE id = $1`],
-    ['DELETE', 'DELETE FROM recipe_versions WHERE id = $1'],
-    ['TRUNCATE', 'TRUNCATE recipe_versions CASCADE'],
-  ])('%s is rejected and the version is unchanged', async (_op, sql) => {
+    ['UPDATE', `UPDATE recipe_versions SET change_reason = 'x' WHERE id = $1`, true, INTEGRITY],
+    ['DELETE', 'DELETE FROM recipe_versions WHERE id = $1', true, INSUFFICIENT_PRIVILEGE],
+    ['TRUNCATE', 'TRUNCATE recipe_versions CASCADE', false, INSUFFICIENT_PRIVILEGE],
+    [
+      'DISABLE TRIGGER',
+      'ALTER TABLE recipe_versions DISABLE TRIGGER recipe_versions_no_update_delete',
+      false,
+      INSUFFICIENT_PRIVILEGE,
+    ],
+    [
+      'DROP TRIGGER',
+      'DROP TRIGGER recipe_versions_no_update_delete ON recipe_versions',
+      false,
+      INSUFFICIENT_PRIVILEGE,
+    ],
+  ])('%s fails and the version is unchanged', async (_op, sql, takesId, code) => {
     const r = await createViaService('Muuttumaton');
-    await expect(
-      pool.query(sql, sql.includes('$1') ? [r.currentVersion.id] : []),
-    ).rejects.toMatchObject({ code: INTEGRITY });
+    await expect(pool.query(sql, takesId ? [r.currentVersion.id] : [])).rejects.toMatchObject({
+      code,
+    });
     const v = await service.getVersion(actorA(), r.id, r.currentVersion.id);
     expect(v.version.changeReason).toBeNull();
     expect(v.content.ingredients[0]?.original_quantity_text).toBe('400 g');
+    // ...and the protection is still in place afterwards.
+    await expect(
+      pool.query(`UPDATE recipe_versions SET change_reason = 'y' WHERE id = $1`, [
+        r.currentVersion.id,
+      ]),
+    ).rejects.toMatchObject({ code: INTEGRITY });
   });
 });

@@ -3,9 +3,9 @@
 # Destructive: refuses to run unless the target database has no tables in `public`.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-: "${DATABASE_URL:?DATABASE_URL must be set}"
+: "${MIGRATION_DATABASE_URL:?MIGRATION_DATABASE_URL must be set (the migrator role)}"
 q() { node -e '
-  const pg = require("pg"); const c = new pg.Client({ connectionString: process.env.DATABASE_URL });
+  const pg = require("pg"); const c = new pg.Client({ connectionString: process.env.MIGRATION_DATABASE_URL });
   c.connect().then(() => c.query(process.argv[1])).then((r) => { console.log(r.rows[0]?.n ?? ""); return c.end(); })
    .catch((e) => { console.error(e.message); process.exit(1); });' "$1"; }
 count_public="SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema = 'public'"

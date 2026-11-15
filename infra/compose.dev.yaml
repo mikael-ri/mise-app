@@ -15,5 +15,33 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+  # One-shot, idempotent: creates the migrator/app roles for `mise` and the roles + database for tests
+  # (ADR-018). Runs on every `up`, so it also works on an existing volume. Dev-only credentials.
+  db-provision:
+    image: postgres:17
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: 'no'
+    environment:
+      PGPASSWORD: mise_dev_only
+    volumes:
+      - ./postgres/provision-roles.sql:/provision-roles.sql:ro
+    entrypoint:
+      [
+        'psql',
+        '-v',
+        'ON_ERROR_STOP=1',
+        '-v',
+        'allow_dev=1',
+        '-h',
+        'postgres',
+        '-U',
+        'mise',
+        '-d',
+        'postgres',
+        '-f',
+        '/provision-roles.sql',
+      ]
 volumes:
   pgdata:

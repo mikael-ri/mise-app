@@ -1,16 +1,15 @@
-// Integration tests against real PostgreSQL (DATABASE_URL, migrations applied).
+// Integration tests against real PostgreSQL as the app role (shared test config, freshly migrated).
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createPool, scopedQuery } from '../platform/index.js';
+import { loadTestDatabaseConfig } from '../platform/test-support.js';
 import type { Pool } from '../platform/index.js';
 import { createTwoHouseholds } from '../platform/isolation-harness.js';
 import type { TwoHouseholds } from '../platform/isolation-harness.js';
 import { createHouseholdsService } from './index.js';
 import type { ActorMembership } from './index.js';
 
-const url = process.env['DATABASE_URL'];
-if (!url) throw new Error('DATABASE_URL is required for integration tests');
-const pool: Pool = createPool(url, 4);
+const pool: Pool = createPool(loadTestDatabaseConfig().appUrl, 4);
 const svc = createHouseholdsService(pool);
 
 // Sample household-scoped entity for the isolation proof: `recipes` (A04 schema), accessed through
@@ -57,7 +56,6 @@ const sample = {
 
 let h: TwoHouseholds;
 let recipeA: string;
-const provisioned: string[] = [];
 
 beforeAll(async () => {
   h = await createTwoHouseholds(pool);
@@ -65,10 +63,6 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await pool.query('DELETE FROM household_members WHERE household_id = ANY($1)', [provisioned]);
-  await pool.query('DELETE FROM households WHERE id = ANY($1)', [provisioned]);
-  await pool.query(`DELETE FROM users WHERE oidc_issuer = 'https://prov.test'`);
-  await h.cleanup(['recipes']);
   await pool.end();
 });
 
@@ -79,10 +73,16 @@ describe('cross-household isolation (FR-30, FR-31)', () => {
     expect(await sample.get(h.a.householdId, recipeA)).toHaveLength(1);
   });
 
-  it('household B cannot update or delete household A entity', async () => {
+  it('household B cannot update household A entity', async () => {
     expect(await sample.rename(h.b.householdId, recipeA, 'hijacked')).toBe(0);
-    expect(await sample.remove(h.b.householdId, recipeA)).toBe(0);
     expect((await sample.get(h.a.householdId, recipeA))[0]!.title).toBe('A secret recipe');
+  });
+
+  it('nobody can delete recipes through the app role at all (ADR-018: recipes are archived)', async () => {
+    for (const household of [h.a.householdId, h.b.householdId]) {
+      await expect(sample.remove(household, recipeA)).rejects.toMatchObject({ code: '42501' });
+    }
+    expect(await sample.get(h.a.householdId, recipeA)).toHaveLength(1);
   });
 
   it('household B cannot write a row attributed to household A member (composite FK)', async () => {
@@ -120,7 +120,6 @@ describe('provisionHousehold (FR-30)', () => {
 
   it('creates a household with an owner and a member', async () => {
     const created = await svc.provisionHousehold(input());
-    provisioned.push(created.id);
     expect(created.timezone).toBe('Europe/Helsinki');
     const members = await svc.listMembers({
       userId: h.a.userId,
@@ -132,8 +131,7 @@ describe('provisionHousehold (FR-30)', () => {
 
   it('is atomic: a duplicate identity conflicts and leaves no household behind', async () => {
     const first = input();
-    const created = await svc.provisionHousehold(first);
-    provisioned.push(created.id);
+    await svc.provisionHousehold(first);
     const dup = input();
     dup.members[1] = first.members[0];
     await expect(svc.provisionHousehold({ ...dup, name: 'Prov-atomic' })).rejects.toMatchObject({

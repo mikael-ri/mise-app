@@ -1,3 +1,5 @@
+export { loadTestDatabaseConfig } from '../../../../tests/support/test-database-config.js';
+
 export const testConfig = {
   publicOrigin: 'https://mise.test',
   csrfSecret: 'test-only-csrf-secret-0123456789abcdef',

@@ -1,6 +1,7 @@
 // Isolation test harness (A08): two households with one user and member each, for integration tests
 // in every module. Usage: `const h = await createTwoHouseholds(pool)`, seed an entity in `h.a`,
-// try to read/update/delete it as `h.b`, expect denial, then `await h.cleanup()`.
+// try to read/update it as `h.b`, expect denial. No cleanup: each test file starts from a freshly
+// migrated database (database/test/setup-reset.ts), and the app role cannot delete these rows anyway.
 // Test-only; later modules import it from the platform folder in their *.int.test.ts files.
 import { randomUUID } from 'node:crypto';
 import type { Pool } from './db.js';
@@ -14,8 +15,6 @@ export interface HouseholdFixture {
 export interface TwoHouseholds {
   a: HouseholdFixture;
   b: HouseholdFixture;
-  /** Removes both fixtures and everything the given tables hold for them. */
-  cleanup: (tablesWithHouseholdId?: readonly string[]) => Promise<void>;
 }
 
 async function createHousehold(pool: Pool, label: string): Promise<HouseholdFixture> {
@@ -47,16 +46,5 @@ export async function createTwoHouseholds(pool: Pool): Promise<TwoHouseholds> {
   return {
     a,
     b,
-    cleanup: async (tablesWithHouseholdId = []) => {
-      for (const f of [a, b]) {
-        // Table names come from test code only, never from input.
-        for (const table of tablesWithHouseholdId) {
-          await pool.query(`DELETE FROM ${table} WHERE household_id = $1`, [f.householdId]);
-        }
-        await pool.query('DELETE FROM household_members WHERE household_id = $1', [f.householdId]);
-        await pool.query('DELETE FROM households WHERE id = $1', [f.householdId]);
-        await pool.query('DELETE FROM users WHERE id = $1', [f.userId]);
-      }
-    },
   };
 }

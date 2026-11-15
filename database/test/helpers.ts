@@ -1,7 +1,9 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import pg from 'pg';
+import { loadTestDatabaseConfig } from '../../tests/support/test-database-config';
 
-export const pool = new pg.Pool({ connectionString: process.env['DATABASE_URL'] });
+// Schema tests act as the OWNER role: they insert across tables and probe constraints and triggers.
+export const pool = new pg.Pool({ connectionString: loadTestDatabaseConfig().ownerUrl });
 
 /** Runs `fn` in a transaction that is always rolled back, so tests leave no rows behind. */
 export async function inRolledBackTx(fn: (c: pg.PoolClient) => Promise<void>): Promise<void> {

@@ -25,6 +25,7 @@ Stack (001), PostgreSQL + Drizzle (002), Authelia OIDC with fresh authentication
 | [015](0015-ingredient-model.md) | Ingredient, unit and category model | Accepted | A04, A05 |
 | [016](0016-plan-lifecycle.md) | Plan lifecycle, calendar and leftovers | Accepted | Milestone C |
 | [017](0017-shopping-merge.md) | Shopping generation, merge and reconciliation | Accepted | Milestone D |
+| [018](0018-database-roles.md) | Database roles: migrator owns the schema, app has least privilege | Accepted | A19, A09 follow-up |
 
 ## Addendum format (spikes and amendments)
 Append to the ADR file:

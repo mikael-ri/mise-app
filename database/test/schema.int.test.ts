@@ -1,4 +1,4 @@
-// Integration tests for migration 0000/0001 invariants (A04). Real PostgreSQL via DATABASE_URL,
+// Integration tests for migration 0000/0001 invariants (A04). Real PostgreSQL (shared test config, owner role),
 // migrated with `pnpm db:migrate`. Each test runs in a rolled-back transaction.
 import { randomUUID } from 'node:crypto';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -204,6 +204,7 @@ describe('device sessions (ADR-003, security rules)', () => {
         'last_seen_at',
         'revoked_at',
         'token_hash',
+        'user_agent', // migration 0002: free-text client label, never a credential
         'user_id',
       ]);
     }));

@@ -1,4 +1,4 @@
-// AC-11 / NFR-01 against real PostgreSQL (DATABASE_URL, migrations applied) and a fake OIDC provider
+// AC-11 / NFR-01 against real PostgreSQL as the app role (shared test config, freshly migrated) and a fake OIDC provider
 // (ADR-003 addendum D6). The real-Authelia suite stays a release gate (infra/authelia/spike).
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -7,7 +7,7 @@ import { DeviceSessionList, MeResponse } from '@mise/contracts';
 import { buildApp } from '../app.js';
 import { createHouseholdsService } from '../households/index.js';
 import { CSRF_HEADER, createPool, createRateLimiter, issueCsrfToken } from '../platform/index.js';
-import { testConfig } from '../platform/test-support.js';
+import { loadTestDatabaseConfig, testConfig } from '../platform/test-support.js';
 import {
   LOGIN_STATE_COOKIE,
   SESSION_COOKIE,
@@ -31,9 +31,7 @@ import {
   TEST_ISSUER,
 } from './test-idp.js';
 
-const url = process.env['DATABASE_URL'];
-if (!url) throw new Error('DATABASE_URL is required for integration tests');
-const pool = createPool(url, 4);
+const pool = createPool(loadTestDatabaseConfig().appUrl, 4);
 const DAY = 86_400_000;
 const ORIGIN = testConfig.publicOrigin;
 const LOGOUT_URL = `${TEST_ISSUER}/logout`;
@@ -110,10 +108,6 @@ beforeEach(() => {
 
 afterAll(async () => {
   await app.close();
-  await pool.query('DELETE FROM device_sessions WHERE user_id = ANY($1::uuid[])', [userIds]);
-  await pool.query('DELETE FROM household_members WHERE user_id = ANY($1::uuid[])', [userIds]);
-  await pool.query('DELETE FROM households WHERE name LIKE $1', [`auth-_-${tag}`]);
-  await pool.query('DELETE FROM users WHERE id = ANY($1::uuid[])', [userIds]);
   await pool.end();
 });
 

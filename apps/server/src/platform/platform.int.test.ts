@@ -1,14 +1,13 @@
-// Integration tests against real PostgreSQL (DATABASE_URL, migrations applied). Data is committed
-// (the code under test opens its own transactions) and removed in afterAll.
+// Integration tests against real PostgreSQL as the app role (shared test config, freshly migrated).
+// Data is committed (the code under test opens its own transactions); the database is reset per file.
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createPool, withTransaction } from './db.js';
+import { loadTestDatabaseConfig } from './test-support.js';
 import { runIdempotent, sweepExpiredKeys } from './idempotency.js';
 import type { IdempotencyScope, ResultRef } from './idempotency.js';
 
-const url = process.env['DATABASE_URL'];
-if (!url) throw new Error('DATABASE_URL is required for integration tests');
-const pool = createPool(url, 8);
+const pool = createPool(loadTestDatabaseConfig().appUrl, 8);
 
 let userId: string;
 let householdId: string;
@@ -36,10 +35,6 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await pool.query('DELETE FROM idempotency_keys WHERE household_id = $1', [householdId]);
-  await pool.query('DELETE FROM household_members WHERE household_id = $1', [householdId]);
-  await pool.query('DELETE FROM households WHERE id = $1', [householdId]);
-  await pool.query('DELETE FROM users WHERE id = $1', [userId]);
   await pool.end();
 });
 

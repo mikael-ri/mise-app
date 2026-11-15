@@ -8,7 +8,9 @@
     "db:migrate": "drizzle-kit migrate",
     "db:drift": "./scripts/drift-check.sh",
     "db:rollback": "node src/rollback.ts",
-    "test:int": "vitest run spike test",
+    "db:grants": "node roles/apply-grants.ts",
+    "test": "vitest run --exclude \"**/*.int.test.ts\" --exclude \"**/node_modules/**\"",
+    "test:int": "vitest run --config vitest.int.config.ts spike test",
     "db:roundtrip": "./scripts/migration-roundtrip.sh"
   },
   "devDependencies": {

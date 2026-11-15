@@ -33,7 +33,11 @@ jobs:
         options: >-
           --health-cmd "pg_isready -U mise" --health-interval 5s --health-timeout 3s --health-retries 10
     env:
-      DATABASE_URL: postgres://mise:mise_ci_only@localhost:5432/mise
+      # Migrator role for the `mise` database; integration tests use the shared test config's roles
+      # (tests/support/test-database-config.ts), pointed at this service on port 5432.
+      MIGRATION_DATABASE_URL: postgres://mise_migrator:mise_dev_migrator_only@localhost:5432/mise
+      TEST_DATABASE_URL: postgres://mise_test_app:mise_test@localhost:5432/mise_test
+      TEST_MIGRATION_DATABASE_URL: postgres://mise_test_owner:mise_test@localhost:5432/mise_test
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -42,6 +46,10 @@ jobs:
           node-version-file: .node-version
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Provision database roles (ADR-018)
+        env:
+          PGPASSWORD: mise_ci_only
+        run: psql -v ON_ERROR_STOP=1 -v allow_dev=1 -h localhost -U mise -d postgres -f infra/postgres/provision-roles.sql
       - run: pnpm --filter @mise/database db:roundtrip
       - run: pnpm --filter @mise/database test:int
       - run: pnpm --filter @mise/server test:int

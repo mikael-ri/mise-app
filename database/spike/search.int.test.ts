@@ -2,13 +2,12 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import pg from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { loadTestDatabaseConfig } from '../../tests/support/test-database-config';
 import { fuzzySearchSql, SCHEMA, setupSql, strictSearchSql } from './search.sql';
 
 const fixtures = join(import.meta.dirname, '../../tests/fixtures');
-const databaseUrl = process.env['DATABASE_URL'];
-if (!databaseUrl)
-  throw new Error('DATABASE_URL is required (the test drops and recreates schema spike_a02)');
-const pool = new pg.Pool({ connectionString: databaseUrl });
+// Owner connection: the test creates and drops the scratch schema spike_a02.
+const pool = new pg.Pool({ connectionString: loadTestDatabaseConfig().ownerUrl });
 // Drop the scratch schema afterwards: it depends on pg_trgm and would block rolling back migration 0000.
 afterAll(async () => {
   await pool.query(`DROP SCHEMA IF EXISTS ${SCHEMA} CASCADE`);

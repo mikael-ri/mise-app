@@ -90,20 +90,35 @@ const toVersion = (r: RawVersion): VersionRow => ({
   createdAt: r.v_created_at,
 });
 
-/** Reads a recipe with its current version. `forUpdate` takes the row lock that serializes edits. */
+/**
+ * Reads a recipe with its current version. `forUpdate` first takes the row lock that serializes edits,
+ * then reads. The lock is a separate statement on purpose: with `FOR UPDATE` on the join, a concurrent
+ * edit that commits while we wait changes `current_version_id`, PostgreSQL re-checks the join against
+ * the new row version and the row silently disappears (a losing writer would see "not found" instead
+ * of the stale-revision conflict).
+ */
 export async function getRecipeWithVersion(
   q: Queryable,
   householdId: string,
   id: string,
   forUpdate = false,
 ): Promise<RecipeWithVersionRow | null> {
+  if (forUpdate) {
+    const locked = await scopedQuery(
+      q,
+      householdId,
+      'SELECT 1 FROM recipes WHERE household_id = $1 AND id = $2 FOR UPDATE',
+      [id],
+    );
+    if (locked.rowCount === 0) return null;
+  }
   const { rows } = await scopedQuery<RawRecipe & RawVersion>(
     q,
     householdId,
     `SELECT ${RECIPE_COLUMNS}, ${VERSION_COLUMNS}
        FROM recipes r
        JOIN recipe_versions v ON v.recipe_id = r.id AND v.id = r.current_version_id
-      WHERE r.household_id = $1 AND r.id = $2${forUpdate ? ' FOR UPDATE OF r' : ''}`,
+      WHERE r.household_id = $1 AND r.id = $2`,
     [id],
   );
   const row = rows[0];

@@ -1,1 +1,5 @@
-{ "extends": "../tsconfig.base.json", "include": ["*.ts", "schema", "seed", "src", "test"] }
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": { "allowImportingTsExtensions": true },
+  "include": ["*.ts", "roles", "schema", "seed", "src", "test"]
+}
