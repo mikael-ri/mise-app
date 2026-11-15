@@ -11,6 +11,7 @@ export { AppError, errorBody, generateCorrelationId, toErrorBody } from './error
 export { buildLoggerOptions, REDACT_PATHS } from './logging.js';
 export {
   ResultRef,
+  canonicalJson,
   parseIdempotencyKey,
   requestHash,
   runIdempotent,

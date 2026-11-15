@@ -38,6 +38,9 @@ importers:
       '@mise/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@mise/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       fastify:
         specifier: ^5.12.7
         version: 5.12.7

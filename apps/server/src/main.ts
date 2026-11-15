@@ -6,6 +6,7 @@ import {
   loginStateKey,
 } from './auth/index.js';
 import { createHouseholdsService } from './households/index.js';
+import { createRecipesService } from './recipes/index.js';
 import {
   ConfigError,
   checkDatabaseReady,
@@ -40,6 +41,7 @@ const authService = createAuthService({
 const app = buildApp({
   checkReady: () => checkDatabaseReady(pool),
   config,
+  recipes: createRecipesService(pool),
   auth: {
     service: authService,
     publicOrigin: config.publicOrigin,

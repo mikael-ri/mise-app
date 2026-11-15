@@ -95,6 +95,7 @@ const errorResponses = (route: RouteDef): Record<string, Json> => {
   if (route.auth) add('unauthenticated');
   if (route.params) add('not_found');
   if (route.ifMatch) add('stale_revision');
+  for (const code of route.extraErrors ?? []) add(code);
   if (route.body) add('payload_too_large');
   if (route.idempotencyKey) add('idempotency_key_reused');
   if (route.ifMatch) add('precondition_required');

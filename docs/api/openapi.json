@@ -846,7 +846,7 @@
         "tags": [
           "recipes"
         ],
-        "summary": "Edit metadata and/or create a new version",
+        "summary": "Edit metadata and/or create a new version. 409 conflict: an archived recipe cannot get a new version (send archived=false in a separate request first).",
         "security": [
           {
             "sessionCookie": []
@@ -934,7 +934,7 @@
             }
           },
           "409": {
-            "description": "Error: stale_revision",
+            "description": "Error: stale_revision, conflict",
             "content": {
               "application/json": {
                 "schema": {
@@ -1178,7 +1178,7 @@
         "tags": [
           "recipes"
         ],
-        "summary": "Copy an earlier version into a new current version",
+        "summary": "Copy an earlier version into a new current version. 409 conflict: an archived recipe cannot be restored; unarchive it first.",
         "security": [
           {
             "sessionCookie": []
@@ -1276,7 +1276,7 @@
             }
           },
           "409": {
-            "description": "Error: stale_revision",
+            "description": "Error: stale_revision, conflict",
             "content": {
               "application/json": {
                 "schema": {

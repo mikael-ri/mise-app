@@ -1,4 +1,5 @@
 import type { z } from 'zod';
+import type { ErrorCode } from './errors.js';
 import {
   DeviceSessionList,
   DeviceSessionParams,
@@ -67,6 +68,8 @@ export interface RouteDef {
   ifMatch?: 'required' | 'required-for-edits';
   /** Requires `Idempotency-Key`. */
   idempotencyKey?: boolean;
+  /** Route-specific error codes beyond the ones implied by params, body and headers. */
+  extraErrors?: readonly ErrorCode[];
   responses: Record<number, RouteResponse>;
 }
 
@@ -195,7 +198,9 @@ export const ROUTES: readonly RouteDef[] = [
     method: 'patch',
     path: '/recipes/{id}',
     tag: 'recipes',
-    summary: 'Edit metadata and/or create a new version',
+    summary:
+      'Edit metadata and/or create a new version. 409 conflict: an archived recipe cannot get a new version (send archived=false in a separate request first).',
+    extraErrors: ['conflict'],
     auth: true,
     params: RecipeParams,
     body: PatchRecipeRequest,
@@ -227,7 +232,9 @@ export const ROUTES: readonly RouteDef[] = [
     method: 'post',
     path: '/recipes/{id}/restore',
     tag: 'recipes',
-    summary: 'Copy an earlier version into a new current version',
+    summary:
+      'Copy an earlier version into a new current version. 409 conflict: an archived recipe cannot be restored; unarchive it first.',
+    extraErrors: ['conflict'],
     auth: true,
     params: RecipeParams,
     body: RestoreRecipeRequest,
