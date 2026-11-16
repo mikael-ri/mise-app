@@ -22,11 +22,11 @@ import type { RequestContext } from '../platform/index.js';
 import { createTwoHouseholds } from '../platform/isolation-harness.js';
 import type { TwoHouseholds } from '../platform/isolation-harness.js';
 import { loadTestDatabaseConfig, testConfig } from '../platform/test-support.js';
-import { createShoppingService, registerShoppingRoutes } from './index.js';
+import { createListEventHub, createShoppingService, registerShoppingRoutes } from './index.js';
 import type { ShoppingActor } from './index.js';
 
 const pool = createPool(loadTestDatabaseConfig().appUrl, 10);
-const service = createShoppingService(pool);
+const service = createShoppingService(pool, createListEventHub());
 
 let h: TwoHouseholds;
 /** Second member of household A, so two members can shop the same list (AC-08). */
@@ -72,7 +72,9 @@ beforeAll(async () => {
       deviceSessionId,
     } as unknown as RequestContext;
   });
-  registerShoppingRoutes(app, service);
+  registerShoppingRoutes(app, service, {
+    sessions: { onRevoked: () => () => {}, isLive: async () => true },
+  });
 });
 
 afterAll(async () => {

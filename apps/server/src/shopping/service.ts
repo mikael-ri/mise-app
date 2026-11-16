@@ -5,6 +5,7 @@ import {
   ShoppingItem,
   ShoppingList,
   ShoppingListSnapshot,
+  ShoppingListEvent,
   ShoppingListSummaryList,
 } from '@mise/contracts';
 import type {
@@ -20,6 +21,7 @@ import { normalizeKey, parseQuantityText } from '@mise/domain';
 import { AppError, runIdempotent, withTransaction } from '../platform/index.js';
 import type { Pool, Queryable, RequestContext, Tx } from '../platform/index.js';
 import { categorize } from './categorize.js';
+import type { ListEventHub, ListEventListener } from './events.js';
 import * as repo from './repository.js';
 
 /** Only the session-derived household and member are needed (hard rule 2). */
@@ -59,6 +61,10 @@ export interface ShoppingService {
     expectedRevision: number,
     input: PatchShoppingListRequest,
   ): Promise<ShoppingList>;
+  /** The list's committed cursor; 404 unless the list is in the actor's household (A14). */
+  currentEvent(actor: ShoppingActor, listId: string): Promise<ShoppingListEvent>;
+  /** Change signals for one list of the actor's household, after commit only. */
+  subscribe(actor: ShoppingActor, listId: string, listener: ListEventListener): () => void;
 
   addItem(
     actor: ShoppingActor,
@@ -153,7 +159,16 @@ const keyFor = (name: string): string | null => {
   return parsed.success ? parsed.data : null;
 };
 
-export function createShoppingService(pool: Pool): ShoppingService {
+export function createShoppingService(pool: Pool, events: ListEventHub): ShoppingService {
+  /**
+   * Signals open streams. Callers pass only a seq returned by `bumpChangeSeq` inside a transaction
+   * that has already committed (DB §8.2); a rollback throws before this line, so it signals nothing.
+   */
+  const signal = (actor: ShoppingActor, listId: string, seq: number | null) => {
+    if (seq === null) return;
+    events.publish(actor.householdId, ShoppingListEvent.parse({ listId, seq }));
+  };
+
   /** A category the household may use: a system default or its own (ADR-002 addendum, item 4). */
   async function assertUsableCategory(q: Queryable, actor: ShoppingActor, id: string) {
     if (!(await repo.getVisibleCategory(q, actor.householdId, id))) throw categoryNotFound();
@@ -329,6 +344,15 @@ export function createShoppingService(pool: Pool): ShoppingService {
       return toListDto(await loadList(actor, id));
     },
 
+    async currentEvent(actor, listId) {
+      const list = await loadList(actor, listId);
+      return ShoppingListEvent.parse({ listId: list.id, seq: list.changeSeq });
+    },
+
+    subscribe(actor, listId, listener) {
+      return events.subscribe(actor.householdId, listId, listener);
+    },
+
     async addItem(actor, listId, idempotencyKey, input) {
       const outcome = await runIdempotent(
         pool,
@@ -350,28 +374,34 @@ export function createShoppingService(pool: Pool): ShoppingService {
             note: input.note ?? null,
             categoryId,
           });
-          await repo.bumpChangeSeq(tx, actor.householdId, listId);
+          const seq = await repo.bumpChangeSeq(tx, actor.householdId, listId);
           return {
             resultRef: { status: 201, resourceType: 'shopping_item', resourceId: id },
-            value: id,
+            value: seq,
           };
         },
       );
+      // A replay changed nothing now, so it signals nothing.
+      if (!outcome.replayed) signal(actor, listId, outcome.value);
       return { value: toItemDto(await loadItem(actor, outcome.resultRef.resourceId)), status: 201 };
     },
 
     async setPicked(actor, itemId, picked) {
-      await withTransaction(pool, async (tx) => {
+      const { listId, seq } = await withTransaction(pool, async (tx) => {
         const item = await lockItemForWrite(tx, actor, itemId);
         const changed = await repo.setPicked(tx, actor.householdId, itemId, picked, actor.memberId);
         // An already-satisfied desired state is a no-op: no attribution change, no cursor bump.
-        if (changed) await repo.bumpChangeSeq(tx, actor.householdId, item.listId);
+        const bumped = changed
+          ? await repo.bumpChangeSeq(tx, actor.householdId, item.listId)
+          : null;
+        return { listId: item.listId, seq: bumped };
       });
+      signal(actor, listId, seq);
       return toItemDto(await loadItem(actor, itemId));
     },
 
     async editItem(actor, itemId, expectedRevision, input) {
-      await withTransaction(pool, async (tx) => {
+      const { listId, seq } = await withTransaction(pool, async (tx) => {
         const cur = await lockItemForWrite(tx, actor, itemId);
         if (cur.revision !== expectedRevision) throw staleRevision(cur.revision);
 
@@ -401,21 +431,29 @@ export function createShoppingService(pool: Pool): ShoppingService {
           next.originalQuantityText === cur.originalQuantityText &&
           next.note === cur.note &&
           next.categoryId === cur.categoryId;
-        if (unchanged) return; // no revision bump, no cursor bump
+        if (unchanged) return { listId: cur.listId, seq: null }; // no revision or cursor bump
 
         await repo.updateItemDetails(tx, actor.householdId, itemId, next);
-        await repo.bumpChangeSeq(tx, actor.householdId, cur.listId);
+        return {
+          listId: cur.listId,
+          seq: await repo.bumpChangeSeq(tx, actor.householdId, cur.listId),
+        };
       });
+      signal(actor, listId, seq);
       return toItemDto(await loadItem(actor, itemId));
     },
 
     async deleteItem(actor, itemId, expectedRevision) {
-      await withTransaction(pool, async (tx) => {
+      const { listId, seq } = await withTransaction(pool, async (tx) => {
         const cur = await lockItemForWrite(tx, actor, itemId);
         if (cur.revision !== expectedRevision) throw staleRevision(cur.revision);
         await repo.deleteItem(tx, actor.householdId, itemId);
-        await repo.bumpChangeSeq(tx, actor.householdId, cur.listId);
+        return {
+          listId: cur.listId,
+          seq: await repo.bumpChangeSeq(tx, actor.householdId, cur.listId),
+        };
       });
+      signal(actor, listId, seq);
     },
 
     async setStaple(actor, normalizedKey, isStaple) {

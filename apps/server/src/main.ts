@@ -7,7 +7,7 @@ import {
 } from './auth/index.js';
 import { createHouseholdsService } from './households/index.js';
 import { createRecipesService } from './recipes/index.js';
-import { createShoppingService } from './shopping/index.js';
+import { createListEventHub, createShoppingService } from './shopping/index.js';
 import {
   ConfigError,
   checkDatabaseReady,
@@ -28,7 +28,7 @@ try {
 }
 
 const pool = createPool(config.databaseUrl, config.databasePoolMax);
-// A14 subscribes SSE streams to this hub to close them on revocation.
+// SSE streams subscribe to this hub to close on revocation (A14).
 const revocations = createRevocationHub();
 const authService = createAuthService({
   pool,
@@ -43,7 +43,15 @@ const app = buildApp({
   checkReady: () => checkDatabaseReady(pool),
   config,
   recipes: createRecipesService(pool),
-  shopping: createShoppingService(pool),
+  shopping: {
+    service: createShoppingService(pool, createListEventHub()),
+    streams: {
+      sessions: {
+        onRevoked: (sessionId, listener) => revocations.subscribe(sessionId, listener),
+        isLive: (actor) => authService.isSessionLive(actor),
+      },
+    },
+  },
   auth: {
     service: authService,
     publicOrigin: config.publicOrigin,

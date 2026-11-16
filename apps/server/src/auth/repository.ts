@@ -108,6 +108,31 @@ export async function findValidSession(
     : null;
 }
 
+/**
+ * Read-only recheck of an already-authenticated session (SSE heartbeat, A14): same validity rules as
+ * `findValidSession`, by id, and only while the user is still a member of `householdId`. Never touches
+ * the sliding expiry, so an open stream cannot keep a session alive.
+ */
+export async function isSessionLive(
+  q: Queryable,
+  householdId: string,
+  sessionId: string,
+  now: Date,
+): Promise<boolean> {
+  const { rows } = await scopedQuery<{ id: string }>(
+    q,
+    householdId,
+    `SELECT s.id
+       FROM device_sessions s
+       JOIN users u ON u.id = s.user_id AND u.is_active
+       JOIN household_members m ON m.user_id = s.user_id
+      WHERE m.household_id = $1 AND s.id = $2
+        AND s.revoked_at IS NULL AND s.idle_expires_at > $3 AND s.absolute_expires_at > $3`,
+    [sessionId, now],
+  );
+  return rows.length > 0;
+}
+
 /** `authenticated_at` of a live session in the household, or null. */
 export async function findSessionAuthenticatedAt(
   q: Queryable,

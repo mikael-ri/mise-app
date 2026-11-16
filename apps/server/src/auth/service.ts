@@ -73,6 +73,11 @@ export interface AuthService {
   ): Promise<CompletedLogin>;
   /** Resolves a session cookie to the actor, or null. Checks revocation and expiry every call. */
   authenticate(token: string): Promise<RequestContext | null>;
+  /**
+   * Whether the actor's device session is still valid (not revoked or expired, user active and in the
+   * same household). Read-only; for long-lived streams that authenticated once (A14).
+   */
+  isSessionLive(actor: RequestContext): Promise<boolean>;
   me(actor: RequestContext): Promise<MeResponse>;
   listDevices(actor: RequestContext): Promise<DeviceSession[]>;
   /** Revokes a session of the actor's household. 404 for unknown or other-household sessions. */
@@ -201,6 +206,10 @@ export function createAuthService(d: AuthServiceDeps): AuthService {
         memberId: MemberId.parse(row.memberId),
         deviceSessionId: DeviceSessionId.parse(row.sessionId),
       };
+    },
+
+    async isSessionLive(actor) {
+      return repo.isSessionLive(d.pool, actor.householdId, actor.deviceSessionId, now());
     },
 
     async me(actor) {

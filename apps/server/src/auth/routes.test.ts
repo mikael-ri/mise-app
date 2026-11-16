@@ -51,6 +51,7 @@ function stubService(): AuthService {
       };
     }),
     authenticate: vi.fn(async (token) => (token === GOOD ? actor : null)),
+    isSessionLive: vi.fn(async () => true),
     me: vi.fn(),
     listDevices: vi.fn(async () => []),
     revokeDevice: vi.fn(async () => {}),

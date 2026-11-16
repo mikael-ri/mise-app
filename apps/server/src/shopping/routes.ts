@@ -19,6 +19,8 @@ import {
 import type { ShoppingItem, ShoppingList } from '@mise/contracts';
 import { parseIdempotencyKey, parseIfMatchHeader, requireActor } from '../platform/index.js';
 import type { ShoppingService } from './service.js';
+import { createListStreams } from './stream.js';
+import type { ListStreamOptions } from './stream.js';
 
 const idempotencyKey = (request: FastifyRequest): string =>
   parseIdempotencyKey(request.headers[HEADER_IDEMPOTENCY_KEY]);
@@ -30,7 +32,11 @@ const sendRevisioned = (
 ) => reply.code(status).header('etag', formatEtag(body.revision)).send(body);
 
 /** Handlers only parse, authenticate, call one service method and map the result (server rules). */
-export function registerShoppingRoutes(app: FastifyInstance, service: ShoppingService): void {
+export function registerShoppingRoutes(
+  app: FastifyInstance,
+  service: ShoppingService,
+  streamOptions: ListStreamOptions,
+): void {
   const categories = `${API_PREFIX}/shopping-categories`;
   const lists = `${API_PREFIX}/shopping-lists`;
   const items = `${API_PREFIX}/shopping-items`;
@@ -70,6 +76,15 @@ export function registerShoppingRoutes(app: FastifyInstance, service: ShoppingSe
     const { id } = ShoppingListParams.parse(request.params);
     const snapshot = await service.getSnapshot(actor, id);
     return reply.header('cache-control', 'no-store').send(snapshot);
+  });
+
+  // SSE: `{listId, seq}` only; clients refetch the snapshot above (ADR-004, AC-08).
+  const streams = createListStreams(service, streamOptions);
+  app.addHook('preClose', async () => streams.closeAll());
+  app.get(`${lists}/:id/events`, async (request, reply) => {
+    const actor = requireActor(request);
+    const { id } = ShoppingListParams.parse(request.params);
+    return streams.open(reply, actor, id);
   });
 
   app.patch(`${lists}/:id`, async (request, reply) => {

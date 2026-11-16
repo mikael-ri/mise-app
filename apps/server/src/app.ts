@@ -5,7 +5,7 @@ import type { AuthRouteOptions } from './auth/index.js';
 import { registerRecipeRoutes } from './recipes/index.js';
 import type { RecipesService } from './recipes/index.js';
 import { registerShoppingRoutes } from './shopping/index.js';
-import type { ShoppingService } from './shopping/index.js';
+import type { ListStreamOptions, ShoppingService } from './shopping/index.js';
 import { registerHealthRoutes } from './health/index.js';
 import type { ReadinessCheck } from './health/index.js';
 import { buildLoggerOptions, generateCorrelationId, registerPlatform } from './platform/index.js';
@@ -21,8 +21,8 @@ export interface AppOptions {
   auth: AuthRouteOptions | null;
   /** Recipe routes; omitted only in tests that do not need them. */
   recipes?: RecipesService;
-  /** Shopping routes; omitted only in tests that do not need them. */
-  shopping?: ShoppingService;
+  /** Shopping routes and their SSE streams; omitted only in tests that do not need them. */
+  shopping?: { service: ShoppingService; streams: ListStreamOptions };
 }
 
 // Fastify's types omit the hop-count form, so express it as a trust function (trust the first n hops).
@@ -42,7 +42,9 @@ export function buildApp(options: AppOptions): FastifyInstance {
   registerPlatform(app, options.config);
   if (options.auth !== null) registerAuth(app, options.auth);
   if (options.recipes) registerRecipeRoutes(app, options.recipes);
-  if (options.shopping) registerShoppingRoutes(app, options.shopping);
+  if (options.shopping) {
+    registerShoppingRoutes(app, options.shopping.service, options.shopping.streams);
+  }
   registerHealthRoutes(app, options.checkReady);
   return app;
 }
