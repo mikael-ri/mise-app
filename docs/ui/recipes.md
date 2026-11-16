@@ -2,6 +2,8 @@
 
 Covers FR-01 to FR-07, AC-02, AC-03, AC-14, AC-18. Not in Milestone A: import, photos, cooking history, ratings, tested-status filters, favourites.
 
+> Note (A12, project owner): member names such as "Anna" and "Ankka" in these wireframes are examples only. Recipe data carries no member names, so the real UI shows "You" for the signed-in member and "Another household member" for anyone else (conflict dialog: "Another household member saved a newer version while you were editing.").
+
 ## R1. Recipe list and search `/recipes`
 
 ```
@@ -166,3 +168,14 @@ Behaviour:
 - **View** opens `/recipes/:id/versions/:versionId`: the R2 layout, read-only, with a banner "You are viewing v2 (not current)" and `[ Restore this version ]`. The servings converter still works.
 - **Restore** confirms ("Restore v2? This creates a new version v4 with v2's content. Nothing is deleted.") and then shows the new current version.
 - Version comparison and diff are out of Milestone A.
+
+## Behaviours added in A12 (2026-11-16)
+
+Rules not in the wireframes above:
+- **Archived recipes are read-only.** Detail, history and old-version views show a note "Restore this recipe to edit it" with a Restore action; Edit, Archive and Restore-version stay unavailable until restored.
+- **List.** "Show archived" is a checkbox; archived items appear in the same list with a text badge "Archived" and a Restore action. Cards show total time and yield ("35 min · 4 serv.") when the summary has them, nothing otherwise.
+- **New recipe.** Starts with an empty yield quantity and the unit "servings"; blank ingredient or step rows are ignored on save.
+- **Scaling hint.** `~` and "Rounded for practicality" appear only when domain scaling reports a rounding warning.
+- **Draft persistence.** While editing (create and edit) the draft is saved to localStorage, debounced, keyed by recipe id or `new`, together with the base revision. Recipe text only; every storage access is guarded. It is restored with a notice and "Discard draft"; if the recipe changed since, the draft is kept with a "recipe has changed" notice. Cleared after a successful save, on Discard, and on leaving after the confirmation. "Open latest version" stores the draft the same way and detail shows "Continue editing".
+- **Drafts and sign-out.** Stored drafts carry a format version and are validated on load (anything invalid is dropped). Signing out or a 401 session end clears all stored drafts.
+- **Authors.** "You" for the signed-in member, otherwise "Another household member".

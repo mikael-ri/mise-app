@@ -54,6 +54,8 @@ export interface RequestOptions<S extends z.ZodType | undefined> {
   /** Absolute path starting with `/api/`. Same-origin only. */
   path: string;
   body?: unknown;
+  /** Extra request headers (e.g. `If-Match`, `Idempotency-Key`). Cannot override accept or the CSRF token. */
+  headers?: Record<string, string>;
   /** Response schema; omit for 204 responses. */
   schema?: S;
 }
@@ -95,10 +97,11 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
       method = 'GET',
       path,
       body,
+      headers: extraHeaders,
       schema,
     }: RequestOptions<S>) {
       if (!path.startsWith('/api/')) throw new Error('api-client: same-origin /api/ paths only');
-      const headers: Record<string, string> = { accept: 'application/json' };
+      const headers: Record<string, string> = { ...extraHeaders, accept: 'application/json' };
       if (method !== 'GET') {
         const csrf = options.getCsrfToken();
         if (csrf !== undefined) headers[CSRF_HEADER] = csrf;

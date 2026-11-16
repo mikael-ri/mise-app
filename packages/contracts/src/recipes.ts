@@ -175,6 +175,10 @@ export const RecipeSummary = z
     archivedAt: Instant.nullable(),
     revision: Revision,
     updatedAt: Instant,
+    /** Prep + cook minutes of the current version (one unknown counts as 0); null when both unknown. */
+    totalMinutes: z.int().min(0).nullable(),
+    /** Yield of the current version, passed through as stored. */
+    yield: RecipeYieldV1.nullable(),
   })
   .meta({ id: 'RecipeSummary' });
 export type RecipeSummary = z.infer<typeof RecipeSummary>;

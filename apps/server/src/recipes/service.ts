@@ -318,6 +318,8 @@ export function createRecipesService(pool: Pool): RecipesService {
         archivedAt: r.archivedAt ? iso(r.archivedAt) : null,
         revision: r.revision,
         updatedAt: iso(r.updatedAt),
+        totalMinutes: r.totalMinutes,
+        yield: r.yield,
       }));
       return RecipeList.parse({ items, nextOffset: rows.length > limit ? offset + limit : null });
     },

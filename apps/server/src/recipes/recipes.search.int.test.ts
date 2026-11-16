@@ -280,6 +280,48 @@ describe('A10 filters and scoping (FR-02, FR-07)', () => {
     expect(await searchIds('q=aikatesti&maxTime=90')).toContain(slow.id);
   });
 
+  it('FR-02: summaries carry totalMinutes and yield of the current version', async () => {
+    const find = async (q: string, id: string) =>
+      (await search(`q=${encodeURIComponent(q)}&includeArchived=true`)).items.find(
+        (i) => i.id === id,
+      );
+    const both = await make('Summatesti kumpikin', { prep: 10, cook: 25, tags: ['summatag'] });
+    const prep = await make('Summatesti vainprep', { prep: 12, cook: null });
+    const cook = await make('Summatesti vaincook', { prep: null, cook: 40 });
+    const none = await make('Summatesti ei aikaa', { prep: null, cook: null });
+    const fi = await make('Pähkinäpiirakka äänekäs', { prep: 0, cook: 0 });
+    const arch = await make('Summatesti arkistoitu', { prep: 5, cook: 5 });
+    await service.patchRecipe(actor(h.a), arch.id, arch.revision, { archived: true });
+    expect((await find('summatesti', both.id))?.totalMinutes).toBe(35);
+    expect((await find('summatesti', prep.id))?.totalMinutes).toBe(12);
+    expect((await find('summatesti', cook.id))?.totalMinutes).toBe(40);
+    expect((await find('summatesti', none.id))?.totalMinutes).toBeNull();
+    expect((await find('summatesti', arch.id))?.totalMinutes).toBe(10);
+    const fiHit = await find('pähkinäpiirakka', fi.id);
+    expect(fiHit?.totalMinutes).toBe(0);
+    expect(fiHit?.yield).toEqual({ quantity: '4', unit: 'servings' });
+    // no-q (title listing) path returns the same fields
+    const listed = (await search('tags=summatag')).items.find((i) => i.id === both.id);
+    expect(listed?.totalMinutes).toBe(35);
+    expect(listed?.yield).toEqual({ quantity: '4', unit: 'servings' });
+  });
+
+  it('FR-02: summary yield and time follow the new version after an edit', async () => {
+    const r = await make('Summaversio', { prep: 90, cook: 90 });
+    await service.patchRecipe(actor(h.a), r.id, r.revision, {
+      content: {
+        ...soupContent(),
+        yield: { quantity: '3/2', unit: 'l' },
+        prep_minutes: 5,
+        cook_minutes: null,
+      },
+      changeReason: 'muutos',
+    });
+    const hit = (await search('q=summaversio')).items.find((i) => i.id === r.id);
+    expect(hit?.totalMinutes).toBe(5);
+    expect(hit?.yield).toEqual({ quantity: '3/2', unit: 'l' });
+  });
+
   it('uses the new version’s time after an edit (current version only)', async () => {
     const r = await make('Versiotesti', { prep: 90, cook: 90 });
     expect(await searchIds('q=versiotesti&maxTime=20')).not.toContain(r.id);

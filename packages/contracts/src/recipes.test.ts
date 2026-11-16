@@ -4,6 +4,7 @@ import {
   PatchRecipeRequest,
   RecipeContentV1,
   RecipeSearchQuery,
+  RecipeSummary,
 } from './recipes.js';
 
 const G1 = '00000000-0000-4000-8000-000000000001';
@@ -201,5 +202,35 @@ describe('RecipeSearchQuery (FR-02, FR-07)', () => {
     { householdId: G1 },
   ])('rejects %o', (value) => {
     expect(RecipeSearchQuery.safeParse(value).success).toBe(false);
+  });
+});
+
+describe('RecipeSummary (FR-02)', () => {
+  const base = {
+    id: '00000000-0000-4000-8000-0000000000a1',
+    title: 'Porkkanakeitto',
+    tags: [],
+    archivedAt: null,
+    revision: 1,
+    updatedAt: '2026-01-01T10:00:00.000Z',
+  };
+  it('accepts total minutes and yield, or nulls', () => {
+    expect(
+      RecipeSummary.safeParse({
+        ...base,
+        totalMinutes: 35,
+        yield: { quantity: '4', unit: 'annosta' },
+      }).success,
+    ).toBe(true);
+    expect(RecipeSummary.safeParse({ ...base, totalMinutes: null, yield: null }).success).toBe(
+      true,
+    );
+  });
+  it('requires both fields and rejects fractional or negative minutes', () => {
+    expect(RecipeSummary.safeParse(base).success).toBe(false);
+    expect(RecipeSummary.safeParse({ ...base, totalMinutes: 1.5, yield: null }).success).toBe(
+      false,
+    );
+    expect(RecipeSummary.safeParse({ ...base, totalMinutes: -1, yield: null }).success).toBe(false);
   });
 });

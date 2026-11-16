@@ -4,6 +4,7 @@ import { vi } from 'vitest';
 import { AppProviders, createQueryClient } from '../app/providers.js';
 import { createTestRouter } from '../app/router.js';
 import { ApiError } from '../lib/api-client.js';
+import type { RecipesApi } from '../features/recipes/recipes-api.js';
 import type { AuthApi } from '../lib/auth-api.js';
 import { ME } from './fixtures.js';
 
@@ -25,11 +26,19 @@ export function fakeApi(overrides: Partial<AuthApi> = {}): AuthApi {
   };
 }
 
-export function renderApp(entry: string, api: AuthApi | 'real' = fakeApi()) {
+export function renderApp(
+  entry: string,
+  api: AuthApi | 'real' = fakeApi(),
+  recipesApi?: RecipesApi,
+) {
   const queryClient = createQueryClient();
   const router = createTestRouter([entry]);
   const view = render(
-    <AppProviders queryClient={queryClient} {...(api === 'real' ? {} : { api })}>
+    <AppProviders
+      queryClient={queryClient}
+      {...(api === 'real' ? {} : { api })}
+      {...(recipesApi === undefined ? {} : { recipesApi })}
+    >
       <RouterProvider router={router} />
     </AppProviders>,
   );

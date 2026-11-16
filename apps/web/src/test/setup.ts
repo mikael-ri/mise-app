@@ -20,3 +20,4 @@ Element.prototype.scrollIntoView ??= () => {};
 // axe probes canvas for colour contrast; jsdom logs a noisy not-implemented error otherwise.
 HTMLCanvasElement.prototype.getContext = (() =>
   null) as typeof HTMLCanvasElement.prototype.getContext;
+window.scrollTo = (() => {}) as typeof window.scrollTo;

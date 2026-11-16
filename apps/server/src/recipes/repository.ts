@@ -28,6 +28,12 @@ export interface VersionRow {
   createdAt: Date;
 }
 
+export interface RecipeSummaryRow extends RecipeRow {
+  /** prep + cook minutes of the current version, null when both are unknown. */
+  totalMinutes: number | null;
+  yield: { quantity: string; unit: string } | null;
+}
+
 export interface RecipeWithVersionRow extends RecipeRow {
   version: VersionRow;
 }
@@ -42,6 +48,21 @@ const RECIPE_COLUMNS = `r.id, r.title, r.description, r.tags, r.general_notes, r
   r.source_url, r.archived_at, r.revision, r.created_at, r.updated_at`;
 const VERSION_COLUMNS = `v.id AS v_id, v.version_no, v.schema_version, v.content,
   v.created_by_member_id AS v_member, v.change_reason, v.created_at AS v_created_at`;
+
+/** Prep + cook minutes of the current version (`v`); one unknown counts as 0. Shared by maxTime and display. */
+const TOTAL_MINUTES_SQL = `coalesce((v.content ->> 'prep_minutes')::int, 0)
+         + coalesce((v.content ->> 'cook_minutes')::int, 0)`;
+const SUMMARY_COLUMNS = `${RECIPE_COLUMNS},
+  CASE WHEN v.content ->> 'prep_minutes' IS NULL AND v.content ->> 'cook_minutes' IS NULL
+       THEN NULL ELSE ${TOTAL_MINUTES_SQL} END AS total_minutes,
+  v.content #>> '{yield,quantity}' AS yield_quantity, v.content #>> '{yield,unit}' AS yield_unit`;
+const SUMMARY_JOIN = 'JOIN recipe_versions v ON v.recipe_id = r.id AND v.id = r.current_version_id';
+
+interface RawSummary extends RawRecipe {
+  total_minutes: number | null;
+  yield_quantity: string | null;
+  yield_unit: string | null;
+}
 
 interface RawRecipe {
   id: string;
@@ -328,17 +349,14 @@ export async function searchRecipes(
   q: Queryable,
   householdId: string,
   p: RecipeSearchParams,
-): Promise<RecipeRow[]> {
+): Promise<RecipeSummaryRow[]> {
   const params: unknown[] = [];
   const bind = (v: unknown): string => `$${params.push(v) + 1}`; // $1 is the household
   const filters: string[] = [];
   if (!p.includeArchived) filters.push('r.archived_at IS NULL');
   if (p.tags.length > 0) filters.push(`r.tags @> ${bind(p.tags)}::text[]`);
   if (p.maxTime !== undefined) {
-    filters.push(
-      `coalesce((v.content ->> 'prep_minutes')::int, 0)
-         + coalesce((v.content ->> 'cook_minutes')::int, 0) <= ${bind(p.maxTime)}`,
-    );
+    filters.push(`${TOTAL_MINUTES_SQL} <= ${bind(p.maxTime)}`);
   }
   const where = ['r.household_id = $1', ...filters].join(' AND ');
   const base = `base AS NOT MATERIALIZED (
@@ -350,7 +368,7 @@ export async function searchRecipes(
   let sql: string;
   if (p.words.length === 0) {
     sql = `WITH ${base}
-      SELECT ${RECIPE_COLUMNS} FROM base JOIN recipes r ON r.id = base.id
+      SELECT ${SUMMARY_COLUMNS} FROM base JOIN recipes r ON r.id = base.id ${SUMMARY_JOIN}
        ORDER BY lower(r.title), r.id LIMIT ${bind(p.limit)} OFFSET ${bind(p.offset)}`;
   } else {
     sql = `WITH ${base},
@@ -384,10 +402,17 @@ export async function searchRecipes(
       hits AS (
         SELECT id, 0 AS tier, score FROM strict
         UNION ALL SELECT id, 1, score FROM fuzzy)
-      SELECT ${RECIPE_COLUMNS} FROM hits JOIN recipes r ON r.id = hits.id
+      SELECT ${SUMMARY_COLUMNS} FROM hits JOIN recipes r ON r.id = hits.id ${SUMMARY_JOIN}
        ORDER BY hits.tier, hits.score DESC, lower(r.title), r.id
        LIMIT ${bind(p.limit)} OFFSET ${bind(p.offset)}`;
   }
-  const { rows } = await scopedQuery<RawRecipe>(q, householdId, sql, params);
-  return rows.map(toRecipe);
+  const { rows } = await scopedQuery<RawSummary>(q, householdId, sql, params);
+  return rows.map((r) => ({
+    ...toRecipe(r),
+    totalMinutes: r.total_minutes,
+    yield:
+      r.yield_quantity !== null && r.yield_unit !== null
+        ? { quantity: r.yield_quantity, unit: r.yield_unit }
+        : null,
+  }));
 }

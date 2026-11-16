@@ -34,6 +34,21 @@ describe('api client (NFR-04, FR-30)', () => {
     }
   });
 
+  it('sends extra headers (If-Match, Idempotency-Key) without overriding accept or CSRF', async () => {
+    const { client, fetchImpl } = setup(json({ ok: true }));
+    await client.request({
+      method: 'PATCH',
+      path: '/api/v1/x',
+      body: {},
+      schema: Thing,
+      headers: { 'If-Match': '"3"', 'X-CSRF-Token': 'evil', accept: 'text/html' },
+    });
+    const sent = sentHeaders(fetchImpl);
+    expect(sent['If-Match']).toBe('"3"');
+    expect(sent['X-CSRF-Token']).toBe('tok');
+    expect(sent['accept']).toBe('application/json');
+  });
+
   it('is same-origin only: relative URL, same-origin credentials, rejects other paths', async () => {
     const { client, fetchImpl } = setup(json({ ok: true }));
     await client.request({ path: '/api/v1/x', schema: Thing });

@@ -1,5 +1,6 @@
 import type { MeResponse } from '@mise/contracts';
 import type { QueryClient } from '@tanstack/react-query';
+import { clearAllDrafts } from '../features/recipes/draft-storage.js';
 
 export const ME_KEY = ['auth', 'me'] as const;
 export const SESSION_END_KEY = ['auth', 'session-end'] as const;
@@ -14,6 +15,8 @@ export type MeState = MeResponse | null | undefined;
  * A 401 before any session was known (first visit) is not a "session ended" event.
  */
 export function endSession(client: QueryClient, reason: SessionEndReason): void {
+  // Unsaved recipe drafts must not outlive the session on a shared device.
+  clearAllDrafts();
   const hadSession = client.getQueryData<MeState>(ME_KEY) != null;
   // Keep the observed `me` query; drop everything else (devices, later recipes and lists).
   client.removeQueries({ predicate: (query) => query.queryKey.join('/') !== ME_KEY.join('/') });

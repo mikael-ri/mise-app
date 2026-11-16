@@ -8,6 +8,7 @@ import { SettingsPage } from '../features/auth/settings-page.js';
 import { SignInPage } from '../features/auth/signin-page.js';
 import { t } from '../i18n/index.js';
 import type { MessageKey } from '../i18n/index.js';
+import { RouteError } from '../components/route-error.js';
 import { RequireAuth } from './require-auth.js';
 import { Shell } from './shell.js';
 
@@ -17,7 +18,7 @@ function LoginRedirect() {
   return <Navigate replace to={`/signin${search}`} />;
 }
 
-/** Tab target only; the real screens arrive in A12 and A15. */
+/** Tab target only; the shopping screens arrive in A15. */
 function PlaceholderPage({ titleKey }: { titleKey: MessageKey }) {
   return <PageHeader title={t(titleKey)} />;
 }
@@ -45,7 +46,53 @@ export const routes: RouteObject[] = [
         element: <Shell />,
         children: [
           { path: '/', element: <Navigate replace to="/recipes" /> },
-          { path: '/recipes', element: <PlaceholderPage titleKey="nav.recipes" /> },
+          {
+            errorElement: <RouteError />,
+            children: [
+              {
+                path: '/recipes',
+                lazy: () =>
+                  import('../features/recipes/recipe-list-page.js').then((m) => ({
+                    Component: m.RecipeListPage,
+                  })),
+              },
+              {
+                path: '/recipes/new',
+                lazy: () =>
+                  import('../features/recipes/recipe-form-page.js').then((m) => ({
+                    element: <m.RecipeFormPage mode="create" />,
+                  })),
+              },
+              {
+                path: '/recipes/:id',
+                lazy: () =>
+                  import('../features/recipes/recipe-detail-page.js').then((m) => ({
+                    Component: m.RecipeDetailPage,
+                  })),
+              },
+              {
+                path: '/recipes/:id/edit',
+                lazy: () =>
+                  import('../features/recipes/recipe-form-page.js').then((m) => ({
+                    element: <m.RecipeFormPage mode="edit" />,
+                  })),
+              },
+              {
+                path: '/recipes/:id/versions',
+                lazy: () =>
+                  import('../features/recipes/history-page.js').then((m) => ({
+                    Component: m.RecipeHistoryPage,
+                  })),
+              },
+              {
+                path: '/recipes/:id/versions/:versionId',
+                lazy: () =>
+                  import('../features/recipes/version-page.js').then((m) => ({
+                    Component: m.RecipeVersionPage,
+                  })),
+              },
+            ],
+          },
           { path: '/shopping', element: <PlaceholderPage titleKey="nav.shopping" /> },
           { path: '/settings', element: <SettingsPage /> },
           { path: '/settings/devices', element: <DevicesPage /> },
