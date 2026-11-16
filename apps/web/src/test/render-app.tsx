@@ -5,6 +5,7 @@ import { AppProviders, createQueryClient } from '../app/providers.js';
 import { createTestRouter } from '../app/router.js';
 import { ApiError } from '../lib/api-client.js';
 import type { RecipesApi } from '../features/recipes/recipes-api.js';
+import type { ShoppingApi } from '../features/shopping/shopping-api.js';
 import type { AuthApi } from '../lib/auth-api.js';
 import { ME } from './fixtures.js';
 
@@ -30,6 +31,7 @@ export function renderApp(
   entry: string,
   api: AuthApi | 'real' = fakeApi(),
   recipesApi?: RecipesApi,
+  shoppingApi?: ShoppingApi,
 ) {
   const queryClient = createQueryClient();
   const router = createTestRouter([entry]);
@@ -38,6 +40,7 @@ export function renderApp(
       queryClient={queryClient}
       {...(api === 'real' ? {} : { api })}
       {...(recipesApi === undefined ? {} : { recipesApi })}
+      {...(shoppingApi === undefined ? {} : { shoppingApi })}
     >
       <RouterProvider router={router} />
     </AppProviders>,

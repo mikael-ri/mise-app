@@ -5,3 +5,4 @@ Follow-ups that belong to a later card. Each item names the card or feature that
 | Item | Pick up in | Origin |
 |---|---|---|
 | Give system shopping categories a stable key and a label per language. The category-name duplicate check (`409 category_name_taken`) must compare against all of those labels, not only the stored fallback name. | The card that introduces UI translations (translated UI, P1) | A13; ADR-015 addendum "correction write rule and category names"; `docs/ui/conventions.md` §7 |
+| Manage categories screen (rename and reorder household categories via the existing A13 create/rename endpoints; wireframe S5 in `docs/ui/shopping.md`). Low priority. Add hide or archive if the category list gets cluttered; that needs a contract change first (no hide or delete exists today). | A later shopping UI card, low priority | A15 (owner decision: skipped, item sheet category select is enough) |

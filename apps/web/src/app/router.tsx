@@ -2,12 +2,10 @@ import { createBrowserRouter, createMemoryRouter, Link, Navigate, useLocation } 
 import type { RouteObject } from 'react-router';
 import { buttonClass } from '../components/button.js';
 import { EmptyState } from '../components/empty-state.js';
-import { PageHeader } from '../components/page-header.js';
 import { DevicesPage } from '../features/auth/devices-page.js';
 import { SettingsPage } from '../features/auth/settings-page.js';
 import { SignInPage } from '../features/auth/signin-page.js';
 import { t } from '../i18n/index.js';
-import type { MessageKey } from '../i18n/index.js';
 import { RouteError } from '../components/route-error.js';
 import { RequireAuth } from './require-auth.js';
 import { Shell } from './shell.js';
@@ -16,11 +14,6 @@ import { Shell } from './shell.js';
 function LoginRedirect() {
   const { search } = useLocation();
   return <Navigate replace to={`/signin${search}`} />;
-}
-
-/** Tab target only; the shopping screens arrive in A15. */
-function PlaceholderPage({ titleKey }: { titleKey: MessageKey }) {
-  return <PageHeader title={t(titleKey)} />;
 }
 
 function NotFoundPage() {
@@ -91,9 +84,22 @@ export const routes: RouteObject[] = [
                     Component: m.RecipeVersionPage,
                   })),
               },
+              {
+                path: '/shopping',
+                lazy: () =>
+                  import('../features/shopping/lists-page.js').then((m) => ({
+                    Component: m.ShoppingListsPage,
+                  })),
+              },
+              {
+                path: '/shopping/:listId',
+                lazy: () =>
+                  import('../features/shopping/list-page.js').then((m) => ({
+                    Component: m.ShoppingListPage,
+                  })),
+              },
             ],
           },
-          { path: '/shopping', element: <PlaceholderPage titleKey="nav.shopping" /> },
           { path: '/settings', element: <SettingsPage /> },
           { path: '/settings/devices', element: <DevicesPage /> },
           { path: '*', element: <NotFoundPage /> },
