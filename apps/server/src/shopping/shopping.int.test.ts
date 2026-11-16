@@ -519,36 +519,82 @@ describe('FR-36: categories, Other fallback, household corrections by normalized
     expect(codes.at(-1)).toBe('other');
   });
 
-  it('an explicit category on add is persisted as the correction for the key', async () => {
+  const overrideOf = async (normalizedKey: string) =>
+    (
+      await pool.query<{ c: string | null; r: number }>(
+        `SELECT shopping_category_id AS c, revision AS r FROM household_ingredient_settings
+          WHERE household_id = $1 AND normalized_key = $2`,
+        [h.a.householdId, normalizedKey],
+      )
+    ).rows[0];
+
+  it('FR-36: an explicit category on add that differs from the default becomes the correction', async () => {
     const list = await newList();
     const dairy = await systemCategory('dairy');
     await addItem(list.id, 'Kauramaito', { categoryId: dairy.id });
+    expect(await overrideOf('kauramaito')).toMatchObject({ c: dairy.id, r: 1 });
     const next = await addItem(list.id, '  KAURAMAITO ');
     expect(next.categoryId).toBe(dairy.id);
   });
 
-  it('recategorizing persists the override; null resets the item to Other and clears it', async () => {
+  it('FR-36: choosing the default category writes nothing (on add and on edit)', async () => {
+    const list = await newList();
+    const other = await systemCategory('other');
+    const item = await addItem(list.id, 'Pyykkietikka', { categoryId: other.id });
+    expect(item.categoryId).toBe(other.id);
+    // A client that re-sends the current category with every edit never creates an override.
+    const edited = await service.editItem(A(), item.id, 1, {
+      quantityText: '1 l',
+      categoryId: other.id,
+    });
+    expect(edited.originalQuantityText).toBe('1 l');
+    expect(await overrideOf('pyykkietikka')).toBeUndefined();
+  });
+
+  it('FR-36: recategorizing to a different category replaces the correction; re-sending it writes nothing', async () => {
     const list = await newList();
     const other = await systemCategory('other');
     const veg = await systemCategory('vegetables');
+    const fruit = await systemCategory('fruit');
     const item = await addItem(list.id, 'Kesäkurpitsa');
     expect(item.categoryId).toBe(other.id);
 
     const moved = await service.editItem(A(), item.id, 1, { categoryId: veg.id });
     expect(moved.categoryId).toBe(veg.id);
+    expect(await overrideOf('kesäkurpitsa')).toMatchObject({ c: veg.id, r: 1 });
     expect((await addItem(list.id, 'kesäkurpitsa')).categoryId).toBe(veg.id);
-    const row = (
-      await pool.query<{ c: string; r: number }>(
-        `SELECT shopping_category_id AS c, revision AS r FROM household_ingredient_settings
-          WHERE household_id = $1 AND normalized_key = 'kesäkurpitsa'`,
-        [h.a.householdId],
-      )
-    ).rows[0]!;
-    expect(row.c).toBe(veg.id);
 
-    const reset = await service.editItem(A(), item.id, 2, { categoryId: null });
-    expect(reset.categoryId).toBe(other.id);
-    expect((await addItem(list.id, 'Kesäkurpitsa')).categoryId).toBe(other.id);
+    // Same category again (now the default, via the override): no write, revision unchanged.
+    await service.editItem(A(), item.id, 2, { note: 'iso', categoryId: veg.id });
+    expect(await overrideOf('kesäkurpitsa')).toMatchObject({ c: veg.id, r: 1 });
+
+    // A different one replaces it.
+    await service.editItem(A(), item.id, 3, { categoryId: fruit.id });
+    expect(await overrideOf('kesäkurpitsa')).toMatchObject({ c: fruit.id, r: 2 });
+  });
+
+  it('FR-36: categoryId null puts the item in its default category and never changes the correction', async () => {
+    const list = await newList();
+    const veg = await systemCategory('vegetables');
+    const dairy = await systemCategory('dairy');
+    const first = await addItem(list.id, 'Parsa', { categoryId: veg.id });
+    const second = await addItem(list.id, 'Parsa');
+    const moved = await service.editItem(A(), second.id, 1, { categoryId: dairy.id });
+    expect(moved.categoryId).toBe(dairy.id);
+    expect(await overrideOf('parsa')).toMatchObject({ c: dairy.id, r: 2 });
+    const reset = await service.editItem(A(), first.id, 1, { categoryId: null });
+    expect(reset.categoryId).toBe(dairy.id); // the current default for "parsa"
+    expect(await overrideOf('parsa')).toMatchObject({ c: dairy.id, r: 2 });
+  });
+
+  it('FR-36: renaming an item keeps its category', async () => {
+    const list = await newList();
+    const veg = await systemCategory('vegetables');
+    const fruit = await systemCategory('fruit');
+    await addItem(list.id, 'Omena', { categoryId: fruit.id }); // correction: omena -> fruit
+    const item = await addItem(list.id, 'Porkkana', { categoryId: veg.id });
+    const renamed = await service.editItem(A(), item.id, 1, { name: 'Omena' });
+    expect(renamed).toMatchObject({ normalizedKey: 'omena', categoryId: veg.id });
   });
 
   it('household corrections do not leak to another household', async () => {
@@ -576,7 +622,14 @@ describe('FR-36: categories, Other fallback, household corrections by normalized
       idem: key(),
     });
     expect(dup.statusCode).toBe(409);
-    expect(errorCode(dup)).toBe('conflict');
+    expect(errorCode(dup)).toBe('category_name_taken');
+
+    // System default names are taken too, ignoring case and spaces.
+    for (const name of ['other', ' OTHER ', 'Dairy']) {
+      const sys = await api('POST', '/shopping-categories', { body: { name }, idem: key() });
+      expect(sys.statusCode).toBe(409);
+      expect(errorCode(sys)).toBe('category_name_taken');
+    }
 
     // Another household may use the same name.
     const inB = await api('POST', '/shopping-categories', {
@@ -617,6 +670,11 @@ describe('FR-36: categories, Other fallback, household corrections by normalized
       body: { name: 'herkut' },
     });
     expect(clash.statusCode).toBe(409);
+    expect(errorCode(clash)).toBe('category_name_taken');
+    const sysClash = await api('PATCH', `/shopping-categories/${cat.id}`, {
+      body: { name: 'household supplies' },
+    });
+    expect(errorCode(sysClash)).toBe('category_name_taken');
     const ownName = await api('PATCH', `/shopping-categories/${cat.id}`, {
       body: { name: 'JUOMAT JA MEHUT' },
     });

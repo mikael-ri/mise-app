@@ -134,9 +134,7 @@ const categoryNotFound = () => new AppError('not_found', 'shopping category not 
 const staleRevision = (current: number) =>
   new AppError('stale_revision', 'item was changed by someone else', { currentRevision: current });
 const nameTaken = () =>
-  new AppError('conflict', 'a category with this name already exists', {
-    reason: 'category_name_taken',
-  });
+  new AppError('category_name_taken', 'a category with this name already exists');
 
 /** Original quantity text is always kept; amounts only when the text parses exactly (hard rule 3). */
 function quantityColumns(text: string | null) {
@@ -159,6 +157,30 @@ export function createShoppingService(pool: Pool): ShoppingService {
   /** A category the household may use: a system default or its own (ADR-002 addendum, item 4). */
   async function assertUsableCategory(q: Queryable, actor: ShoppingActor, id: string) {
     if (!(await repo.getVisibleCategory(q, actor.householdId, id))) throw categoryNotFound();
+  }
+
+  /**
+   * The item's category and, when needed, the household correction (FR-36, ADR-015 addendum).
+   * The default for a name is what the categorizer returns now, including any existing override.
+   * - no choice (`undefined`) or `null`: the default; nothing is written.
+   * - a choice equal to the default: nothing is written, so re-sending the current category with
+   *   every edit never creates or pins an override.
+   * - a different choice: written as the override for the key (replacing any earlier one).
+   * Resetting a correction to the system default is a separate action, never a side effect here.
+   */
+  async function resolveCategory(
+    tx: Tx,
+    actor: ShoppingActor,
+    normalizedKey: string | null,
+    chosen: string | null | undefined,
+  ): Promise<string> {
+    if (chosen !== undefined && chosen !== null) await assertUsableCategory(tx, actor, chosen);
+    const fallback = await categorize(tx, { householdId: actor.householdId, normalizedKey });
+    if (chosen === undefined || chosen === null) return fallback;
+    if (chosen !== fallback && normalizedKey !== null) {
+      await repo.upsertCategoryOverride(tx, actor.householdId, normalizedKey, chosen);
+    }
+    return chosen;
   }
 
   async function loadList(actor: ShoppingActor, id: string, q: Queryable = pool) {
@@ -320,16 +342,7 @@ export function createShoppingService(pool: Pool): ShoppingService {
         async (tx) => {
           await lockActiveList(tx, actor, listId);
           const normalizedKey = keyFor(input.name);
-          let categoryId: string;
-          if (input.categoryId !== undefined) {
-            await assertUsableCategory(tx, actor, input.categoryId);
-            categoryId = input.categoryId;
-            if (normalizedKey !== null) {
-              await repo.upsertCategoryOverride(tx, actor.householdId, normalizedKey, categoryId);
-            }
-          } else {
-            categoryId = await categorize(tx, { householdId: actor.householdId, normalizedKey });
-          }
+          const categoryId = await resolveCategory(tx, actor, normalizedKey, input.categoryId);
           const id = await repo.insertUserItem(tx, actor.householdId, listId, {
             name: input.name,
             normalizedKey,
@@ -375,21 +388,11 @@ export function createShoppingService(pool: Pool): ShoppingService {
             : quantityColumns(input.quantityText);
         const note = input.note === undefined ? cur.note : input.note;
 
-        let categoryId = cur.categoryId;
-        if (input.categoryId !== undefined) {
-          // Recategorizing persists the household's correction for this key (FR-36). `null`
-          // means "no specific category": the item falls back to Other and the correction is cleared.
-          if (input.categoryId !== null) await assertUsableCategory(tx, actor, input.categoryId);
-          categoryId = input.categoryId ?? (await repo.getOtherCategoryId(tx, actor.householdId));
-          if (normalizedKey !== null) {
-            await repo.upsertCategoryOverride(
-              tx,
-              actor.householdId,
-              normalizedKey,
-              input.categoryId,
-            );
-          }
-        }
+        // A rename keeps the category: it may have been chosen on purpose (owner decision, A13).
+        const categoryId =
+          input.categoryId === undefined
+            ? cur.categoryId
+            : await resolveCategory(tx, actor, normalizedKey, input.categoryId);
 
         const next: repo.ItemDetails = { name, normalizedKey, ...quantity, note, categoryId };
         const unchanged =

@@ -262,11 +262,12 @@ export const ROUTES: readonly RouteDef[] = [
     method: 'post',
     path: '/shopping-categories',
     tag: 'shopping',
-    summary: 'Create a household category (name unique per household, ignoring case)',
+    summary:
+      'Create a household category (name unique among system and household categories, ignoring case)',
     auth: true,
     body: CreateShoppingCategoryRequest,
     idempotencyKey: true,
-    extraErrors: ['conflict'],
+    extraErrors: ['category_name_taken'],
     responses: { 201: { description: 'Created (or replayed)', schema: ShoppingCategory } },
   },
   {
@@ -278,7 +279,7 @@ export const ROUTES: readonly RouteDef[] = [
     auth: true,
     params: ShoppingCategoryParams,
     body: PatchShoppingCategoryRequest,
-    extraErrors: ['conflict', 'forbidden'],
+    extraErrors: ['category_name_taken', 'forbidden'],
     responses: { 200: { description: 'Updated', schema: ShoppingCategory } },
   },
   {

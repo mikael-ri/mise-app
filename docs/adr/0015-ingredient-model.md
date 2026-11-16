@@ -39,3 +39,16 @@ Spike results and amendments go in an *Addendum* section below, never by editing
 - **Household categories.** Households can create, rename and reorder their own categories. System defaults are read-only. Names are unique per household, ignoring case (`409`). Category PATCH is deliberately last-write-wins without `If-Match`. Ordering uses gapped `sortOrder` values, so moving a category is one PATCH of one row. There is no delete in A.
 **Consequences:** Milestone D (generation) must insert the keyword-dictionary step between the household override and `Other`. A13's final report flags this. The milestone plan should carry the item.
 **Still to verify:** dictionary coverage and its key normalization once the ingredient dictionary replaces the Milestone A lowercase+trim key.
+
+## Addendum (2026-11-16): correction write rule and category names (card A13, owner follow-up)
+**Evidence:** `apps/server/src/shopping/service.ts` (`resolveCategory`), `apps/server/src/shopping/shopping.int.test.ts` ("FR-36: ..." cases).
+**Finding:** The previous addendum wrote an override for every explicit category. A client that re-sends the current category with each edit would pile up overrides and pin names, so later categorizer improvements would never apply to them.
+**Decision / change (owner):** supersedes the "Corrections" bullet of the previous addendum.
+- **Default.** The default for a name is what the categorizer returns now, including any existing override.
+- **Same as default.** An explicit category equal to the default writes nothing.
+- **Different.** A category that differs from the default writes or replaces the override.
+- **`categoryId: null` on edit.** Puts the item in its default category and never changes an override. Resetting a correction to the system default is a separate, deliberate action and is not built yet.
+- **Rename.** Renaming an item keeps its category.
+- **Category names.** A household category name must not match any system or household category name, ignoring case and surrounding spaces. A clash returns `409 category_name_taken`, a new error code. System categories cannot be renamed or removed through the API.
+**Consequences:** the comparison uses the stored system fallback names (e.g. "Other"), not the web's translated labels. If the UI later shows translated labels that differ from those, the uniqueness check does not see the translated text.
+**Still to verify:** the UI for the "reset correction" action (not in A).

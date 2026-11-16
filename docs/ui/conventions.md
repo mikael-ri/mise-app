@@ -92,6 +92,7 @@ Only tabs that exist in the current milestone are shown. Never show disabled pla
 - All text via i18n keys named `feature.screen.element`, e.g. `recipes.list.empty.title`. English labels in P0; recipe content is Finnish.
 - Use ICU plurals for counts ("1 item", "3 items"). Never concatenate translated fragments.
 - Format numbers and dates with `Intl` using the household locale (default `fi-FI`, so `1,5 dl`). Quantities come from `packages/domain` formatting.
+- Category name uniqueness is checked against stored system names. When translated labels are introduced, the check must cover every label a household can see (A13; see `docs/backlog.md`).
 
 ## 8. Test IDs (for E2E, card A16)
 

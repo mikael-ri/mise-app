@@ -40,9 +40,9 @@ const CategoryName = nonEmptyText(50);
 const SortOrder = z.int().min(0).max(1_000_000);
 
 /**
- * POST /shopping-categories (FR-36). Requires `Idempotency-Key`. Names are unique per household,
- * ignoring case (`409 conflict`). Without `sortOrder` the category goes 10 after the last
- * non-`other` category.
+ * POST /shopping-categories (FR-36). Requires `Idempotency-Key`. A name must not match any system
+ * or household category name, ignoring case and surrounding spaces (`409 category_name_taken`).
+ * Without `sortOrder` the category goes 10 after the last non-`other` category.
  */
 export const CreateShoppingCategoryRequest = z
   .strictObject({ name: CategoryName, sortOrder: SortOrder.optional() })
@@ -139,7 +139,12 @@ export const PatchShoppingListRequest = z
   .meta({ id: 'PatchShoppingListRequest' });
 export type PatchShoppingListRequest = z.infer<typeof PatchShoppingListRequest>;
 
-/** POST /shopping-lists/:id/items. Requires `Idempotency-Key`. Always creates an `origin: user` row (FR-35). */
+/**
+ * POST /shopping-lists/:id/items. Requires `Idempotency-Key`. Always creates an `origin: user` row
+ * (FR-35). A `categoryId` that differs from the categorizer's default for the name is stored as the
+ * household correction for that name; one equal to the default writes nothing (ADR-015 addendum).
+ * A replay re-reads the item (ADR-013 addendum), so a replay after the item was deleted is `404`.
+ */
 export const AddShoppingItemRequest = z
   .strictObject({
     name: ItemName,
@@ -156,7 +161,12 @@ export const SetPickedRequest = z
   .meta({ id: 'SetPickedRequest' });
 export type SetPickedRequest = z.infer<typeof SetPickedRequest>;
 
-/** Detail edit. Requires `If-Match`; stale -> 409. */
+/**
+ * Detail edit. Requires `If-Match`; stale -> 409. `categoryId`: a value that differs from the
+ * categorizer's default for the name replaces the household correction; one equal to the default
+ * writes nothing. `null` puts the item in its default category and never changes a correction.
+ * A rename keeps the item's category.
+ */
 export const EditShoppingItemRequest = z
   .strictObject({
     name: ItemName.optional(),

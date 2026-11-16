@@ -10,21 +10,9 @@ import {
   HEADER_IDEMPOTENCY_KEY,
   HEADER_IF_MATCH,
   formatEtag,
-  parseIfMatch,
 } from '@mise/contracts';
-import { AppError, parseIdempotencyKey, requireActor } from '../platform/index.js';
+import { parseIdempotencyKey, parseIfMatchHeader, requireActor } from '../platform/index.js';
 import type { RecipeResult, RecipesService } from './service.js';
-
-/** Missing `If-Match` -> 428, malformed -> 400 (stale is decided by the service -> 409). */
-function expectedRevision(request: FastifyRequest): number {
-  const header = request.headers[HEADER_IF_MATCH];
-  if (header === undefined) {
-    throw new AppError('precondition_required', 'If-Match header is required');
-  }
-  const revision = typeof header === 'string' ? parseIfMatch(header) : null;
-  if (revision === null) throw new AppError('validation_failed', 'If-Match is malformed');
-  return revision;
-}
 
 const idempotencyKey = (request: FastifyRequest): string =>
   parseIdempotencyKey(request.headers[HEADER_IDEMPOTENCY_KEY]);
@@ -57,7 +45,12 @@ export function registerRecipeRoutes(app: FastifyInstance, service: RecipesServi
     const actor = requireActor(request);
     const { id } = RecipeParams.parse(request.params);
     const body = PatchRecipeRequest.parse(request.body);
-    const recipe = await service.patchRecipe(actor, id, expectedRevision(request), body);
+    const recipe = await service.patchRecipe(
+      actor,
+      id,
+      parseIfMatchHeader(request.headers[HEADER_IF_MATCH]),
+      body,
+    );
     return send(reply, { recipe, status: 200 });
   });
 
@@ -75,7 +68,7 @@ export function registerRecipeRoutes(app: FastifyInstance, service: RecipesServi
     const actor = requireActor(request);
     const { id } = RecipeParams.parse(request.params);
     const body = RestoreRecipeRequest.parse(request.body);
-    const revision = expectedRevision(request);
+    const revision = parseIfMatchHeader(request.headers[HEADER_IF_MATCH]);
     return send(
       reply,
       await service.restoreRecipe(actor, id, revision, idempotencyKey(request), body),

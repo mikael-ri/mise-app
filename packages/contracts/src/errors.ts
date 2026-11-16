@@ -15,6 +15,8 @@ export const ERROR_STATUS = {
   not_found: 404,
   stale_revision: 409,
   conflict: 409,
+  /** Shopping category name already used by a system or household category (case-insensitive). */
+  category_name_taken: 409,
   payload_too_large: 413,
   idempotency_key_reused: 422,
   precondition_required: 428,

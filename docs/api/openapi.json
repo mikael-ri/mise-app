@@ -1418,7 +1418,7 @@
         "tags": [
           "shopping"
         ],
-        "summary": "Create a household category (name unique per household, ignoring case)",
+        "summary": "Create a household category (name unique among system and household categories, ignoring case)",
         "security": [
           {
             "sessionCookie": []
@@ -1478,7 +1478,7 @@
             }
           },
           "409": {
-            "description": "Error: conflict",
+            "description": "Error: category_name_taken",
             "content": {
               "application/json": {
                 "schema": {
@@ -1616,7 +1616,7 @@
             }
           },
           "409": {
-            "description": "Error: conflict",
+            "description": "Error: category_name_taken",
             "content": {
               "application/json": {
                 "schema": {
@@ -2845,6 +2845,7 @@
               "not_found",
               "stale_revision",
               "conflict",
+              "category_name_taken",
               "payload_too_large",
               "idempotency_key_reused",
               "precondition_required",

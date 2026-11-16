@@ -115,6 +115,10 @@ export async function lockCategoryNames(q: Queryable, householdId: string): Prom
   );
 }
 
+/**
+ * True when a system or household category already uses the name, ignoring case and surrounding
+ * spaces. System names are the stored fallback labels (e.g. "Other").
+ */
 export async function categoryNameTaken(
   q: Queryable,
   householdId: string,
@@ -125,7 +129,9 @@ export async function categoryNameTaken(
     q,
     householdId,
     `SELECT 1 FROM shopping_categories
-      WHERE household_id = $1 AND lower(name) = lower($2) AND ($3::uuid IS NULL OR id <> $3::uuid)`,
+      WHERE (household_id = $1 OR household_id IS NULL)
+        AND lower(btrim(name)) = lower(btrim($2))
+        AND ($3::uuid IS NULL OR id <> $3::uuid)`,
     [name, exceptId],
   );
   return (rowCount ?? 0) > 0;

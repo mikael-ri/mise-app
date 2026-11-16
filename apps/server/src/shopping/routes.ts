@@ -15,22 +15,10 @@ import {
   ShoppingListsQuery,
   formatEtag,
   isSetPicked,
-  parseIfMatch,
 } from '@mise/contracts';
 import type { ShoppingItem, ShoppingList } from '@mise/contracts';
-import { AppError, parseIdempotencyKey, requireActor } from '../platform/index.js';
+import { parseIdempotencyKey, parseIfMatchHeader, requireActor } from '../platform/index.js';
 import type { ShoppingService } from './service.js';
-
-/** Missing `If-Match` -> 428, malformed -> 400 (stale is decided by the service -> 409). */
-function expectedRevision(request: FastifyRequest): number {
-  const header = request.headers[HEADER_IF_MATCH];
-  if (header === undefined) {
-    throw new AppError('precondition_required', 'If-Match header is required');
-  }
-  const revision = typeof header === 'string' ? parseIfMatch(header) : null;
-  if (revision === null) throw new AppError('validation_failed', 'If-Match is malformed');
-  return revision;
-}
 
 const idempotencyKey = (request: FastifyRequest): string =>
   parseIdempotencyKey(request.headers[HEADER_IDEMPOTENCY_KEY]);
@@ -88,7 +76,12 @@ export function registerShoppingRoutes(app: FastifyInstance, service: ShoppingSe
     const actor = requireActor(request);
     const { id } = ShoppingListParams.parse(request.params);
     const body = PatchShoppingListRequest.parse(request.body);
-    const list = await service.patchList(actor, id, expectedRevision(request), body);
+    const list = await service.patchList(
+      actor,
+      id,
+      parseIfMatchHeader(request.headers[HEADER_IF_MATCH]),
+      body,
+    );
     return sendRevisioned(reply, 200, list);
   });
 
@@ -107,14 +100,19 @@ export function registerShoppingRoutes(app: FastifyInstance, service: ShoppingSe
     // Checkoff ignores revisions entirely (ADR-013): an unrelated edit can never reject it.
     const item = isSetPicked(body)
       ? await service.setPicked(actor, id, body.picked)
-      : await service.editItem(actor, id, expectedRevision(request), body);
+      : await service.editItem(
+          actor,
+          id,
+          parseIfMatchHeader(request.headers[HEADER_IF_MATCH]),
+          body,
+        );
     return sendRevisioned(reply, 200, item);
   });
 
   app.delete(`${items}/:id`, async (request, reply) => {
     const actor = requireActor(request);
     const { id } = ShoppingItemParams.parse(request.params);
-    await service.deleteItem(actor, id, expectedRevision(request));
+    await service.deleteItem(actor, id, parseIfMatchHeader(request.headers[HEADER_IF_MATCH]));
     return reply.code(204).send();
   });
 }

@@ -8,6 +8,7 @@ export type { AppConfig, DatabaseConfig, OidcConfig } from './config.js';
 export { checkDatabaseReady, createPool, withTransaction } from './db.js';
 export type { Pool, Queryable, Tx } from './db.js';
 export { AppError, errorBody, generateCorrelationId, toErrorBody } from './errors.js';
+export { parseIfMatchHeader } from './http.js';
 export { buildLoggerOptions, REDACT_PATHS } from './logging.js';
 export {
   ResultRef,
