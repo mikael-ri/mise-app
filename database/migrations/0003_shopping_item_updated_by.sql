@@ -1,0 +1,2 @@
+ALTER TABLE "shopping_items" ADD COLUMN "updated_by_member_id" uuid;--> statement-breakpoint
+ALTER TABLE "shopping_items" ADD CONSTRAINT "shopping_items_updater_same_household_fk" FOREIGN KEY ("household_id","updated_by_member_id") REFERENCES "public"."household_members"("household_id","id") ON DELETE restrict ON UPDATE no action;

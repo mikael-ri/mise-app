@@ -7,6 +7,7 @@ import {
   OidcCallbackQuery,
   OidcStartQuery,
 } from './auth.js';
+import { HouseholdMemberList } from './household.js';
 import { HealthOk, HealthUnavailable } from './health.js';
 import {
   CreateRecipeRequest,
@@ -58,7 +59,7 @@ export interface RouteDef {
   method: 'get' | 'post' | 'patch' | 'delete';
   /** Path below API_PREFIX, OpenAPI style (`{id}`). */
   path: string;
-  tag: 'auth' | 'health' | 'recipes' | 'shopping';
+  tag: 'auth' | 'health' | 'household' | 'recipes' | 'shopping';
   summary: string;
   /** False only for health and the OIDC login endpoints. */
   auth: boolean;
@@ -163,6 +164,17 @@ export const ROUTES: readonly RouteDef[] = [
     auth: true,
     params: DeviceSessionParams,
     responses: { 204: noContent },
+  },
+
+  // Household
+  {
+    operationId: 'listHouseholdMembers',
+    method: 'get',
+    path: '/household/members',
+    tag: 'household',
+    summary: "List the actor's household members (id and display name only)",
+    auth: true,
+    responses: { 200: { description: 'Household members', schema: HouseholdMemberList } },
   },
 
   // Recipes

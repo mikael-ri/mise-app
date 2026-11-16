@@ -1,6 +1,7 @@
 import {
   API_PREFIX,
   HEADER_IDEMPOTENCY_KEY,
+  HouseholdMemberList,
   ShoppingCategoryList,
   ShoppingItem,
   ShoppingList,
@@ -13,6 +14,7 @@ import type {
   CreateShoppingListRequest,
   EditShoppingItemRequest,
   PatchShoppingListRequest,
+  HouseholdMember,
   ShoppingCategory,
 } from '@mise/contracts';
 import type { ApiClient } from '../../lib/api-client.js';
@@ -40,6 +42,8 @@ export interface ShoppingApi {
   editItem(itemId: string, revision: number, body: EditShoppingItemRequest): Promise<ShoppingItem>;
   deleteItem(itemId: string, revision: number): Promise<void>;
   listCategories(): Promise<ShoppingCategory[]>;
+  /** Household members (id + display name), read-only, for attribution lines. */
+  listMembers(): Promise<HouseholdMember[]>;
 }
 
 const listPath = (id: string) => `${API_PREFIX}/shopping-lists/${encodeURIComponent(id)}`;
@@ -108,6 +112,13 @@ export function createShoppingApi(client: ApiClient): ShoppingApi {
       const list = await client.request({
         path: `${API_PREFIX}/shopping-categories`,
         schema: ShoppingCategoryList,
+      });
+      return list.items;
+    },
+    async listMembers() {
+      const list = await client.request({
+        path: `${API_PREFIX}/household/members`,
+        schema: HouseholdMemberList,
       });
       return list.items;
     },

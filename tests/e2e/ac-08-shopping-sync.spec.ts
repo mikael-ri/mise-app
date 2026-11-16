@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { COLOR_SCHEMES, expectNoAxeViolations } from '../support/axe.js';
-import { FakeShoppingServer } from '../support/fake-shopping-api.js';
+import { FakeShoppingServer, SECOND_MEMBER } from '../support/fake-shopping-api.js';
 
 // UI-ONLY (card A15): stubbed API and a fake EventSource (see tests/support/fake-shopping-api.ts).
 // A16 must replace the fake with the real sign-in helper and rerun this flow against the real
@@ -30,7 +30,7 @@ test.describe('UI-only (stubbed API): AC-08 live shopping list on two devices', 
     const a = await contextA.newPage();
     const b = await contextB.newPage();
     await server.attach(a);
-    const clientB = await server.attach(b);
+    const clientB = await server.attach(b, SECOND_MEMBER);
 
     // Device A creates a standalone list with groceries and a non-food item (FR-34, FR-35).
     await a.goto('/shopping');
@@ -60,7 +60,16 @@ test.describe('UI-only (stubbed API): AC-08 live shopping list on two devices', 
     await row(a, 'Milk').getByTestId('item-checkbox').click();
     await expect(b.getByTestId('picked-section')).toContainText('Picked up (1)');
     await expect(b.getByTestId('list-progress')).toContainText('1 of 3 picked up');
-    await expect(b.getByTestId('live-announcements')).toContainText('Milk picked up');
+    await expect(b.getByTestId('live-announcements')).toContainText('Milk picked up by Anna');
+    // Attribution uses the real member name (B is Ankka, A is Anna).
+    await b
+      .getByTestId('picked-section')
+      .getByRole('button', { name: /Picked up/ })
+      .click();
+    await b.getByRole('button', { name: 'Edit Milk' }).click();
+    await expect(b.getByTestId('item-sheet')).toContainText('Picked up by Anna');
+    await b.keyboard.press('Escape');
+    await expect(b.getByTestId('item-sheet')).toBeHidden();
 
     // B loses the connection: indicator shows Reconnecting, the list stays visible.
     await clientB.disconnect();

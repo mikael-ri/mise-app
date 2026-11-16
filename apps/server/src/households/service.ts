@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { HouseholdId, MemberId, UserId, nonEmptyText } from '@mise/contracts';
-import type { MEMBER_ROLES } from '@mise/contracts';
+import type { HouseholdMember, MEMBER_ROLES } from '@mise/contracts';
 import { AppError, withTransaction } from '../platform/index.js';
 import type { Pool, RequestContext } from '../platform/index.js';
 import * as repo from './repository.js';
@@ -49,6 +49,8 @@ export interface HouseholdsService {
   resolveActor(userId: string): Promise<ActorMembership>;
   getHousehold(actor: ActorMembership): Promise<HouseholdView>;
   listMembers(actor: ActorMembership): Promise<MemberView[]>;
+  /** Minimum-data member directory for the API: member id and display name only. */
+  listHouseholdMembers(actor: ActorMembership): Promise<HouseholdMember[]>;
   provisionHousehold(input: ProvisionHouseholdInput): Promise<HouseholdView>;
 }
 
@@ -79,6 +81,11 @@ export function createHouseholdsService(pool: Pool): HouseholdsService {
         displayName: r.displayName,
         role: r.role,
       }));
+    },
+
+    async listHouseholdMembers(actor) {
+      const rows = await repo.listMembers(pool, actor.householdId);
+      return rows.map((r) => ({ id: MemberId.parse(r.id), displayName: r.displayName }));
     },
 
     async provisionHousehold(rawInput) {

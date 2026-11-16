@@ -313,5 +313,6 @@
   "shopping.add.retryLabel": "Retry adding {name}",
   "shopping.add.dismiss": "Remove",
   "shopping.add.dismissLabel": "Remove {name}",
-  "shopping.add.pendingList": "Items being added"
+  "shopping.add.pendingList": "Items being added",
+  "shopping.announce.pickedBy": "{name} picked up by {member}"
 }

@@ -45,6 +45,7 @@ export interface ItemRow {
   revision: number;
   createdAt: Date;
   updatedAt: Date;
+  updatedByMemberId: string | null;
 }
 
 /** Columns a detail edit may set. Quantity fields always change together. */
@@ -358,7 +359,8 @@ const ITEM_COLS = `id, shopping_list_id AS "listId", origin, name, normalized_ke
   amount_min::text AS "amountMin", amount_max::text AS "amountMax", unit_code AS "unitCode",
   original_quantity_text AS "originalQuantityText", note, category_id AS "categoryId", picked,
   picked_at AS "pickedAt", picked_by_member_id AS "pickedByMemberId",
-  user_modified AS "userModified", revision, created_at AS "createdAt", updated_at AS "updatedAt"`;
+  user_modified AS "userModified", revision, created_at AS "createdAt", updated_at AS "updatedAt",
+  updated_by_member_id AS "updatedByMemberId"`;
 
 export async function listItems(
   q: Queryable,
@@ -393,18 +395,21 @@ export async function getItem(
 
 /**
  * Always `origin = 'user'` in Milestone A (FR-35). The composite FK (household_id, shopping_list_id)
- * rejects a list from another household.
+ * rejects a list from another household; the updater FK rejects a member from another household.
+ * `memberId` is the session actor (FR-37), never a client value.
  */
 export async function insertUserItem(
   q: Queryable,
   householdId: string,
   listId: string,
+  memberId: string,
   d: ItemDetails,
 ): Promise<string> {
   const { rows } = await q.query<{ id: string }>(
     `INSERT INTO shopping_items (household_id, shopping_list_id, origin, name, normalized_key,
-       amount_min, amount_max, unit_code, original_quantity_text, note, category_id)
-     VALUES ($1, $2, 'user', $3, $4, $5, $6, $7, $8, $9, $10)
+       amount_min, amount_max, unit_code, original_quantity_text, note, category_id,
+       updated_by_member_id)
+     VALUES ($1, $2, 'user', $3, $4, $5, $6, $7, $8, $9, $10, $11)
      RETURNING id`,
     [
       householdId,
@@ -417,16 +422,21 @@ export async function insertUserItem(
       d.originalQuantityText,
       d.note,
       d.categoryId,
+      memberId,
     ],
   );
   return rows[0]!.id;
 }
 
-/** Detail edit: bumps only this item's revision and marks it user-modified. */
+/**
+ * Detail edit: bumps only this item's revision, marks it user-modified and records the actor
+ * (`memberId`, from the session) as the last updater (FR-37).
+ */
 export async function updateItemDetails(
   q: Queryable,
   householdId: string,
   id: string,
+  memberId: string,
   d: ItemDetails,
 ): Promise<void> {
   await scopedQuery(
@@ -435,7 +445,7 @@ export async function updateItemDetails(
     `UPDATE shopping_items
         SET name = $3, normalized_key = $4, amount_min = $5, amount_max = $6, unit_code = $7,
             original_quantity_text = $8, note = $9, category_id = $10, user_modified = true,
-            revision = revision + 1, updated_at = clock_timestamp()
+            revision = revision + 1, updated_at = clock_timestamp(), updated_by_member_id = $11
       WHERE household_id = $1 AND id = $2`,
     [
       id,
@@ -447,13 +457,15 @@ export async function updateItemDetails(
       d.originalQuantityText,
       d.note,
       d.categoryId,
+      memberId,
     ],
   );
 }
 
 /**
  * Desired-state checkoff. Writes only when the state differs (idempotent) and returns whether it
- * did. Does not touch `revision`, so a checkoff never makes a concurrent detail edit stale.
+ * did. Does not touch `revision`, so a checkoff never makes a concurrent detail edit stale. A write
+ * records `memberId` as the last updater (FR-37); a no-op leaves it unchanged.
  * `clock_timestamp()`: the time this write took effect, after waiting for the list lock, so the
  * later committed write also carries the later time (server-time last write wins).
  */
@@ -471,7 +483,8 @@ export async function setPicked(
         SET picked = $3,
             picked_at = CASE WHEN $3 THEN clock_timestamp() END,
             picked_by_member_id = CASE WHEN $3 THEN $4::uuid END,
-            updated_at = clock_timestamp()
+            updated_at = clock_timestamp(),
+            updated_by_member_id = $4::uuid
       WHERE household_id = $1 AND id = $2 AND picked IS DISTINCT FROM $3`,
     [id, picked, memberId],
   );

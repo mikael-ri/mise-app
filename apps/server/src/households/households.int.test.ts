@@ -1,9 +1,12 @@
 // Integration tests against real PostgreSQL as the app role (shared test config, freshly migrated).
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import type { FastifyInstance } from 'fastify';
+import { ErrorBody, HouseholdMemberList } from '@mise/contracts';
+import { buildApp } from '../app.js';
 import { createPool, scopedQuery } from '../platform/index.js';
-import { loadTestDatabaseConfig } from '../platform/test-support.js';
-import type { Pool } from '../platform/index.js';
+import { loadTestDatabaseConfig, testConfig } from '../platform/test-support.js';
+import type { Pool, RequestContext } from '../platform/index.js';
 import { createTwoHouseholds } from '../platform/isolation-harness.js';
 import type { TwoHouseholds } from '../platform/isolation-harness.js';
 import { createHouseholdsService } from './index.js';
@@ -139,5 +142,70 @@ describe('provisionHousehold (FR-30)', () => {
     });
     const left = await pool.query(`SELECT 1 FROM households WHERE name = 'Prov-atomic'`);
     expect(left.rowCount).toBe(0);
+  });
+});
+
+describe('GET /api/v1/household/members (FR-34, FR-37)', () => {
+  let app: FastifyInstance;
+  let a2MemberId: string;
+
+  beforeAll(async () => {
+    const userId = (
+      await pool.query<{ id: string }>(
+        `INSERT INTO users (oidc_issuer, oidc_subject, display_name)
+         VALUES ('https://auth.test', $1, 'Second A') RETURNING id`,
+        [randomUUID()],
+      )
+    ).rows[0]!.id;
+    a2MemberId = (
+      await pool.query<{ id: string }>(
+        `INSERT INTO household_members (household_id, user_id, role)
+         VALUES ($1, $2, 'member') RETURNING id`,
+        [h.a.householdId, userId],
+      )
+    ).rows[0]!.id;
+    app = buildApp({ checkReady: async () => {}, config: testConfig, auth: null, households: svc });
+    // Test-only stand-in for the session hook (the real one is covered in auth/*.int.test.ts).
+    app.addHook('onRequest', async (request) => {
+      const who = request.headers['x-test-actor'];
+      if (who === 'none') {
+        request.actor = null;
+        return;
+      }
+      const f = who === 'b' ? h.b : h.a;
+      request.actor = { ...f, deviceSessionId: randomUUID() } as unknown as RequestContext;
+    });
+  });
+  afterAll(async () => {
+    await app.close();
+  });
+
+  const get = (who: 'a' | 'b' | 'none') =>
+    app.inject({
+      method: 'GET',
+      url: '/api/v1/household/members',
+      headers: { 'x-test-actor': who },
+    });
+
+  it('household A sees exactly its own members, with id and displayName only', async () => {
+    const res = await get('a');
+    expect(res.statusCode).toBe(200);
+    const body = HouseholdMemberList.parse(res.json());
+    expect(body.items.map((m) => m.id).sort()).toEqual([h.a.memberId, a2MemberId].sort());
+    expect(body.items.map((m) => m.id)).not.toContain(h.b.memberId);
+    for (const item of res.json<{ items: object[] }>().items) {
+      expect(Object.keys(item).sort()).toEqual(['displayName', 'id']);
+    }
+  });
+
+  it('household B never sees A members', async () => {
+    const body = HouseholdMemberList.parse((await get('b')).json());
+    expect(body.items.map((m) => m.id)).toEqual([h.b.memberId]);
+  });
+
+  it('unauthenticated gets 401', async () => {
+    const res = await get('none');
+    expect(res.statusCode).toBe(401);
+    expect(ErrorBody.parse(res.json()).code).toBe('unauthenticated');
   });
 });

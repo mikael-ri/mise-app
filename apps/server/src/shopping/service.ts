@@ -134,6 +134,7 @@ const toItemDto = (i: repo.ItemRow): ShoppingItem =>
     revision: i.revision,
     createdAt: iso(i.createdAt),
     updatedAt: iso(i.updatedAt),
+    updatedByMemberId: i.updatedByMemberId,
   });
 
 const listNotFound = () => new AppError('not_found', 'shopping list not found');
@@ -372,7 +373,7 @@ export function createShoppingService(pool: Pool, events: ListEventHub): Shoppin
           await lockActiveList(tx, actor, listId);
           const normalizedKey = keyFor(input.name);
           const categoryId = await resolveCategory(tx, actor, normalizedKey, input.categoryId);
-          const id = await repo.insertUserItem(tx, actor.householdId, listId, {
+          const id = await repo.insertUserItem(tx, actor.householdId, listId, actor.memberId, {
             name: input.name,
             normalizedKey,
             ...quantityColumns(input.quantityText ?? null),
@@ -438,7 +439,7 @@ export function createShoppingService(pool: Pool, events: ListEventHub): Shoppin
           next.categoryId === cur.categoryId;
         if (unchanged) return { listId: cur.listId, seq: null }; // no revision or cursor bump
 
-        await repo.updateItemDetails(tx, actor.householdId, itemId, next);
+        await repo.updateItemDetails(tx, actor.householdId, itemId, actor.memberId, next);
         return {
           listId: cur.listId,
           seq: await repo.bumpChangeSeq(tx, actor.householdId, cur.listId),

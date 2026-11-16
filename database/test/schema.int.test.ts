@@ -1,6 +1,7 @@
-// Integration tests for migration 0000/0001 invariants (A04). Real PostgreSQL (shared test config, owner role),
+// Integration tests for migration 0000/0001 invariants (A04) and later additive migrations. Real PostgreSQL (shared test config, owner role),
 // migrated with `pnpm db:migrate`. Each test runs in a rolled-back transaction.
 import { randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { afterAll, describe, expect, it } from 'vitest';
 import {
   contentV1,
@@ -58,6 +59,20 @@ describe('household isolation by composite FKs (DB §3, hard rule 2)', () => {
          VALUES ($1, $2, 'user', 'Maito', true, now(), $3)`,
         [a.householdId, listA, b.memberId],
         { constraint: 'shopping_items_picker_same_household_fk' },
+      );
+    }));
+
+  it('FR-37: rejects a last updater from another household', () =>
+    inRolledBackTx(async (c) => {
+      const a = await createHousehold(c, 'A');
+      const b = await createHousehold(c, 'B');
+      const listA = await createList(c, a);
+      await expectPgError(
+        c,
+        `INSERT INTO shopping_items (household_id, shopping_list_id, origin, name, updated_by_member_id)
+         VALUES ($1, $2, 'user', 'Maito', $3)`,
+        [a.householdId, listA, b.memberId],
+        { constraint: 'shopping_items_updater_same_household_fk' },
       );
     }));
 
@@ -316,6 +331,29 @@ describe('shopping items (FR-35, FR-37, FR-38, DB §8, §10.1)', () => {
       await expectPgError(c, 'UPDATE shopping_lists SET revision = 0 WHERE id = $1', [list], {
         constraint: 'shopping_lists_revision_ck',
       });
+    }));
+});
+
+describe('migration 0003 shopping_items.updated_by_member_id (FR-37)', () => {
+  const migration = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');
+
+  it('FR-37: rows that exist before the migration keep updated_by_member_id NULL', () =>
+    inRolledBackTx(async (c) => {
+      // Back to the pre-0003 shape inside this transaction, write a row, then re-apply 0003.
+      await c.query(migration('../migrations/down/0003_shopping_item_updated_by.down.sql'));
+      const h = await createHousehold(c);
+      const list = await createList(c, h);
+      const { rows: before } = await c.query<{ id: string }>(
+        `INSERT INTO shopping_items (household_id, shopping_list_id, origin, name)
+         VALUES ($1, $2, 'user', 'Maito') RETURNING id`,
+        [h.householdId, list],
+      );
+      await c.query(migration('../migrations/0003_shopping_item_updated_by.sql'));
+      const { rows } = await c.query<{ u: string | null }>(
+        'SELECT updated_by_member_id AS u FROM shopping_items WHERE id = $1',
+        [before[0]!.id],
+      );
+      expect(rows).toEqual([{ u: null }]);
     }));
 });
 

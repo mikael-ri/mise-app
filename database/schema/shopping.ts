@@ -140,6 +140,8 @@ export const shoppingItems = pgTable(
     revision: integer('revision').notNull().default(1),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
+    // FR-37: the member whose write last moved updated_at. NULL for rows written before it existed.
+    updatedByMemberId: uuid('updated_by_member_id'),
   },
   (t) => [
     foreignKey({
@@ -150,6 +152,11 @@ export const shoppingItems = pgTable(
     foreignKey({
       name: 'shopping_items_picker_same_household_fk',
       columns: [t.householdId, t.pickedByMemberId],
+      foreignColumns: [householdMembers.householdId, householdMembers.id],
+    }).onDelete('restrict'),
+    foreignKey({
+      name: 'shopping_items_updater_same_household_fk',
+      columns: [t.householdId, t.updatedByMemberId],
       foreignColumns: [householdMembers.householdId, householdMembers.id],
     }).onDelete('restrict'),
     index('shopping_items_list_idx').on(t.shoppingListId),

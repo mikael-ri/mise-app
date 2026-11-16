@@ -68,11 +68,18 @@ describe('ShoppingItem response', () => {
     revision: 1,
     createdAt: '2026-11-12T10:00:00.000Z',
     updatedAt: '2026-11-12T10:00:00+02:00',
+    updatedByMemberId: ID,
   };
 
   it('accepts numeric amounts only as decimal strings', () => {
     expect(ShoppingItem.safeParse(item).success).toBe(true);
     expect(ShoppingItem.safeParse({ ...item, amountMin: 2 }).success).toBe(false);
+  });
+
+  it('FR-37: updatedByMemberId is a member uuid or null and is required', () => {
+    expect(ShoppingItem.safeParse({ ...item, updatedByMemberId: null }).success).toBe(true);
+    expect(ShoppingItem.safeParse({ ...item, updatedByMemberId: 'anna' }).success).toBe(false);
+    expect(ShoppingItem.safeParse({ ...item, updatedByMemberId: undefined }).success).toBe(false);
   });
 });
 

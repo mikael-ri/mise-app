@@ -122,6 +122,8 @@ export interface ItemChange {
   kind: ChangeKind;
   itemId: string;
   name: string;
+  /** Who picked it, for `picked` changes, when the snapshot says. */
+  memberId?: string;
 }
 
 /** Differences between two snapshots, for the polite live-region announcement. */
@@ -136,7 +138,14 @@ export function diffItems(
     const old = prev.get(item.id);
     if (old === undefined) changes.push({ kind: 'added', itemId: item.id, name: item.name });
     else if (old.picked !== item.picked)
-      changes.push({ kind: item.picked ? 'picked' : 'unpicked', itemId: item.id, name: item.name });
+      changes.push({
+        kind: item.picked ? 'picked' : 'unpicked',
+        itemId: item.id,
+        name: item.name,
+        ...(item.picked && item.pickedByMemberId !== null
+          ? { memberId: item.pickedByMemberId }
+          : {}),
+      });
     else if (old.revision !== item.revision)
       changes.push({ kind: 'changed', itemId: item.id, name: item.name });
   }

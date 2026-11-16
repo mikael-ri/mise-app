@@ -3,6 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { QueryClient } from '@tanstack/react-query';
+import { ME } from '../../test/fixtures.js';
 import { ApiError, createApiClient } from '../../lib/api-client.js';
 import { endSession } from '../../lib/session.js';
 import { createShoppingApi } from './shopping-api.js';
@@ -71,6 +72,10 @@ function fakeShopping(over: Partial<ShoppingApi> = {}): ShoppingApi {
     editItem: vi.fn().mockResolvedValue(shoppingItem(1, { name: 'Milk', revision: 2 })),
     deleteItem: vi.fn().mockResolvedValue(undefined),
     listCategories: vi.fn().mockResolvedValue(CATEGORIES),
+    listMembers: vi.fn().mockResolvedValue([
+      { id: ME.member.id, displayName: 'Anna' },
+      { id: uuid(900), displayName: 'Ankka' },
+    ]),
     ...over,
     setPicked: vi.fn().mockImplementation((id: string, picked: boolean) =>
       checkoff(id, picked).then((item) => {
@@ -308,6 +313,8 @@ describe('session end on the stream (FR-34)', () => {
       });
     const fetchImpl = vi.fn((path: string | URL | Request) => {
       const url = String(path);
+      if (url.endsWith('/household/members'))
+        return Promise.resolve(jsonResponse(200, { items: [] }));
       if (url.endsWith('/shopping-categories')) {
         return Promise.resolve(jsonResponse(200, { items: CATEGORIES }));
       }
@@ -610,6 +617,69 @@ describe('item sheet (FR-35, FR-36, FR-37)', () => {
     expect(api.editItem).toHaveBeenLastCalledWith(latest.id, 5, { note: 'minun' });
   });
 
+  it.each([
+    ['another member', uuid<NonNullable<ShoppingItem['updatedByMemberId']>>(900), 'Ankka'],
+    ['nobody known (old row)', null, 'Another household member'],
+    ['the current member (other device)', ME.member.id, 'Another household member'],
+  ])('FR-37: the 409 banner names the editor: %s', async (_name, editor, expected) => {
+    const latest = shoppingItem(1, {
+      name: 'Milk',
+      categoryId: CAT.dairy,
+      revision: 5,
+      updatedByMemberId: editor,
+    });
+    const getSnapshot = vi
+      .fn()
+      .mockResolvedValueOnce(snapshotOf(groceries()))
+      .mockResolvedValue(snapshotOf([latest]));
+    const api = fakeShopping({ getSnapshot, editItem: vi.fn().mockRejectedValue(stale()) });
+    const sheet = await open(api);
+    await userEvent.type(within(sheet).getByLabelText('Note'), 'x');
+    await userEvent.click(within(sheet).getByRole('button', { name: 'Save' }));
+    const banner = await within(sheet).findByTestId('item-conflict');
+    await waitFor(() =>
+      expect(banner).toHaveTextContent(`Changed by ${expected} while you were editing.`),
+    );
+    expect(banner).not.toHaveTextContent('Changed by You');
+  });
+
+  it('FR-37: the 409 banner stays generic when the refetch fails', async () => {
+    const getSnapshot = vi
+      .fn()
+      .mockResolvedValueOnce(snapshotOf(groceries()))
+      .mockRejectedValue(network());
+    const api = fakeShopping({ getSnapshot, editItem: vi.fn().mockRejectedValue(stale()) });
+    const sheet = await open(api);
+    await userEvent.type(within(sheet).getByLabelText('Note'), 'x');
+    await userEvent.click(within(sheet).getByRole('button', { name: 'Save' }));
+    const banner = await within(sheet).findByTestId('item-conflict');
+    await waitFor(() => expect(getSnapshot).toHaveBeenCalledTimes(2));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(banner).toHaveTextContent('Changed by Another household member');
+  });
+
+  it('FR-37: a checkoff by another member (same revision) is not named as the editor', async () => {
+    const checkedOff = shoppingItem(1, {
+      name: 'Milk',
+      categoryId: CAT.dairy,
+      revision: 1,
+      updatedByMemberId: uuid<NonNullable<ShoppingItem['updatedByMemberId']>>(900),
+    });
+    const getSnapshot = vi
+      .fn()
+      .mockResolvedValueOnce(snapshotOf(groceries()))
+      .mockResolvedValue(snapshotOf([checkedOff]));
+    const api = fakeShopping({ getSnapshot, editItem: vi.fn().mockRejectedValue(stale()) });
+    const sheet = await open(api);
+    await userEvent.type(within(sheet).getByLabelText('Note'), 'x');
+    await userEvent.click(within(sheet).getByRole('button', { name: 'Save' }));
+    const banner = await within(sheet).findByTestId('item-conflict');
+    await waitFor(() => expect(getSnapshot).toHaveBeenCalledTimes(2));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(banner).toHaveTextContent('Changed by Another household member');
+    expect(banner).not.toHaveTextContent('Ankka');
+  });
+
   it('FR-35: deleting an unpicked item is immediate with an Undo that re-adds it', async () => {
     const api = fakeShopping();
     const sheet = await open(api);
@@ -639,7 +709,7 @@ describe('item sheet (FR-35, FR-36, FR-37)', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Picked up (1)' }));
     await userEvent.click(screen.getByRole('button', { name: 'Edit Milk' }));
     const sheet = await screen.findByTestId('item-sheet');
-    expect(within(sheet).getByText(/Picked up by Another household member/)).toBeInTheDocument();
+    await waitFor(() => expect(within(sheet).getByText(/Picked up by Ankka,/)).toBeInTheDocument());
     await userEvent.click(within(sheet).getByRole('button', { name: 'Delete item' }));
     expect(api.deleteItem).not.toHaveBeenCalled();
     const confirm = await screen.findByRole('dialog', { name: 'Delete "Milk"?' });

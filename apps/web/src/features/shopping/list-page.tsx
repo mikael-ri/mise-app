@@ -20,7 +20,15 @@ import { categoryLabel } from './category-label.js';
 import { ItemSheet } from './item-sheet.js';
 import { applyCheckoff, buildListView, categoryOf, diffItems, isRejected } from './list-model.js';
 import type { CategoryGroup, CheckoffEntry } from './list-model.js';
-import { shoppingKeys, useCategories, useCheckoff, useSnapshot } from './queries.js';
+import { memberName } from './member-names.js';
+import { useMe } from '../auth/use-session.js';
+import {
+  shoppingKeys,
+  useHouseholdMembers,
+  useCategories,
+  useCheckoff,
+  useSnapshot,
+} from './queries.js';
 import { usePendingAdds } from './use-pending-adds.js';
 import type { PendingAdd } from './use-pending-adds.js';
 import { useListEvents } from './use-list-events.js';
@@ -393,6 +401,12 @@ export function ShoppingListPage() {
   const [listMessage, setListMessage] = useState<string | undefined>();
   const [announcement, setAnnouncement] = useState('');
   const touched = useRef(new Set<string>());
+  const me = useMe().data;
+  const members = useHouseholdMembers().data;
+  const membersRef = useRef(members);
+  membersRef.current = members;
+  const meRef = useRef(me);
+  meRef.current = me;
   const previous = useRef<readonly ShoppingItem[] | null>(null);
 
   const list = snapshot.data?.list;
@@ -421,7 +435,14 @@ export function ShoppingListPage() {
         (c) => !touched.current.has(c.itemId),
       );
       if (changes.length > 0) {
-        setAnnouncement(changes.map((c) => t(ANNOUNCE_KEY[c.kind], { name: c.name })).join('. '));
+        const text = (c: (typeof changes)[number]) =>
+          c.kind === 'picked' && c.memberId !== undefined
+            ? t('shopping.announce.pickedBy', {
+                name: c.name,
+                member: memberName(membersRef.current, c.memberId, meRef.current?.member.id),
+              })
+            : t(ANNOUNCE_KEY[c.kind], { name: c.name });
+        setAnnouncement(changes.map(text).join('. '));
       }
     }
     touched.current.clear();

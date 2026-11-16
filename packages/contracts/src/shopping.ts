@@ -102,6 +102,11 @@ export const ShoppingItem = z
     revision: Revision,
     createdAt: Instant,
     updatedAt: Instant,
+    /**
+     * Member whose add, detail edit or checkoff last changed the item (FR-37); null for items
+     * last written before this was recorded.
+     */
+    updatedByMemberId: MemberId.nullable(),
   })
   .meta({ id: 'ShoppingItem' });
 export type ShoppingItem = z.infer<typeof ShoppingItem>;

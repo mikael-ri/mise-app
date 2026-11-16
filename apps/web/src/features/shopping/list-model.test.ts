@@ -116,6 +116,14 @@ describe('diffItems (announcements, FR-34)', () => {
   ])('%s', (_name, before, after, kind) => {
     expect(diffItems(before, after).map((c) => c.kind)).toEqual([kind]);
   });
+  it('FR-37: a picked change carries who picked it, when the snapshot says', () => {
+    const by = uuid(77);
+    const [change] = diffItems(
+      [a],
+      [{ ...a, picked: true, pickedByMemberId: by as never, revision: 2 }],
+    );
+    expect(change?.memberId).toBe(by);
+  });
   it('no change, no announcement', () => {
     expect(diffItems([a, b], [a, b])).toEqual([]);
   });

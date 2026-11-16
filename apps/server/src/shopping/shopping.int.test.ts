@@ -1,4 +1,4 @@
-// FR-34, FR-35, FR-36, FR-39, AC-08 (server side), AC-10 against real PostgreSQL as the app role
+// FR-34, FR-35, FR-36, FR-37, FR-39, AC-08 (server side), AC-10 against real PostgreSQL as the app role
 // (shared test config, freshly migrated database per file).
 import { randomUUID } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -531,6 +531,86 @@ describe('ADR-013: per-item revision, desired-state checkoff, change_seq', () =>
     );
     await Promise.all(writes);
     for (const s of snaps) expect(s.items).toHaveLength(s.list.changeSeq); // one seq per add
+  });
+});
+
+describe('FR-37: last updater of an item comes from the session actor', () => {
+  const updaterOf = async (id: string) =>
+    (
+      await pool.query<{ u: string | null; r: number }>(
+        'SELECT updated_by_member_id AS u, revision AS r FROM shopping_items WHERE id = $1',
+        [id],
+      )
+    ).rows[0]!;
+
+  it('FR-37: add, edit and checkoff each record the acting member; no-ops change nothing', async () => {
+    const list = await newList();
+    const res = await api('POST', `/shopping-lists/${list.id}/items`, {
+      body: { name: 'Maito' },
+      idem: key(),
+    });
+    const added = ShoppingItem.parse(res.json());
+    expect(added.updatedByMemberId).toBe(h.a.memberId);
+
+    const edited = await service.editItem(A2(), added.id, added.revision, { note: 'laktoositon' });
+    expect(edited).toMatchObject({ updatedByMemberId: a2.memberId, revision: added.revision + 1 });
+
+    const back = await service.editItem(A(), added.id, edited.revision, { note: 'luomu' });
+    expect(back.updatedByMemberId).toBe(h.a.memberId);
+
+    const seq = await seqOf(list.id);
+    const picked = await service.setPicked(A2(), added.id, true);
+    // Same revision/cursor semantics as before: checkoff keeps the revision, moves the cursor once.
+    expect(picked).toMatchObject({ updatedByMemberId: a2.memberId, revision: back.revision });
+    expect(await seqOf(list.id)).toBe(seq + 1);
+
+    // An already-satisfied checkoff and an unchanged edit by A are no-ops: still A2.
+    expect((await service.setPicked(A(), added.id, true)).updatedByMemberId).toBe(a2.memberId);
+    const noop = await service.editItem(A(), added.id, picked.revision, { note: 'luomu' });
+    expect(noop).toMatchObject({ updatedByMemberId: a2.memberId, revision: picked.revision });
+    expect(await seqOf(list.id)).toBe(seq + 1);
+
+    const snap = ShoppingListSnapshot.parse(
+      (await api('GET', `/shopping-lists/${list.id}`)).json(),
+    );
+    expect(snap.items.find((i) => i.id === added.id)?.updatedByMemberId).toBe(a2.memberId);
+  });
+
+  it('FR-37: a replayed add does not change the last updater', async () => {
+    const list = await newList();
+    const k = key();
+    const first = await service.addItem(A(), list.id, k, { name: 'Leipä' });
+    await service.editItem(A2(), first.value.id, first.value.revision, { note: 'ruis' });
+    const before = await updaterOf(first.value.id);
+
+    const replay = await api('POST', `/shopping-lists/${list.id}/items`, {
+      body: { name: 'Leipä' },
+      idem: k,
+    });
+    expect(replay.statusCode).toBe(201);
+    expect(ShoppingItem.parse(replay.json()).updatedByMemberId).toBe(a2.memberId);
+    expect(await updaterOf(first.value.id)).toEqual(before);
+    expect(before.u).toBe(a2.memberId);
+  });
+
+  it('FR-37: household B never sees members of A and cannot be attributed to A rows', async () => {
+    const listB = await newList(B(), 'B:n lista');
+    const itemB = await addItem(listB.id, 'Kahvi', {}, B());
+    expect(itemB.updatedByMemberId).toBe(h.b.memberId);
+    const snapB = ShoppingListSnapshot.parse(
+      (await api('GET', `/shopping-lists/${listB.id}`, { who: 'b' })).json(),
+    );
+    const updaters = snapB.items.map((i) => i.updatedByMemberId);
+    expect(updaters).not.toContain(h.a.memberId);
+    expect(updaters).not.toContain(a2.memberId);
+
+    // The composite FK rejects an updater from another household even if code passed one.
+    await expect(
+      pool.query(
+        `UPDATE shopping_items SET updated_by_member_id = $3 WHERE household_id = $1 AND id = $2`,
+        [h.b.householdId, itemB.id, h.a.memberId],
+      ),
+    ).rejects.toMatchObject({ constraint: 'shopping_items_updater_same_household_fk' });
   });
 });
 

@@ -1,7 +1,7 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { AddShoppingItemRequest, ShoppingCategory, ShoppingItem } from '@mise/contracts';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '../../components/button.js';
 import { ConfirmDialog } from '../../components/confirm-dialog.js';
 import { ConflictState } from '../../components/conflict-state.js';
@@ -26,7 +26,8 @@ import {
   insertUnit,
   sortCategories,
 } from './list-model.js';
-import { cacheItem, shoppingKeys, uncacheItem } from './queries.js';
+import { memberName } from './member-names.js';
+import { cacheItem, shoppingKeys, uncacheItem, useHouseholdMembers } from './queries.js';
 import { useShoppingApi } from './use-shopping-api.js';
 import type { ShoppingListSnapshot } from '@mise/contracts';
 
@@ -66,14 +67,25 @@ export function ItemSheet({
   const queryClient = useQueryClient();
   const toast = useToast();
   const me = useMe().data;
+  const members = useHouseholdMembers().data;
   const timeZone = me?.household.timezone ?? HOUSEHOLD_TIMEZONE;
   const [base, setBase] = useState(initialItem);
   const [values, setValues] = useState<ItemFormValues>(() => formFromItem(initialItem));
   const [nameError, setNameError] = useState<string | undefined>();
   const [conflict, setConflict] = useState(false);
   const [refreshed, setRefreshed] = useState(false);
+  /** Member who last changed the item, once known; null/undefined = unknown. */
+  const [latestEditor, setLatestEditor] = useState<string | null | undefined>(undefined);
   const [failed, setFailed] = useState<string | undefined>();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const conflictToken = useRef(0);
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
   const categoryRef = useRef<HTMLSelectElement>(null);
   const quantityRef = useRef<HTMLInputElement>(null);
 
@@ -85,6 +97,30 @@ export function ItemSheet({
       setConflict(true);
       setRefreshed(false);
       setFailed(undefined);
+      // The banner is shown at once with the generic label; the editor's name follows the refetch.
+      setLatestEditor(undefined);
+      conflictToken.current += 1;
+      const token = conflictToken.current;
+      const basedOn = base.revision;
+      // fetchQuery rejects on failure, so a failed fetch can never be mistaken for fresh data.
+      queryClient
+        .fetchQuery({
+          queryKey: shoppingKeys.snapshot(base.listId),
+          queryFn: () => api.getSnapshot(base.listId),
+          staleTime: 0,
+        })
+        .then(
+          (snapshot) => {
+            if (!mountedRef.current || token !== conflictToken.current) return;
+            const latest = snapshot.items.find((i) => i.id === base.id);
+            // A checkoff changes updatedByMemberId without bumping the revision: only a newer
+            // revision proves that member changed what the user was editing.
+            setLatestEditor(
+              latest !== undefined && latest.revision > basedOn ? latest.updatedByMemberId : null,
+            );
+          },
+          () => undefined,
+        );
     } else if (isApiError(error) && error.status === 404) {
       setFailed(t('shopping.sheet.gone'));
       void queryClient.invalidateQueries({ queryKey: shoppingKeys.snapshot(base.listId) });
@@ -180,10 +216,7 @@ export function ItemSheet({
   const pickedBy =
     base.picked && base.pickedAt !== null && base.pickedByMemberId !== null
       ? t('shopping.sheet.pickedBy', {
-          name:
-            base.pickedByMemberId === me?.member.id
-              ? t('shopping.sheet.memberYou')
-              : t('shopping.sheet.memberOther'),
+          name: memberName(members, base.pickedByMemberId, me?.member.id),
           when: when(base.pickedAt),
         })
       : null;
@@ -217,7 +250,13 @@ export function ItemSheet({
             {conflict && (
               <div className="mb-3" data-testid="item-conflict">
                 <ConflictState
-                  title={t('shopping.item.conflict', { name: t('shopping.sheet.memberOther') })}
+                  title={t('shopping.item.conflict', {
+                    // Never "Changed by You": an edit from your own other device gets the generic label.
+                    name:
+                      typeof latestEditor === 'string' && latestEditor !== me?.member.id
+                        ? memberName(members, latestEditor, me?.member.id)
+                        : t('shopping.sheet.memberOther'),
+                  })}
                   {...(refreshed
                     ? { description: t('shopping.item.refreshed') }
                     : {

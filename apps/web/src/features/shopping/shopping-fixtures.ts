@@ -54,6 +54,7 @@ export function shoppingItem(n: number, over: Partial<ShoppingItem> = {}): Shopp
     revision: 1,
     createdAt: `2026-11-16T08:${String(10 + n).padStart(2, '0')}:00Z`,
     updatedAt: `2026-11-16T08:${String(10 + n).padStart(2, '0')}:00Z`,
+    updatedByMemberId: null,
     ...over,
   });
 }

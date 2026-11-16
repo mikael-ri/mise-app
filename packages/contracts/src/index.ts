@@ -4,6 +4,7 @@ export * from './errors.js';
 export * from './headers.js';
 export * from './health.js';
 export * from './auth.js';
+export * from './household.js';
 export * from './recipes.js';
 export * from './shopping.js';
 export * from './routes.js';

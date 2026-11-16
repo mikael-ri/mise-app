@@ -51,3 +51,29 @@ describe('households service (FR-30, FR-31)', () => {
     ).rejects.toMatchObject({ code: 'forbidden' });
   });
 });
+
+describe('listHouseholdMembers (FR-34, FR-37)', () => {
+  it('scopes by the actor household and returns only id and displayName', async () => {
+    const memberId = randomUUID();
+    const householdId = randomUUID();
+    const query = vi.fn().mockResolvedValue({
+      rows: [
+        {
+          id: memberId,
+          user_id: randomUUID(),
+          display_name: 'Anna',
+          role: 'owner',
+          joined_at: new Date(),
+        },
+      ],
+    });
+    const svc = createHouseholdsService({ query, connect: vi.fn() } as never);
+    const out = await svc.listHouseholdMembers({
+      householdId,
+      userId: randomUUID(),
+      memberId,
+    } as never);
+    expect(out).toEqual([{ id: memberId, displayName: 'Anna' }]);
+    expect(query.mock.calls[0]![1][0]).toBe(householdId);
+  });
+});

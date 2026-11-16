@@ -24,6 +24,7 @@ import {
   AddShoppingItemRequest,
   CreateShoppingListRequest,
   ErrorBody,
+  HouseholdMemberList,
   type ErrorCode,
   MeResponse,
   PatchShoppingItemRequest,
@@ -129,7 +130,18 @@ export interface FakeShoppingClient {
   reconnect(): Promise<void>;
 }
 
+/** Who a page is signed in as. Pages default to the ME fixture's member. */
+export interface FakeIdentity {
+  memberId: string;
+  displayName: string;
+}
+
+/** A second household member, for the "other device" context. */
+export const SECOND_MEMBER: FakeIdentity = { memberId: uuid(901), displayName: 'Ankka' };
+const DEFAULT_IDENTITY: FakeIdentity = { memberId: ME.member.id, displayName: ME.user.displayName };
+
 export class FakeShoppingServer {
+  private readonly identities = new Map<Page, FakeIdentity>();
   private readonly lists = new Map<string, ListT>();
   private readonly items = new Map<string, ItemT>();
   private readonly seqs = new Map<string, number>();
@@ -187,8 +199,9 @@ export class FakeShoppingServer {
     );
   }
 
-  async attach(page: Page): Promise<FakeShoppingClient> {
+  async attach(page: Page, identity: FakeIdentity = DEFAULT_IDENTITY): Promise<FakeShoppingClient> {
     this.pages.add(page);
+    this.identities.set(page, identity);
     const requests: string[] = [];
     await page.exposeFunction('__fakeSseSeq', (listId: string) => this.seq(listId));
     await page.addInitScript(installFakeEventSource);
@@ -227,7 +240,30 @@ export class FakeShoppingServer {
     requests.push(`${method} ${url.pathname}${url.search}`);
     if (this.offline.has(page)) return route.abort('connectionfailed');
 
-    if (method === 'GET' && path === '/auth/me') return json(route, 200, MeResponse.parse(ME));
+    const who = this.identities.get(page) ?? DEFAULT_IDENTITY;
+    if (method === 'GET' && path === '/auth/me') {
+      return json(
+        route,
+        200,
+        MeResponse.parse({
+          ...ME,
+          user: { ...ME.user, displayName: who.displayName },
+          member: { ...ME.member, id: who.memberId },
+        }),
+      );
+    }
+    if (method === 'GET' && path === '/household/members') {
+      return json(
+        route,
+        200,
+        HouseholdMemberList.parse({
+          items: [
+            { id: DEFAULT_IDENTITY.memberId, displayName: DEFAULT_IDENTITY.displayName },
+            { id: SECOND_MEMBER.memberId, displayName: SECOND_MEMBER.displayName },
+          ],
+        }),
+      );
+    }
     if (method === 'GET' && path === '/shopping-categories') {
       return json(route, 200, ShoppingCategoryList.parse({ items: CATEGORIES }));
     }
@@ -317,6 +353,7 @@ export class FakeShoppingServer {
           revision: 1,
           createdAt: now,
           updatedAt: now,
+          updatedByMemberId: who.memberId,
         });
         this.items.set(item.id, item);
         await this.bump(listId);
@@ -338,9 +375,10 @@ export class FakeShoppingServer {
             ...item,
             picked: body.picked,
             pickedAt: body.picked ? now : null,
-            pickedByMemberId: body.picked ? ME.member.id : null,
+            pickedByMemberId: body.picked ? who.memberId : null,
             revision: item.revision + 1,
             updatedAt: now,
+            updatedByMemberId: who.memberId,
           });
           this.items.set(item.id, updated);
           await this.bump(item.listId);
@@ -362,6 +400,7 @@ export class FakeShoppingServer {
           userModified: true,
           revision: item.revision + 1,
           updatedAt: now,
+          updatedByMemberId: who.memberId,
         });
         this.items.set(item.id, updated);
         await this.bump(item.listId);

@@ -12,6 +12,7 @@ export const shoppingKeys = {
   listsAll: ['shopping', 'lists'] as const,
   snapshot: (listId: string) => ['shopping', 'snapshot', listId] as const,
   categories: ['shopping', 'categories'] as const,
+  members: ['shopping', 'members'] as const,
 };
 
 export function useLists(status: 'active' | 'archived') {
@@ -32,6 +33,16 @@ export function useCategories() {
   return useQuery({
     queryKey: shoppingKeys.categories,
     queryFn: () => api.listCategories(),
+    staleTime: 5 * 60_000,
+  });
+}
+
+/** Read-only and rarely changing; never blocks rendering (names fall back to a generic label). */
+export function useHouseholdMembers() {
+  const api = useShoppingApi();
+  return useQuery({
+    queryKey: shoppingKeys.members,
+    queryFn: () => api.listMembers(),
     staleTime: 5 * 60_000,
   });
 }

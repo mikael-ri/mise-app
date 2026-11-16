@@ -30,9 +30,10 @@ try {
 const pool = createPool(config.databaseUrl, config.databasePoolMax);
 // SSE streams subscribe to this hub to close on revocation (A14).
 const revocations = createRevocationHub();
+const households = createHouseholdsService(pool);
 const authService = createAuthService({
   pool,
-  households: createHouseholdsService(pool),
+  households,
   idp: createIdpClient(config.oidc),
   revocations,
   oidc: config.oidc,
@@ -42,6 +43,7 @@ const authService = createAuthService({
 const app = buildApp({
   checkReady: () => checkDatabaseReady(pool),
   config,
+  households,
   recipes: createRecipesService(pool),
   shopping: {
     service: createShoppingService(pool, createListEventHub()),
