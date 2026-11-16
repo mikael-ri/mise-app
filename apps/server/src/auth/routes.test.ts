@@ -15,7 +15,7 @@ import {
   sealLoginState,
 } from './cookies.js';
 import { OidcError } from './oidc.js';
-import { LOGIN_FAILED_PATH } from './routes.js';
+import { LOGIN_FAILED_PATH, LOGIN_NOT_PROVISIONED_PATH } from './routes.js';
 import type { AuthService } from './service.js';
 
 const GOOD = newSessionToken();
@@ -291,6 +291,28 @@ describe('OIDC routes', () => {
       `${SESSION_COOKIE}=${GOOD}; Path=/; Max-Age=100; HttpOnly; Secure; SameSite=Lax`,
     ]);
   });
+
+  it.each([
+    ['subject_not_provisioned', LOGIN_NOT_PROVISIONED_PATH],
+    ['signature_invalid', LOGIN_FAILED_PATH],
+    ['auth_time_stale', LOGIN_FAILED_PATH],
+  ] as const)(
+    'callback failing with %s redirects to %s, clears login state, sets no session',
+    async (reason, path) => {
+      makeApp();
+      vi.mocked(service.completeLogin).mockRejectedValueOnce(new OidcError(reason));
+      const res = await app.inject({
+        url: `/api/v1/auth/oidc/callback?code=c&state=${'s'.repeat(43)}`,
+        headers: { cookie: `${LOGIN_STATE_COOKIE}=${sealedState()}` },
+      });
+      expect(res.statusCode).toBe(302);
+      expect(res.headers.location).toBe(path);
+      expect(res.headers['cache-control']).toBe('no-store');
+      const set = String(res.headers['set-cookie']);
+      expect(set).toBe(`${LOGIN_STATE_COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`);
+      expect(set).not.toContain(`${SESSION_COOKIE}=`);
+    },
+  );
 
   it('rate-limits the auth routes per client IP', async () => {
     makeApp(2);

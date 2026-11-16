@@ -6,6 +6,7 @@ import { buildApp } from '../app.js';
 import {
   CSRF_HEADER,
   createRateLimiter,
+  buildCsp,
   issueCsrfToken,
   rateLimitHook,
   verifyCsrfToken,
@@ -132,6 +133,15 @@ describe('security headers (NFR-04)', () => {
       expect(res.headers['strict-transport-security']).toContain('max-age=');
       expect(res.headers['cache-control']).toBe('no-store');
     }
+  });
+});
+
+describe('CSP style policy (NFR-04, ADR-019)', () => {
+  it('locks style-src to self: no unsafe-inline, nonce or hash relaxation without an ADR change', () => {
+    const directive = buildCsp()
+      .split('; ')
+      .find((d) => d.startsWith('style-src'));
+    expect(directive).toBe("style-src 'self'");
   });
 });
 

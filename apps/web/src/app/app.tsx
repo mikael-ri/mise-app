@@ -1,10 +1,13 @@
-import { t } from '../i18n/index.js';
+import { useState } from 'react';
+import { RouterProvider } from 'react-router';
+import { AppProviders } from './providers.js';
+import { createAppRouter } from './router.js';
 
 export function App() {
+  const [router] = useState(createAppRouter);
   return (
-    <main>
-      <h1>{t('app.title')}</h1>
-      <p>{t('app.tagline')}</p>
-    </main>
+    <AppProviders>
+      <RouterProvider router={router} />
+    </AppProviders>
   );
 }

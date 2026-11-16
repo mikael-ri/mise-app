@@ -88,3 +88,9 @@ Behaviour:
 - After revoke: the row disappears and a toast confirms. No "revoke all others" in Milestone A.
 - States: loading skeleton rows; error with try again; the list always has at least the current device.
 - If the current device is revoked from elsewhere, the next request returns `401` and the user sees A1 with the "session has ended" message.
+
+## Decision log
+
+- 2026-11-16 (A11, project owner): the devices list shows all household device sessions (contract `DeviceSessionList`), with the member name on other members' rows, so either member can revoke a lost device. This replaces "own sessions only" in A3.
+- 2026-11-16 (A11, project owner): `/signin` query values are whitelisted: `reason` = `session_ended` | `signed_out`; `error` = `unexpected` | `not_provisioned` | `signin_failed`. Anything else is ignored. `correlationId` (with `error=unexpected`) is plain text, max 64 chars of `[A-Za-z0-9_-]`.
+- 2026-11-16 (A11, project owner): the server redirects to `/signin?error=not_provisioned` when an authenticated identity has no member record, and to `/signin?error=signin_failed` for other failures.

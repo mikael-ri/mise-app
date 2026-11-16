@@ -1,0 +1,71 @@
+@import 'tailwindcss';
+
+/* Design tokens (ADR-019). Light by default, dark via prefers-color-scheme. */
+:root {
+  --mise-bg: #fbfaf7;
+  --mise-surface: #ffffff;
+  --mise-surface-muted: #f1efe8;
+  --mise-text: #1d1b16;
+  --mise-text-muted: #5c584d;
+  --mise-border: #d6d2c4;
+  --mise-primary: #1f5f3d;
+  --mise-primary-text: #ffffff;
+  --mise-danger: #a4262c;
+  --mise-danger-text: #ffffff;
+  --mise-focus: #1a56db;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --mise-bg: #14130f;
+    --mise-surface: #1e1c17;
+    --mise-surface-muted: #2a2720;
+    --mise-text: #f2efe6;
+    --mise-text-muted: #bdb8a8;
+    --mise-border: #4a4638;
+    --mise-primary: #7fcf9f;
+    --mise-primary-text: #0d1f15;
+    --mise-danger: #ff8a8f;
+    --mise-danger-text: #2a0a0c;
+    --mise-focus: #8ab4ff;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--mise-bg);
+  --color-surface: var(--mise-surface);
+  --color-surface-muted: var(--mise-surface-muted);
+  --color-text: var(--mise-text);
+  --color-text-muted: var(--mise-text-muted);
+  --color-border: var(--mise-border);
+  --color-primary: var(--mise-primary);
+  --color-primary-text: var(--mise-primary-text);
+  --color-danger: var(--mise-danger);
+  --color-danger-text: var(--mise-danger-text);
+  --color-focus: var(--mise-focus);
+}
+
+body {
+  background: var(--mise-bg);
+  color: var(--mise-text);
+  font-family: system-ui, sans-serif;
+}
+
+/* Visible focus ring everywhere. */
+:focus-visible {
+  outline: 3px solid var(--mise-focus);
+  outline-offset: 2px;
+}
+
+/*
+ * Radix modal layers lock page scroll with an injected <style> element, which CSP style-src 'self'
+ * blocks. This static rule gives the same effect without inline styles.
+ */
+html {
+  scrollbar-gutter: stable;
+}
+
+body:has([data-modal-overlay]) {
+  overflow: hidden;
+}

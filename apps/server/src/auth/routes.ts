@@ -21,8 +21,13 @@ import {
 import { OidcError } from './oidc.js';
 import type { AuthService } from './service.js';
 
-/** Where a failed login lands (A11 renders it). One generic code: no reason leaks to the browser. */
-export const LOGIN_FAILED_PATH = '/login?error=signin_failed';
+/** Where a failed login lands (A11 renders it). One generic code for every reason but one. */
+export const LOGIN_FAILED_PATH = '/signin?error=signin_failed';
+/**
+ * The IdP authenticated the user but no active, provisioned member matches the identity
+ * (`subject_not_provisioned`). Accepted disclosure: reveals only that fact, never identity data.
+ */
+export const LOGIN_NOT_PROVISIONED_PATH = '/signin?error=not_provisioned';
 
 export interface AuthRouteOptions {
   service: AuthService;
@@ -68,10 +73,12 @@ export function registerAuthRoutes(app: FastifyInstance, o: AuthRouteOptions): v
 
   const redirectFailed = (request: FastifyRequest, reply: FastifyReply, reason: string) => {
     request.log.info({ reason }, 'login rejected'); // fixed reason code only
+    const target =
+      reason === 'subject_not_provisioned' ? LOGIN_NOT_PROVISIONED_PATH : LOGIN_FAILED_PATH;
     return reply
       .header('set-cookie', clearCookie(LOGIN_STATE_COOKIE))
       .header('cache-control', 'no-store')
-      .redirect(LOGIN_FAILED_PATH, 302);
+      .redirect(target, 302);
   };
 
   app.get('/api/v1/auth/oidc/start', publicRoute, async (request, reply) => {

@@ -84,6 +84,7 @@ Only tabs that exist in the current milestone are shown. Never show disabled pla
 - Visible focus ring, full keyboard operation, dialogs trap focus and restore it on close.
 - State is never conveyed by colour alone (picked = checked box + struck text; error = icon + text).
 - Contrast meets WCAG AA. Support light and dark via design tokens (`prefers-color-scheme`); useful in dim shops.
+- Contrast and axe rules are checked in a real browser by Playwright (`tests/support/axe.ts`) in both themes; jsdom unit tests cannot check colour. A screen is not done until it passes that check.
 - Live changes from the other member are announced politely (`aria-live="polite"`) without moving focus.
 
 ## 7. i18n and formatting
@@ -99,3 +100,9 @@ Only tabs that exist in the current milestone are shown. Never show disabled pla
 ## 9. Component primitives needed (choose the library in A11)
 
 Accessible dialog, bottom sheet, dropdown menu, tabs or tab bar, toast, checkbox, select, chip input, collapsible section, skeleton. Do not hand-roll these.
+
+## 10. Decision log
+
+- 2026-11-16 (A11, project owner): the user menu (desktop sidebar: member name, Devices, Sign out) is built; there is no header overflow menu in Milestone A. Add overflow items only when a later card needs one, and update the wireframes to say what goes in it.
+- 2026-11-16 (A11, project owner): axe contrast checks run in Playwright, light and dark, as part of each screen's definition of done (see §6 and A16).
+- Component library: Radix UI + Tailwind; see ADR-019.

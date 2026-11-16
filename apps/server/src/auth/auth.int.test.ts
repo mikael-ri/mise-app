@@ -16,7 +16,7 @@ import {
 } from './cookies.js';
 import { createIdpClient } from './idp.js';
 import { createRevocationHub } from './revocation.js';
-import { LOGIN_FAILED_PATH } from './routes.js';
+import { LOGIN_FAILED_PATH, LOGIN_NOT_PROVISIONED_PATH } from './routes.js';
 import {
   SESSION_ABSOLUTE_MS,
   SESSION_IDLE_MS,
@@ -248,12 +248,19 @@ describe('AC-11: login creates a device session only on verified fresh authentic
     expect(await sessionCount()).toBe(before);
   });
 
-  it('rejects an unknown subject and an inactive user', async () => {
+  it('rejects an unknown subject and an inactive user as not provisioned, with no session', async () => {
     const before = await sessionCount();
-    expect((await login(`stranger-${tag}`)).cb.headers.location).toBe(LOGIN_FAILED_PATH);
+    const stranger = await login(`stranger-${tag}`);
+    expect(stranger.cb.headers.location).toBe(LOGIN_NOT_PROVISIONED_PATH);
+    expect(stranger.token).toBeUndefined();
+    expect(String(stranger.cb.headers['set-cookie'])).not.toContain(`${SESSION_COOKIE}=`);
+    expect(String(stranger.cb.headers['set-cookie'])).toContain(`${LOGIN_STATE_COOKIE}=;`);
+    expect(String(stranger.cb.headers.location)).not.toContain('stranger');
     await pool.query('UPDATE users SET is_active = false WHERE oidc_subject = $1', [subj.dan]);
     try {
-      expect((await login(subj.dan)).cb.headers.location).toBe(LOGIN_FAILED_PATH);
+      const inactive = await login(subj.dan);
+      expect(inactive.cb.headers.location).toBe(LOGIN_NOT_PROVISIONED_PATH);
+      expect(inactive.token).toBeUndefined();
     } finally {
       await pool.query('UPDATE users SET is_active = true WHERE oidc_subject = $1', [subj.dan]);
     }
@@ -500,7 +507,7 @@ describe('operator commands never mint sessions (ADR-003, lost-device runbook)',
     await createOperatorService(pool).linkIdentity(memberIds['dan']!, TEST_ISSUER, newSubject);
     expect(await sessionCount()).toBe(before);
     expect((await get('/api/v1/household-data', old.cookie)).statusCode).toBe(401);
-    expect((await login(subj.dan)).cb.headers.location).toBe(LOGIN_FAILED_PATH);
+    expect((await login(subj.dan)).cb.headers.location).toBe(LOGIN_NOT_PROVISIONED_PATH);
     const fresh = await signedIn(newSubject);
     expect(fresh.me.member.id).toBe(memberIds['dan']);
     await createOperatorService(pool).linkIdentity(memberIds['dan']!, TEST_ISSUER, subj.dan);

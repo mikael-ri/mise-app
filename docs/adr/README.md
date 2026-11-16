@@ -26,6 +26,7 @@ Stack (001), PostgreSQL + Drizzle (002), Authelia OIDC with fresh authentication
 | [016](0016-plan-lifecycle.md) | Plan lifecycle, calendar and leftovers | Accepted | Milestone C |
 | [017](0017-shopping-merge.md) | Shopping generation, merge and reconciliation | Accepted | Milestone D |
 | [018](0018-database-roles.md) | Database roles: migrator owns the schema, app has least privilege | Accepted | A19, A09 follow-up |
+| [019](0019-web-ui-libraries.md) | Web UI libraries: Radix + Tailwind, TanStack Query, React Router | Accepted | A11 |
 
 ## Addendum format (spikes and amendments)
 Append to the ADR file:
