@@ -460,3 +460,57 @@ describe('AC-11 / A07 residual: revoked or expired sessions lose their stream', 
     expect(c.isEnded()).toBe(false);
   });
 });
+
+describe('FR-37 / AC-08: list rename and archive reach open streams', () => {
+  const patchListOverHttp = (s: Session, listId: string, revision: number, body: object) =>
+    apps[0]!.inject({
+      method: 'PATCH',
+      url: `/api/v1/shopping-lists/${listId}`,
+      headers: {
+        cookie: s.cookie,
+        origin: ORIGIN,
+        [CSRF_HEADER]: s.csrf,
+        'if-match': `"${revision}"`,
+      },
+      payload: body,
+    });
+
+  it("signals the other member's stream; the refetch returns the new name and status", async () => {
+    const sa = await sessionFor(h.a);
+    const sb = await sessionFor(a2);
+    const list = await newList(sa);
+    const watcher = await subscribe(sb, list.id);
+    await watcher.waitFor((x) => x.events.length === 1);
+    const start = lastSeq(watcher);
+
+    const renamed = await patchListOverHttp(sa, list.id, list.revision, { name: 'Prisma' });
+    expect(renamed.statusCode).toBe(200);
+    await watcher.waitFor((x) => lastSeq(x) === start + 1);
+    let snap = await snapshotOverHttp(sb, list.id);
+    expect(snap.list).toMatchObject({ name: 'Prisma', status: 'active', changeSeq: start + 1 });
+
+    const rev = (renamed.json() as { revision: number }).revision;
+    expect((await patchListOverHttp(sa, list.id, rev, { status: 'archived' })).statusCode).toBe(
+      200,
+    );
+    await watcher.waitFor((x) => lastSeq(x) === start + 2);
+    snap = await snapshotOverHttp(sb, list.id);
+    expect(snap.list).toMatchObject({ name: 'Prisma', status: 'archived', changeSeq: start + 2 });
+  });
+
+  it('sends nothing for a no-op patch or a stale revision (409)', async () => {
+    const s = await sessionFor(h.a);
+    const list = await newList(s);
+    const c = await subscribe(s, list.id);
+    await c.waitFor((x) => x.events.length === 1);
+
+    expect(
+      (await patchListOverHttp(s, list.id, list.revision, { name: list.name })).statusCode,
+    ).toBe(200);
+    expect((await patchListOverHttp(s, list.id, list.revision + 7, { name: 'x' })).statusCode).toBe(
+      409,
+    );
+    await quiet();
+    expect(c.events).toHaveLength(1);
+  });
+});

@@ -328,7 +328,9 @@ export function createShoppingService(pool: Pool, events: ListEventHub): Shoppin
     },
 
     async patchList(actor, id, expectedRevision, input) {
-      await withTransaction(pool, async (tx) => {
+      // Name and status are shown on every device, so a change advances the cursor and signals open
+      // streams like an item change does (owner decision, A14); clients refetch list and items.
+      const seq = await withTransaction(pool, async (tx) => {
         const cur = await repo.getList(tx, actor.householdId, id, true);
         if (!cur) throw listNotFound();
         if (cur.revision !== expectedRevision) {
@@ -338,9 +340,10 @@ export function createShoppingService(pool: Pool, events: ListEventHub): Shoppin
         }
         const name = input.name ?? cur.name;
         const status = input.status ?? cur.status;
-        if (name === cur.name && status === cur.status) return; // nothing to do
-        await repo.updateList(tx, actor.householdId, id, { name, status });
+        if (name === cur.name && status === cur.status) return null; // nothing to do
+        return repo.updateList(tx, actor.householdId, id, { name, status });
       });
+      signal(actor, id, seq);
       return toListDto(await loadList(actor, id));
     },
 

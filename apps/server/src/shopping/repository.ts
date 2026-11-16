@@ -305,16 +305,20 @@ export async function updateList(
   householdId: string,
   id: string,
   change: { name: string; status: 'active' | 'archived' },
-): Promise<void> {
-  await scopedQuery(
+): Promise<number> {
+  const { rows } = await scopedQuery<{ seq: string }>(
     q,
     householdId,
     `UPDATE shopping_lists
         SET name = $3, status = $4, revision = revision + 1, change_seq = change_seq + 1,
             updated_at = now()
-      WHERE household_id = $1 AND id = $2`,
+      WHERE household_id = $1 AND id = $2
+      RETURNING change_seq AS seq`,
     [id, change.name, change.status],
   );
+  const row = rows[0];
+  if (!row) throw new Error('shopping list vanished inside its own transaction');
+  return Number(row.seq);
 }
 
 /** Advances the sync cursor in the caller's transaction (ADR-013, DB §8.2). */

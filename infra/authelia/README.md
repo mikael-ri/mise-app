@@ -61,6 +61,9 @@ No secrets are committed. Everything generated lives in gitignored paths: `secre
 3. `nginx -t && systemctl reload nginx`.
 4. The `X-Forwarded-Proto` / `X-Forwarded-Host` headers in the snippet are load-bearing: Authelia derives its issuer
    from them. The forward-auth endpoints (`/api/authz/*`) are blocked on the public side on purpose.
+5. Keep the live-list stream location (`location ~ ^/api/.*/events$` in `mise.mydomain.com.conf`) with `proxy_buffering off`
+   and a `proxy_read_timeout` longer than the 25 s SSE heartbeat (ADR-004). Otherwise nginx holds back the events and the
+   shopping list looks dead behind the proxy.
 
 ## Check it works (from any machine)
 
