@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   AddShoppingItemRequest,
+  CreateShoppingCategoryRequest,
+  PatchShoppingCategoryRequest,
   PatchShoppingItemRequest,
   ShoppingItem,
   ShoppingListEvent,
@@ -80,5 +82,34 @@ describe('ShoppingListEvent (ADR-004)', () => {
     expect(ShoppingListEvent.safeParse({ listId: ID, seq: 3, item: { name: 'x' } }).success).toBe(
       false,
     );
+  });
+});
+
+describe('Shopping category requests (FR-36)', () => {
+  it.each([
+    ['name only', { name: 'Leipä' }, true],
+    ['name and sort order', { name: 'Leipä', sortOrder: 15 }, true],
+    ['blank name', { name: '  ' }, false],
+    ['name too long', { name: 'x'.repeat(51) }, false],
+    ['multi-line name', { name: 'a\nb' }, false],
+    ['negative sort order', { name: 'x', sortOrder: -1 }, false],
+    ['fractional sort order', { name: 'x', sortOrder: 1.5 }, false],
+    ['client sets household', { name: 'x', householdId: ID }, false],
+    ['client sets system code', { name: 'x', systemCode: 'dairy' }, false],
+  ])('create: %s', (_name, value, ok) => {
+    expect(CreateShoppingCategoryRequest.safeParse(value).success).toBe(ok);
+  });
+
+  it('trims the name', () => {
+    expect(CreateShoppingCategoryRequest.parse({ name: '  Leipä ' }).name).toBe('Leipä');
+  });
+
+  it.each([
+    ['rename', { name: 'Leivät' }, true],
+    ['reorder', { sortOrder: 25 }, true],
+    ['empty body', {}, false],
+    ['client sends a revision', { name: 'x', revision: 1 }, false],
+  ])('patch: %s', (_name, value, ok) => {
+    expect(PatchShoppingCategoryRequest.safeParse(value).success).toBe(ok);
   });
 });

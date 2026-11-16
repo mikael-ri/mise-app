@@ -27,6 +27,39 @@ export type ShoppingCategory = z.infer<typeof ShoppingCategory>;
 export const ShoppingCategoryList = z
   .strictObject({ items: z.array(ShoppingCategory) })
   .meta({ id: 'ShoppingCategoryList' });
+export type ShoppingCategoryList = z.infer<typeof ShoppingCategoryList>;
+
+export const ShoppingCategoryParams = z.strictObject({ id: ShoppingCategoryId });
+
+const CategoryName = nonEmptyText(50);
+/**
+ * Gapped ordering (system defaults use 10, 20, ... and `other` 1000): moving one category is one
+ * PATCH of one row to a value between its new neighbours, never a renumbering of the others.
+ * Ties sort by name, then id.
+ */
+const SortOrder = z.int().min(0).max(1_000_000);
+
+/**
+ * POST /shopping-categories (FR-36). Requires `Idempotency-Key`. Names are unique per household,
+ * ignoring case (`409 conflict`). Without `sortOrder` the category goes 10 after the last
+ * non-`other` category.
+ */
+export const CreateShoppingCategoryRequest = z
+  .strictObject({ name: CategoryName, sortOrder: SortOrder.optional() })
+  .meta({ id: 'CreateShoppingCategoryRequest' });
+export type CreateShoppingCategoryRequest = z.infer<typeof CreateShoppingCategoryRequest>;
+
+/**
+ * PATCH /shopping-categories/:id: rename or reorder a household category; system defaults are
+ * read-only. Deliberately last-write-wins with no `If-Match` (owner decision, A13): concurrent
+ * edits of one category are very unlikely and a revision column would change the frozen schema.
+ * No delete in Milestone A.
+ */
+export const PatchShoppingCategoryRequest = z
+  .strictObject({ name: CategoryName.optional(), sortOrder: SortOrder.optional() })
+  .refine((p) => Object.keys(p).length > 0, { message: 'no changes given' })
+  .meta({ id: 'PatchShoppingCategoryRequest' });
+export type PatchShoppingCategoryRequest = z.infer<typeof PatchShoppingCategoryRequest>;
 
 export const ShoppingList = z
   .strictObject({
@@ -73,6 +106,7 @@ export type ShoppingItem = z.infer<typeof ShoppingItem>;
 export const ShoppingListSummaryList = z
   .strictObject({ items: z.array(ShoppingList) })
   .meta({ id: 'ShoppingListSummaryList' });
+export type ShoppingListSummaryList = z.infer<typeof ShoppingListSummaryList>;
 
 /** Authoritative snapshot (GET /shopping-lists/:id). Clients refetch this after any SSE event. */
 export const ShoppingListSnapshot = z

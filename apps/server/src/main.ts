@@ -7,6 +7,7 @@ import {
 } from './auth/index.js';
 import { createHouseholdsService } from './households/index.js';
 import { createRecipesService } from './recipes/index.js';
+import { createShoppingService } from './shopping/index.js';
 import {
   ConfigError,
   checkDatabaseReady,
@@ -42,6 +43,7 @@ const app = buildApp({
   checkReady: () => checkDatabaseReady(pool),
   config,
   recipes: createRecipesService(pool),
+  shopping: createShoppingService(pool),
   auth: {
     service: authService,
     publicOrigin: config.publicOrigin,

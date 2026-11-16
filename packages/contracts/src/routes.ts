@@ -22,10 +22,14 @@ import {
 } from './recipes.js';
 import {
   AddShoppingItemRequest,
+  CreateShoppingCategoryRequest,
   CreateShoppingListRequest,
+  PatchShoppingCategoryRequest,
   PatchShoppingItemRequest,
   PatchShoppingListRequest,
+  ShoppingCategory,
   ShoppingCategoryList,
+  ShoppingCategoryParams,
   ShoppingItem,
   ShoppingItemParams,
   ShoppingList,
@@ -254,6 +258,30 @@ export const ROUTES: readonly RouteDef[] = [
     responses: { 200: { description: 'Categories', schema: ShoppingCategoryList } },
   },
   {
+    operationId: 'createShoppingCategory',
+    method: 'post',
+    path: '/shopping-categories',
+    tag: 'shopping',
+    summary: 'Create a household category (name unique per household, ignoring case)',
+    auth: true,
+    body: CreateShoppingCategoryRequest,
+    idempotencyKey: true,
+    extraErrors: ['conflict'],
+    responses: { 201: { description: 'Created (or replayed)', schema: ShoppingCategory } },
+  },
+  {
+    operationId: 'patchShoppingCategory',
+    method: 'patch',
+    path: '/shopping-categories/{id}',
+    tag: 'shopping',
+    summary: 'Rename or reorder a household category (last write wins; system defaults read-only)',
+    auth: true,
+    params: ShoppingCategoryParams,
+    body: PatchShoppingCategoryRequest,
+    extraErrors: ['conflict', 'forbidden'],
+    responses: { 200: { description: 'Updated', schema: ShoppingCategory } },
+  },
+  {
     operationId: 'listShoppingLists',
     method: 'get',
     path: '/shopping-lists',
@@ -309,6 +337,8 @@ export const ROUTES: readonly RouteDef[] = [
     params: ShoppingListParams,
     body: AddShoppingItemRequest,
     idempotencyKey: true,
+    // `conflict`: the list is archived.
+    extraErrors: ['conflict'],
     responses: { 201: { description: 'Created (or replayed)', schema: ShoppingItem, etag: true } },
   },
   {
@@ -322,6 +352,8 @@ export const ROUTES: readonly RouteDef[] = [
     params: ShoppingItemParams,
     body: PatchShoppingItemRequest,
     ifMatch: 'required-for-edits',
+    // `conflict`: the list is archived.
+    extraErrors: ['conflict'],
     responses: { 200: { description: 'Updated', schema: ShoppingItem, etag: true } },
   },
   {
@@ -333,6 +365,8 @@ export const ROUTES: readonly RouteDef[] = [
     auth: true,
     params: ShoppingItemParams,
     ifMatch: 'required',
+    // `conflict`: the list is archived.
+    extraErrors: ['conflict'],
     responses: { 204: noContent },
   },
   {

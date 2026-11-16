@@ -23,3 +23,19 @@ Spike results and amendments go in an *Addendum* section below, never by editing
 - **Unit table location:** the table is embedded in `units.ts` (the package does no I/O); a test asserts it equals `tests/fixtures/units.json`.
 - **Vague terms:** `ripaus` and `kourallinen` are included next to `maun mukaan` as vague amounts that are never scaled numerically.
 - **Warnings are code-only:** `ScaleWarning` carries a code and numbers, no text; the web layer maps codes to i18n keys.
+
+## Addendum (2026-11-16): shopping category resolution order (card A13)
+**Evidence:** `apps/server/src/shopping/categorize.ts` (`CATEGORIZE_STEPS`), `apps/server/src/shopping/shopping.int.test.ts` ("FR-36: categories ..."); the quantity-text parser in `packages/domain/src/quantity-text.ts` with table tests.
+**Finding:** The decision above says "keyword dictionary first, LLM fallback later, manual override persisted per normalized key" but does not fix where the override sits relative to the dictionary. A13 ships no dictionary, so the order has to be settled now so the dictionary can be added later without reworking the categorizer.
+**Decision / change (owner, A13):**
+- **Order.** Category resolution for a shopping item, first match wins:
+  1. Explicit category chosen by the member in the request.
+  2. Household override for the normalized key (`household_ingredient_settings.shopping_category_id`).
+  3. Keyword dictionary (not built yet).
+  4. LLM suggestion (later, never in the request path of a manual add; FR-39/AC-10).
+  5. `Other`. This step always answers and stays last.
+- **Shape.** The categorizer is an ordered list of steps, each returning a category ID or "no answer". New steps are inserted into the list; existing steps do not change.
+- **Corrections.** An explicit category on add or edit is stored as the household override for the item's key. Clearing an item's category (`categoryId: null`) sets the item to `Other` and clears the override.
+- **Household categories.** Households can create, rename and reorder their own categories. System defaults are read-only. Names are unique per household, ignoring case (`409`). Category PATCH is deliberately last-write-wins without `If-Match`. Ordering uses gapped `sortOrder` values, so moving a category is one PATCH of one row. There is no delete in A.
+**Consequences:** Milestone D (generation) must insert the keyword-dictionary step between the household override and `Other`. A13's final report flags this. The milestone plan should carry the item.
+**Still to verify:** dictionary coverage and its key normalization once the ingredient dictionary replaces the Milestone A lowercase+trim key.
