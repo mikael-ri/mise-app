@@ -91,4 +91,37 @@ test.describe('UI-only (stubbed API): AC-08 live shopping list on two devices', 
     await contextA.close();
     await contextB.close();
   });
+
+  test('FR-35: an added item shows an "Adding…" placeholder at once, then lands in its category; axe passes with it visible', async ({
+    browser,
+  }) => {
+    const server = new FakeShoppingServer();
+    const context = await browser.newContext({ viewport });
+    const page = await context.newPage();
+    await server.attach(page);
+    await page.goto('/shopping');
+    await page.getByRole('button', { name: 'New list' }).click();
+    await page.getByRole('button', { name: 'Create' }).click();
+    await expect(page).toHaveURL(/\/shopping\/[0-9a-f-]+$/);
+
+    const release = server.holdItemPosts();
+    const input = page.getByTestId('add-item-input');
+    await input.fill('Milk');
+    await input.press('Enter');
+    const placeholder = page.getByTestId('pending-item');
+    await expect(placeholder).toContainText('Milk');
+    await expect(placeholder).toContainText('Adding\u2026');
+    await expect(input).toBeFocused();
+    await expect(input).toHaveValue('');
+    for (const scheme of COLOR_SCHEMES) {
+      await page.emulateMedia({ colorScheme: scheme });
+      await expectNoAxeViolations(page);
+    }
+
+    release();
+    await expect(placeholder).toBeHidden();
+    await expect(row(page, 'Milk')).toBeVisible();
+    await expect(page.getByRole('heading', { level: 2 })).toHaveText([/Dairy \(1\)/]);
+    await context.close();
+  });
 });

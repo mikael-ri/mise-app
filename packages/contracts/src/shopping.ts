@@ -73,6 +73,9 @@ export const ShoppingList = z
     createdByMemberId: MemberId,
     createdAt: Instant,
     updatedAt: Instant,
+    /** Derived aggregates; do not affect revision or changeSeq. */
+    itemCount: z.int().min(0),
+    pickedCount: z.int().min(0),
   })
   .meta({ id: 'ShoppingList' });
 export type ShoppingList = z.infer<typeof ShoppingList>;

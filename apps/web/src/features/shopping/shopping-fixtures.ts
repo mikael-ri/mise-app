@@ -68,6 +68,8 @@ export function shoppingList(over: Partial<ShoppingList> = {}): ShoppingList {
     createdByMemberId: ME.member.id,
     createdAt: '2026-11-16T08:00:00Z',
     updatedAt: '2026-11-16T08:30:00Z',
+    itemCount: 0,
+    pickedCount: 0,
     ...over,
   });
 }
@@ -76,7 +78,14 @@ export function snapshotOf(
   items: ShoppingItem[],
   list: Partial<ShoppingList> = {},
 ): ShoppingListSnapshot {
-  return ShoppingListSnapshot.parse({ list: shoppingList(list), items });
+  return ShoppingListSnapshot.parse({
+    list: shoppingList({
+      itemCount: items.length,
+      pickedCount: items.filter((i) => i.picked).length,
+      ...list,
+    }),
+    items,
+  });
 }
 
 /** milk (dairy), carrots (vegetables), batteries (other). */

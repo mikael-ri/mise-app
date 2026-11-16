@@ -93,10 +93,18 @@ const row = (name: string) => {
 describe('lists index (FR-34)', () => {
   it('FR-34: shows active lists newest activity first, archived behind a toggle with Restore', async () => {
     const active = [
-      shoppingList({ id: uuid(1), name: 'Old', updatedAt: '2026-11-10T08:00:00Z' }),
+      shoppingList({
+        id: uuid(1),
+        name: 'Old',
+        updatedAt: '2026-11-10T08:00:00Z',
+        itemCount: 8,
+        pickedCount: 3,
+      }),
       shoppingList({ id: uuid(2), name: 'New', updatedAt: '2026-11-15T08:00:00Z' }),
     ];
-    const archived = [shoppingList({ id: uuid(3), name: 'Gone', status: 'archived' })];
+    const archived = [
+      shoppingList({ id: uuid(3), name: 'Gone', status: 'archived', itemCount: 1, pickedCount: 0 }),
+    ];
     const api = fakeShopping({
       listLists: vi
         .fn()
@@ -109,7 +117,13 @@ describe('lists index (FR-34)', () => {
       expect.stringContaining('Old'),
     ]);
     expect(screen.queryByText('Gone')).not.toBeInTheDocument();
+    expect(within(cards[1] as HTMLElement).getByTestId('list-card-progress')).toHaveTextContent(
+      '3 of 8 items picked up',
+    );
     await userEvent.click(screen.getByRole('button', { name: 'Archived lists (1)' }));
+    expect(screen.getAllByTestId('list-card-progress')[2]).toHaveTextContent(
+      '0 of 1 item picked up',
+    );
     await userEvent.click(screen.getByRole('button', { name: 'Restore Gone' }));
     expect(api.patchList).toHaveBeenCalledWith(uuid(3), 1, { status: 'active' });
   });
@@ -387,26 +401,103 @@ describe('list view fixes', () => {
 });
 
 describe('adding an item (FR-35, FR-36, FR-39)', () => {
-  it('FR-35: a retry of the same name reuses the idempotency key; a new name gets a new one (rule 8)', async () => {
+  const deferred = () => {
+    let resolve: (v: unknown) => void = () => undefined;
+    const promise = new Promise((r) => (resolve = r));
+    return { promise, resolve };
+  };
+  const maito = (name = 'Maito') => shoppingItem(9, { name, categoryId: CAT.dairy });
+
+  it('FR-35: submitting shows an "Adding…" placeholder at once (not pickable), the field clears and keeps focus; it becomes the real item in its category', async () => {
+    const d = deferred();
+    const api = fakeShopping({ addItem: vi.fn().mockReturnValue(d.promise) });
+    renderList(api);
+    await screen.findByText('Milk');
+    const input = screen.getByTestId('add-item-input');
+    await userEvent.type(input, 'Maito{Enter}');
+    const placeholder = await screen.findByTestId('pending-item');
+    expect(placeholder).toHaveTextContent('Maito');
+    expect(placeholder).toHaveTextContent('Adding…');
+    expect(placeholder).toHaveAttribute('aria-busy', 'true');
+    expect(within(placeholder).queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(input).toHaveValue('');
+    expect(input).toHaveFocus();
+    expect(screen.queryByText('Added "Maito" to Dairy.')).not.toBeInTheDocument();
+    d.resolve(maito());
+    expect(await screen.findByText('Added "Maito" to Dairy.')).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByTestId('pending-item')).not.toBeInTheDocument());
+    expect(screen.getAllByText('Maito')).toHaveLength(1); // the real row only: no duplicate
+    expect(screen.getAllByTestId('shopping-item')).toHaveLength(4);
+  });
+
+  it('FR-35: a failed add keeps the placeholder with Not saved, Retry reuses the same key and Remove drops it', async () => {
     const addItem = vi
       .fn()
       .mockRejectedValueOnce(network())
-      .mockImplementation((_l, body: { name: string }) =>
-        Promise.resolve(shoppingItem(9, { name: body.name, categoryId: CAT.dairy })),
-      );
+      .mockRejectedValueOnce(network())
+      .mockImplementation((_l, body: { name: string }) => Promise.resolve(maito(body.name)));
+    renderList(fakeShopping({ addItem }));
+    await screen.findByText('Milk');
+    await userEvent.type(screen.getByTestId('add-item-input'), 'Maito{Enter}');
+    const failed = await screen.findByText('Not saved');
+    expect(failed).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Retry adding Maito' }));
+    await screen.findByRole('button', { name: 'Remove Maito' }); // failed again
+    await userEvent.click(screen.getByRole('button', { name: 'Retry adding Maito' }));
+    expect(await screen.findByText('Added "Maito" to Dairy.')).toBeInTheDocument();
+    expect(addItem).toHaveBeenCalledTimes(3);
+    const keys = addItem.mock.calls.map((c) => c[2]);
+    expect(new Set(keys).size).toBe(1);
+    expect(screen.queryByTestId('pending-item')).not.toBeInTheDocument();
+  });
+
+  it('FR-35: a failed placeholder is announced as an alert', async () => {
+    renderList(fakeShopping({ addItem: vi.fn().mockRejectedValue(network()) }));
+    await screen.findByText('Milk');
+    await userEvent.type(screen.getByTestId('add-item-input'), 'Maito{Enter}');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Not saved');
+  });
+
+  it('FR-35: a late success after leaving the page shows no toast', async () => {
+    const d = deferred();
+    const view = renderList(fakeShopping({ addItem: vi.fn().mockReturnValue(d.promise) }));
+    await screen.findByText('Milk');
+    await userEvent.type(screen.getByTestId('add-item-input'), 'Maito{Enter}');
+    await screen.findByTestId('pending-item');
+    await view.router.navigate('/shopping');
+    await screen.findByText('No lists yet');
+    d.resolve(maito());
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(screen.queryByText(/Added "Maito"/)).not.toBeInTheDocument();
+  });
+
+  it('FR-35: Remove drops a failed placeholder without sending anything', async () => {
+    const addItem = vi.fn().mockRejectedValue(network());
+    renderList(fakeShopping({ addItem }));
+    await screen.findByText('Milk');
+    await userEvent.type(screen.getByTestId('add-item-input'), 'Maito{Enter}');
+    await userEvent.click(await screen.findByRole('button', { name: 'Remove Maito' }));
+    expect(screen.queryByTestId('pending-item')).not.toBeInTheDocument();
+    expect(addItem).toHaveBeenCalledTimes(1);
+  });
+
+  it('FR-35: two concurrent adds each get a placeholder and their own idempotency key', async () => {
+    const first = deferred();
+    const second = deferred();
+    const addItem = vi.fn().mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
     renderList(fakeShopping({ addItem }));
     await screen.findByText('Milk');
     const input = screen.getByTestId('add-item-input');
     await userEvent.type(input, 'Maito{Enter}');
-    await screen.findByText('Could not add the item. Try again.');
-    await userEvent.clear(input);
-    await userEvent.type(input, 'Maito{Enter}');
-    await waitFor(() => expect(addItem).toHaveBeenCalledTimes(2));
     await userEvent.type(input, 'Juusto{Enter}');
-    await waitFor(() => expect(addItem).toHaveBeenCalledTimes(3));
-    const keys = addItem.mock.calls.map((c) => c[2]);
-    expect(keys[0]).toBe(keys[1]);
-    expect(keys[2]).not.toBe(keys[0]);
+    expect(screen.getAllByTestId('pending-item')).toHaveLength(2);
+    expect(addItem.mock.calls[0]?.[2]).not.toBe(addItem.mock.calls[1]?.[2]);
+    second.resolve(shoppingItem(10, { name: 'Juusto', categoryId: CAT.dairy }));
+    await waitFor(() => expect(screen.getAllByTestId('pending-item')).toHaveLength(1));
+    expect(screen.getByTestId('pending-item')).toHaveTextContent('Maito');
+    first.resolve(maito());
+    await waitFor(() => expect(screen.queryByTestId('pending-item')).not.toBeInTheDocument());
+    expect(screen.getAllByTestId('shopping-item')).toHaveLength(5);
   });
 
   it('FR-35: Enter adds, clears the field and keeps it focused; the toast names the category', async () => {
@@ -429,15 +520,6 @@ describe('adding an item (FR-35, FR-36, FR-39)', () => {
     await userEvent.type(screen.getByTestId('add-item-input'), '   {Enter}');
     expect(api.addItem).not.toHaveBeenCalled();
     expect(screen.getByRole('alert')).toHaveTextContent('Enter a name.');
-  });
-
-  it('FR-35: a network failure shows an error and keeps the typed text', async () => {
-    const api = fakeShopping({ addItem: vi.fn().mockRejectedValue(network()) });
-    renderList(api);
-    await screen.findByText('Milk');
-    await userEvent.type(screen.getByTestId('add-item-input'), 'Maito{Enter}');
-    expect(await screen.findByText('Could not add the item. Try again.')).toBeInTheDocument();
-    expect(screen.getByTestId('add-item-input')).toHaveValue('Maito');
   });
 
   it('FR-36: the toast Change action opens the item sheet focused on the category', async () => {

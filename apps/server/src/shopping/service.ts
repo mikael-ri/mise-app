@@ -110,6 +110,8 @@ const toListDto = (l: repo.ListRow): ShoppingList =>
     createdByMemberId: l.createdByMemberId,
     createdAt: iso(l.createdAt),
     updatedAt: iso(l.updatedAt),
+    itemCount: l.itemCount,
+    pickedCount: l.pickedCount,
   });
 
 const toItemDto = (i: repo.ItemRow): ShoppingItem =>

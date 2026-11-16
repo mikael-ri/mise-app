@@ -217,6 +217,38 @@ describe('FR-34: standalone lists (create, rename, archive)', () => {
     expect(same.changeSeq).toBe(0);
   });
 
+  it('FR-34: itemCount/pickedCount update after add, checkoff and delete, never move revision, and are household-scoped', async () => {
+    const list = await newList(A(), 'Laskuri');
+    expect(list).toMatchObject({ itemCount: 0, pickedCount: 0 });
+    const counts = async () => {
+      const { list: l } = await service.getSnapshot(A(), list.id);
+      const idx = (await service.listLists(A(), 'active')).items.find((i) => i.id === list.id)!;
+      expect(idx).toMatchObject({ itemCount: l.itemCount, pickedCount: l.pickedCount });
+      return { n: l.itemCount, p: l.pickedCount, revision: l.revision };
+    };
+    const maito = await addItem(list.id, 'Maito');
+    const leipa = await addItem(list.id, 'Leipä');
+    expect(await counts()).toEqual({ n: 2, p: 0, revision: 1 });
+    await api('PATCH', `/shopping-items/${maito.id}`, { body: { picked: true } });
+    expect(await counts()).toEqual({ n: 2, p: 1, revision: 1 });
+    const seq = await seqOf(list.id);
+    await api('DELETE', `/shopping-items/${maito.id}`, { ifMatch: 1 });
+    expect(await counts()).toEqual({ n: 1, p: 0, revision: 1 });
+    expect(await seqOf(list.id)).toBe(seq + 1); // the delete bumped it, counts themselves do not
+    await api('DELETE', `/shopping-items/${leipa.id}`, { ifMatch: 1 });
+    const patched = await service.patchList(A(), list.id, 1, { name: 'Laskuri 2' });
+    expect(patched).toMatchObject({ itemCount: 0, pickedCount: 0 });
+    // Household B sees only its own lists and counts.
+    const other = await newList(B(), 'B-lista');
+    await addItem(other.id, 'Kahvi', {}, B());
+    expect((await service.getSnapshot(B(), other.id)).list.itemCount).toBe(1);
+    const bIdx = (await service.listLists(B(), 'active')).items;
+    expect(bIdx.find((i) => i.id === list.id)).toBeUndefined();
+    expect(
+      (await service.listLists(A(), 'active')).items.find((i) => i.id === other.id),
+    ).toBeUndefined();
+  });
+
   it('snapshot: no ETag, Cache-Control no-store, list + items + changeSeq', async () => {
     const list = await newList();
     await addItem(list.id, 'Maito');

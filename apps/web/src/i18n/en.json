@@ -305,5 +305,13 @@
   "shopping.item.saveFailedLabel": "Not saved. Retry: {name}",
   "shopping.item.refreshed": "Showing the latest values. Your edits are kept; review and save.",
   "shopping.sheet.memberYou": "You",
-  "shopping.sheet.memberOther": "Another household member"
+  "shopping.sheet.memberOther": "Another household member",
+  "shopping.lists.progress": "{picked} of {total, plural, one {# item} other {# items}} picked up",
+  "shopping.add.pending": "Adding…",
+  "shopping.add.notSaved": "Not saved",
+  "shopping.add.retry": "Retry",
+  "shopping.add.retryLabel": "Retry adding {name}",
+  "shopping.add.dismiss": "Remove",
+  "shopping.add.dismissLabel": "Remove {name}",
+  "shopping.add.pendingList": "Items being added"
 }

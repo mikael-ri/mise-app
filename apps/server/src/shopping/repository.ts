@@ -22,6 +22,8 @@ export interface ListRow {
   createdByMemberId: string;
   createdAt: Date;
   updatedAt: Date;
+  itemCount: number;
+  pickedCount: number;
 }
 
 export interface ItemRow {
@@ -239,11 +241,21 @@ export async function upsertStaple(
 // ---------------------------------------------------------------------------------------------
 // Lists
 
-const LIST_COLS = `id, name, status, change_seq AS "changeSeq", revision,
-  created_by_member_id AS "createdByMemberId", created_at AS "createdAt", updated_at AS "updatedAt"`;
+// Item counts are derived aggregates; they never touch list revision or change_seq.
+const LIST_COLS = `l.id, l.name, l.status, l.change_seq AS "changeSeq", l.revision,
+  l.created_by_member_id AS "createdByMemberId", l.created_at AS "createdAt", l.updated_at AS "updatedAt",
+  (SELECT count(*) FROM shopping_items i
+    WHERE i.household_id = l.household_id AND i.shopping_list_id = l.id) AS "itemCount",
+  (SELECT count(*) FROM shopping_items i
+    WHERE i.household_id = l.household_id AND i.shopping_list_id = l.id AND i.picked) AS "pickedCount"`;
 
 // bigint arrives as a string from pg; change_seq stays far below 2^53 for a household app.
-const toList = (r: ListRow): ListRow => ({ ...r, changeSeq: Number(r.changeSeq) });
+const toList = (r: ListRow): ListRow => ({
+  ...r,
+  changeSeq: Number(r.changeSeq),
+  itemCount: Number(r.itemCount),
+  pickedCount: Number(r.pickedCount),
+});
 
 export async function listLists(
   q: Queryable,
@@ -253,8 +265,8 @@ export async function listLists(
   const { rows } = await scopedQuery<ListRow>(
     q,
     householdId,
-    `SELECT ${LIST_COLS} FROM shopping_lists WHERE household_id = $1 AND status = $2
-      ORDER BY created_at DESC, id`,
+    `SELECT ${LIST_COLS} FROM shopping_lists l WHERE l.household_id = $1 AND l.status = $2
+      ORDER BY l.created_at DESC, l.id`,
     [status],
   );
   return rows.map(toList);
@@ -273,8 +285,8 @@ export async function getList(
   const { rows } = await scopedQuery<ListRow>(
     q,
     householdId,
-    `SELECT ${LIST_COLS} FROM shopping_lists WHERE household_id = $1 AND id = $2
-      ${lock ? 'FOR UPDATE' : ''}`,
+    `SELECT ${LIST_COLS} FROM shopping_lists l WHERE l.household_id = $1 AND l.id = $2
+      ${lock ? 'FOR UPDATE OF l' : ''}`,
     [id],
   );
   return rows[0] ? toList(rows[0]) : undefined;

@@ -137,6 +137,23 @@ export class FakeShoppingServer {
   private readonly offline = new Set<Page>();
   private readonly keys = new Map<string, unknown>();
   private next = 10_000;
+  private itemPostGate: Promise<void> | null = null;
+
+  /** Holds every POST /items response until the returned function is called (pending-add UI). */
+  holdItemPosts(): () => void {
+    let release: () => void = () => undefined;
+    this.itemPostGate = new Promise((resolve) => (release = resolve));
+    return () => {
+      release();
+      this.itemPostGate = null;
+    };
+  }
+
+  /** Derived item counts, like the server aggregate. */
+  private counted(list: ListT): ListT {
+    const items = [...this.items.values()].filter((i) => i.listId === list.id);
+    return { ...list, itemCount: items.length, pickedCount: items.filter((i) => i.picked).length };
+  }
 
   seq(listId: string): number {
     return this.seqs.get(listId) ?? 0;
@@ -222,9 +239,9 @@ export class FakeShoppingServer {
     if (path === '/shopping-lists') {
       if (method === 'GET') {
         const status = url.searchParams.get('status');
-        const items = [...this.lists.values()].filter(
-          (l) => status === null || l.status === status,
-        );
+        const items = [...this.lists.values()]
+          .filter((l) => status === null || l.status === status)
+          .map((l) => this.counted(l));
         return json(route, 200, ShoppingListSummaryList.parse({ items }));
       }
       if (method === 'POST') {
@@ -241,6 +258,8 @@ export class FakeShoppingServer {
           createdByMemberId: ME.member.id,
           createdAt: now,
           updatedAt: now,
+          itemCount: 0,
+          pickedCount: 0,
         });
         this.lists.set(list.id, list);
         this.keys.set(request.headers()['idempotency-key'] ?? '', list);
@@ -255,7 +274,7 @@ export class FakeShoppingServer {
       if (list === undefined) return error(route, 404, 'not_found');
       if (method === 'GET' && listMatch[2] === undefined) {
         const items = [...this.items.values()].filter((i) => i.listId === listId);
-        return json(route, 200, ShoppingListSnapshot.parse({ list, items }), {
+        return json(route, 200, ShoppingListSnapshot.parse({ list: this.counted(list), items }), {
           'cache-control': 'no-store',
         });
       }
@@ -273,11 +292,12 @@ export class FakeShoppingServer {
         });
         this.lists.set(listId, updated);
         await this.bump(listId);
-        return json(route, 200, updated, { etag: formatEtag(updated.revision) });
+        return json(route, 200, this.counted(updated), { etag: formatEtag(updated.revision) });
       }
       if (method === 'POST' && listMatch[2] !== undefined) {
         if (needsKey()) return error(route, 400, 'idempotency_key_required');
         const body = AddShoppingItemRequest.parse(request.postDataJSON());
+        await this.itemPostGate;
         const item = ShoppingItem.parse({
           id: uuid(this.next++),
           listId,

@@ -44,7 +44,12 @@ function ListCard({
     >
       <Link to={`/shopping/${list.id}`} className="flex min-h-11 flex-1 flex-col gap-1 p-4">
         <span className="text-lg font-medium">{list.name}</span>
-        <span className="text-sm text-text-muted">{updated}</span>
+        <span className="flex justify-between gap-3 text-sm text-text-muted">
+          <span data-testid="list-card-progress">
+            {t('shopping.lists.progress', { picked: list.pickedCount, total: list.itemCount })}
+          </span>
+          <span>{updated}</span>
+        </span>
       </Link>
       {action !== undefined && <div className="pr-3">{action}</div>}
     </li>

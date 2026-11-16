@@ -20,7 +20,9 @@ import { categoryLabel } from './category-label.js';
 import { ItemSheet } from './item-sheet.js';
 import { applyCheckoff, buildListView, categoryOf, diffItems, isRejected } from './list-model.js';
 import type { CategoryGroup, CheckoffEntry } from './list-model.js';
-import { cacheItem, shoppingKeys, useCategories, useCheckoff, useSnapshot } from './queries.js';
+import { shoppingKeys, useCategories, useCheckoff, useSnapshot } from './queries.js';
+import { usePendingAdds } from './use-pending-adds.js';
+import type { PendingAdd } from './use-pending-adds.js';
 import { useListEvents } from './use-list-events.js';
 import { useShoppingApi } from './use-shopping-api.js';
 
@@ -251,48 +253,10 @@ function RenameDialog({
 }
 
 /** Sticky add bar (S3): one field, Enter or [+]; stays focused so several items go in quickly. */
-function AddBar({
-  listId,
-  categories,
-  onChange,
-}: {
-  listId: string;
-  categories: readonly ShoppingCategory[];
-  onChange: (item: ShoppingItem) => void;
-}) {
-  const api = useShoppingApi();
-  const queryClient = useQueryClient();
-  const toast = useToast();
+function AddBar({ onAdd }: { onAdd: (name: string) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [text, setText] = useState('');
   const [message, setMessage] = useState<string | undefined>();
-  const keyRef = useRef<{ name: string; key: string } | null>(null);
-  const textRef = useRef(text);
-  textRef.current = text;
-
-  const add = useMutation({
-    mutationFn: (name: string) => {
-      // Same name = same retry: replay instead of adding twice (hard rule 8). Cleared on success.
-      if (keyRef.current?.name !== name) keyRef.current = { name, key: crypto.randomUUID() };
-      return api.addItem(listId, { name }, keyRef.current.key);
-    },
-    onSuccess: (item) => {
-      keyRef.current = null;
-      cacheItem(queryClient, item);
-      toast.show(
-        t('shopping.add.toast', {
-          name: item.name,
-          category: categoryLabel(categoryOf(item, categories)),
-        }),
-        { label: t('shopping.add.change'), onSelect: () => onChange(item) },
-      );
-    },
-    onError: (_error, name) => {
-      setMessage(t('shopping.add.error'));
-      // Keep what the user typed so a network failure loses nothing.
-      if (textRef.current === '') setText(name);
-    },
-  });
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -304,7 +268,7 @@ function AddBar({
     }
     setMessage(undefined);
     setText('');
-    add.mutate(name);
+    onAdd(name);
     inputRef.current?.focus();
   };
 
@@ -347,6 +311,59 @@ function AddBar({
   );
 }
 
+/** Placeholder rows for adds the server has not confirmed yet: not pickable, never in a category. */
+function PendingRows({
+  pending,
+  onRetry,
+  onDismiss,
+}: {
+  pending: readonly PendingAdd[];
+  onRetry: (id: string) => void;
+  onDismiss: (id: string) => void;
+}) {
+  if (pending.length === 0) return null;
+  return (
+    <ul aria-label={t('shopping.add.pendingList')} data-testid="pending-adds" className="mb-2">
+      {pending.map((p) => (
+        <li
+          key={p.id}
+          data-testid="pending-item"
+          {...(p.status === 'pending' ? { 'aria-busy': true } : {})}
+          className="flex min-h-11 items-center gap-2 border-b border-border px-3 py-2"
+        >
+          <span className="flex-1">{p.name}</span>
+          {p.status === 'pending' ? (
+            <span className="text-sm text-text-muted">{t('shopping.add.pending')}</span>
+          ) : (
+            <>
+              <span role="alert" className="text-sm font-medium text-danger">
+                <span aria-hidden="true">! </span>
+                {t('shopping.add.notSaved')}
+              </span>
+              <button
+                type="button"
+                aria-label={t('shopping.add.retryLabel', { name: p.name })}
+                onClick={() => onRetry(p.id)}
+                className="flex min-h-11 items-center px-3 font-medium underline"
+              >
+                {t('shopping.add.retry')}
+              </button>
+              <button
+                type="button"
+                aria-label={t('shopping.add.dismissLabel', { name: p.name })}
+                onClick={() => onDismiss(p.id)}
+                className="flex min-h-11 items-center px-3 underline"
+              >
+                {t('shopping.add.dismiss')}
+              </button>
+            </>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 /** S2: the shopping list. Live updates come from SSE-triggered refetches (AC-08). */
 export function ShoppingListPage() {
   const { listId = '' } = useParams();
@@ -356,7 +373,7 @@ export function ShoppingListPage() {
   const categories = useCategories();
   const { status } = useListEvents(listId, snapshot.refetch);
   const checkoff = useCheckoff(listId);
-
+  const toast = useToast();
   // Keep toasts above the sticky add bar while this page is shown.
   useEffect(() => {
     const root = document.documentElement.style;
@@ -381,6 +398,20 @@ export function ShoppingListPage() {
   const list = snapshot.data?.list;
   const serverItems = snapshot.data?.items;
   const cats = useMemo(() => categories.data ?? [], [categories.data]);
+
+  const adds = usePendingAdds(listId, (item) => {
+    touched.current.add(item.id);
+    toast.show(
+      t('shopping.add.toast', {
+        name: item.name,
+        category: categoryLabel(categoryOf(item, cats)),
+      }),
+      {
+        label: t('shopping.add.change'),
+        onSelect: () => setSheet({ itemId: item.id, focusCategory: true }),
+      },
+    );
+  });
 
   // Polite announcement of changes made by the other member; own changes are not announced.
   useEffect(() => {
@@ -469,12 +500,15 @@ export function ShoppingListPage() {
     };
     body = (
       <>
-        {view.total === 0 && <EmptyState title={t('shopping.list.empty')} />}
+        {view.total === 0 && adds.pending.length === 0 && (
+          <EmptyState title={t('shopping.list.empty')} />
+        )}
         {view.total > 0 && view.open.length === 0 && (
           <p className="py-6 text-center text-lg font-medium" data-testid="all-picked">
             {t('shopping.list.allPicked')}
           </p>
         )}
+        <PendingRows pending={adds.pending} onRetry={adds.retry} onDismiss={adds.dismiss} />
         <Rows
           groups={view.open}
           collapsible
@@ -579,13 +613,7 @@ export function ShoppingListPage() {
 
       {body}
 
-      {list !== undefined && !readOnly && (
-        <AddBar
-          listId={list.id}
-          categories={cats}
-          onChange={(item) => setSheet({ itemId: item.id, focusCategory: true })}
-        />
-      )}
+      {list !== undefined && !readOnly && <AddBar onAdd={adds.add} />}
 
       {list !== undefined && (
         <>
