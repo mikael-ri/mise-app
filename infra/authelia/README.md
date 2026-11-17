@@ -12,7 +12,7 @@ No secrets are committed. Everything generated lives in gitignored paths: `secre
 | `compose.yaml`                         | Production: Authelia + Postgres, image pinned to `authelia/authelia:4.39.28` (digest in the header)               |
 | `configuration.example.yml`            | Config template; values come from environment variables, secrets from `/run/secrets`                              |
 | `users.example.yml`                    | Provisioned users (file backend). Only these users can sign in                                                    |
-| `nginx/`                               | Server blocks and proxy snippets for the proxy Pi (`auth.mydomain.com`, `mise.…`)                                 |
+| `nginx/`                               | Server block and proxy snippet for the proxy Pi (`auth.mydomain.com`); Mise's are in `infra/nginx/`               |
 | `scripts/setup.sh`                     | Generates secrets and the OIDC client secret (plain + PBKDF2 digest)                                              |
 | `scripts/validate-config.sh`           | Validates the rendered config with the pinned image                                                               |
 | `compose.dev.yaml`, `scripts/dev-*.sh` | **Dev only**: self-contained stack (Authelia, Postgres, local nginx), throwaway CA and secrets, `*.mydomain.test` |
@@ -23,7 +23,8 @@ No secrets are committed. Everything generated lives in gitignored paths: `secre
 1. Copy this folder to the host. Needs Docker with the compose plugin.
 2. Production layout (`compose.yaml`): Authelia stores its data in Postgres (`authelia_db`, chosen for operator familiarity
    and to avoid SQLite file corruption). It needs, created once beforehand: the external network and volumes
-   (`docker network create authelia`, `docker volume create authelia_data`, `docker volume create authelia_db`) and the files
+   (`docker network create authelia`, `docker network create --internal mise_oidc` (shared with the Mise app, `infra/compose.yaml`),
+   `docker volume create authelia_data`, `docker volume create authelia_db`) and the files
    `.secrets/{postgres_pw,session-secret,storage-encryption-key,oidc-hmac-secret,oidc-jwks-rsa.pem,oidc-client-secret.digest}`
    (gitignore them; `scripts/setup.sh` makes the same set under `secrets/` for the dev stack only). Copy
    `configuration.example.yml` to `configuration.yml`. Make the data volume writable for the container user (Docker creates it root-owned):
@@ -54,14 +55,14 @@ No secrets are committed. Everything generated lives in gitignored paths: `secre
 
 ## Proxy Pi (nginx)
 
-1. Copy `nginx/auth.mydomain.com.conf` and `nginx/mise.mydomain.com.conf` to `/etc/nginx/conf.d/`, and
-   `nginx/authelia-proxy.conf`, `nginx/mise-proxy.conf` to `/etc/nginx/snippets/` (create the directory if missing).
+1. Copy `nginx/auth.mydomain.com.conf` to `/etc/nginx/conf.d/` and `nginx/authelia-proxy.conf` to `/etc/nginx/snippets/`
+   (create the directory if missing). The Mise server block is `infra/nginx/` (A19; see `docs/runbooks/go-live.md`).
 2. Replace in the copies: `mydomain.com` with your domain, `@TLS_CERT@` / `@TLS_KEY@` with your certificate paths,
-   `@AUTHELIA_UPSTREAM@` with `<host-lan-ip>:9091`, `@MISE_UPSTREAM@` with `<host-lan-ip>:<mise-port>`.
+   `@AUTHELIA_UPSTREAM@` with `<host-lan-ip>:9091`.
 3. `nginx -t && systemctl reload nginx`.
 4. The `X-Forwarded-Proto` / `X-Forwarded-Host` headers in the snippet are load-bearing: Authelia derives its issuer
    from them. The forward-auth endpoints (`/api/authz/*`) are blocked on the public side on purpose.
-5. Keep the live-list stream location (`location ~ ^/api/.*/events$` in `mise.mydomain.com.conf`) with `proxy_buffering off`
+5. Keep the live-list stream location (the `/events` location in `infra/nginx/mise.example.conf`) with `proxy_buffering off`
    and a `proxy_read_timeout` longer than the 25 s SSE heartbeat (ADR-004). Otherwise nginx holds back the events and the
    shopping list looks dead behind the proxy.
 

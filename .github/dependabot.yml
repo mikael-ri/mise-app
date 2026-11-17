@@ -1,0 +1,21 @@
+# Dependency update automation (A19, ADR-012 compensating control "dependency updates").
+# Dependabot is GitHub-native: no new repo dependency. Every PR must pass CI (`pnpm check`,
+# database and E2E jobs) before merge; security updates are raised immediately regardless of schedule.
+version: 2
+updates:
+  - package-ecosystem: npm # covers the pnpm workspace via pnpm-lock.yaml
+    directory: /
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 10
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+  - package-ecosystem: docker # node base image in the root Dockerfile
+    directory: /
+    schedule: { interval: weekly, day: monday }
+  - package-ecosystem: docker-compose # postgres, authelia and nginx image tags
+    directories: [/infra, /infra/authelia]
+    schedule: { interval: weekly, day: monday }
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: monthly }

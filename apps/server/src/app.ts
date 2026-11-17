@@ -10,8 +10,13 @@ import { registerShoppingRoutes } from './shopping/index.js';
 import type { ListStreamOptions, ShoppingService } from './shopping/index.js';
 import { registerHealthRoutes } from './health/index.js';
 import type { ReadinessCheck } from './health/index.js';
-import { buildLoggerOptions, generateCorrelationId, registerPlatform } from './platform/index.js';
-import type { AppConfig } from './platform/index.js';
+import {
+  buildLoggerOptions,
+  generateCorrelationId,
+  registerPlatform,
+  registerSpaRoutes,
+} from './platform/index.js';
+import type { AppConfig, SpaAssets } from './platform/index.js';
 
 export interface AppOptions {
   checkReady: ReadinessCheck;
@@ -27,6 +32,8 @@ export interface AppOptions {
   recipes?: RecipesService;
   /** Shopping routes and their SSE streams; omitted only in tests that do not need them. */
   shopping?: { service: ShoppingService; streams: ListStreamOptions };
+  /** Built web app served on non-API paths (production image); dev uses the Vite server instead. */
+  spa?: SpaAssets;
 }
 
 // Fastify's types omit the hop-count form, so express it as a trust function (trust the first n hops).
@@ -51,5 +58,6 @@ export function buildApp(options: AppOptions): FastifyInstance {
     registerShoppingRoutes(app, options.shopping.service, options.shopping.streams);
   }
   registerHealthRoutes(app, options.checkReady);
+  if (options.spa) registerSpaRoutes(app, options.spa);
   return app;
 }

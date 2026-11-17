@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # DEV ONLY. Creates a throwaway CA + certs for auth/mise.mydomain.test and renders the production nginx
-# configs from ./nginx into ./tls/nginx with dev values, so the dev proxy tests the same files you deploy.
+# configs from ./nginx (Authelia) and ../nginx (Mise) into ./tls/nginx with dev values, so the dev proxy tests the same files you deploy.
 # Output (all gitignored): ./tls/ca.pem, ./tls/{cert,key}.pem, ./tls/nginx/*
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -25,7 +25,7 @@ render() { # render <src> <dst>
     -e 's|@AUTHELIA_UPSTREAM@|authelia:9091|; s|@MISE_UPSTREAM@|127.0.0.1:3000|' "$1" >"$2"
 }
 render "nginx/auth.mydomain.com.conf" "tls/nginx/conf.d/auth.conf"
-render "nginx/mise.mydomain.com.conf" "tls/nginx/conf.d/mise.conf"
+render "../nginx/mise.example.conf" "tls/nginx/conf.d/mise.conf"
 render "nginx/authelia-proxy.conf" "tls/nginx/snippets/authelia-proxy.conf"
-render "nginx/mise-proxy.conf" "tls/nginx/snippets/mise-proxy.conf"
+render "../nginx/mise-proxy.conf" "tls/nginx/snippets/mise-proxy.conf"
 echo "rendered nginx config for *.$D into tls/nginx"

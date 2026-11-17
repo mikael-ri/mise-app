@@ -1,0 +1,18 @@
+# Build context for the root Dockerfile: sources and manifests only. Never secrets or local state.
+**/node_modules
+**/dist
+**/coverage
+**/*.tsbuildinfo
+.git
+.github
+.claude
+.env*
+**/.env*
+infra
+docs
+tests
+scripts
+playwright-report
+test-results
+**/*.pem
+**/*.key

@@ -112,7 +112,33 @@ export async function runIdempotent<T>(
   }
 }
 
-/** Expiry sweep (ADR-013 addendum "still to verify"); schedule from the app process. */
+/** Expiry sweep (ADR-013 addendum "still to verify"); scheduled by `startPeriodicSweep` in main.ts. */
 export async function sweepExpiredKeys(pool: Pool): Promise<number> {
   return repo.deleteAllExpired(pool);
+}
+
+/**
+ * Runs `sweep` every `intervalMs` (first run after one interval), never overlapping, until the
+ * returned stop function is called. Housekeeping only: expired keys are already treated as absent.
+ * The timer is unref'd so it never keeps the process alive.
+ */
+export function startPeriodicSweep(options: {
+  sweep: () => Promise<number>;
+  intervalMs: number;
+  onSwept: (deleted: number) => void;
+  onError: (err: unknown) => void;
+}): () => void {
+  let running = false;
+  const timer = setInterval(() => {
+    if (running) return;
+    running = true;
+    options
+      .sweep()
+      .then(options.onSwept, options.onError)
+      .finally(() => {
+        running = false;
+      });
+  }, options.intervalMs);
+  timer.unref();
+  return () => clearInterval(timer);
 }

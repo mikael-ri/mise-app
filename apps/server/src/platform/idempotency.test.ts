@@ -1,6 +1,59 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AppError } from './errors.js';
-import { canonicalJson, parseIdempotencyKey, requestHash } from './idempotency.js';
+import {
+  canonicalJson,
+  parseIdempotencyKey,
+  requestHash,
+  startPeriodicSweep,
+} from './idempotency.js';
+
+describe('startPeriodicSweep (ADR-013 expiry sweep)', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('sweeps on every interval, reports counts and errors, and stops cleanly', async () => {
+    vi.useFakeTimers();
+    const sweep = vi
+      .fn<() => Promise<number>>()
+      .mockResolvedValueOnce(3)
+      .mockRejectedValueOnce(new Error('db down'))
+      .mockResolvedValue(0);
+    const onSwept = vi.fn();
+    const onError = vi.fn();
+    const stop = startPeriodicSweep({ sweep, intervalMs: 1000, onSwept, onError });
+
+    expect(sweep).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(onSwept).toHaveBeenCalledWith(3);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(onError).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(sweep).toHaveBeenCalledTimes(3);
+
+    stop();
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(sweep).toHaveBeenCalledTimes(3);
+  });
+
+  it('never runs two sweeps at once when one is slower than the interval', async () => {
+    vi.useFakeTimers();
+    let release: (n: number) => void = () => {};
+    const sweep = vi.fn(() => new Promise<number>((resolve) => (release = resolve)));
+    const stop = startPeriodicSweep({
+      sweep,
+      intervalMs: 1000,
+      onSwept: () => {},
+      onError: () => {},
+    });
+    await vi.advanceTimersByTimeAsync(3500);
+    expect(sweep).toHaveBeenCalledTimes(1);
+    release(0);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(sweep).toHaveBeenCalledTimes(2);
+    stop();
+  });
+});
 
 describe('idempotency helpers (NFR-04)', () => {
   it('canonicalJson sorts keys, drops undefined and is whitespace free', () => {

@@ -82,6 +82,8 @@ const ConfigSchema = DatabaseSchema.extend({
    * session outlives the login (ADR-003 addendum D4). `rd=<app url>` is appended.
    */
   OIDC_POST_LOGIN_LOGOUT_URL: z.url({ protocol: /^https$/ }),
+  /** Directory of the built web app (apps/web/dist). Unset in dev, where Vite serves the UI. */
+  WEB_DIST_DIR: z.string().min(1).optional(),
 }).refine((c) => new URL(c.OIDC_POST_LOGIN_LOGOUT_URL).origin === c.OIDC_ISSUER, {
   path: ['OIDC_POST_LOGIN_LOGOUT_URL'],
   message: 'must be on the OIDC_ISSUER origin',
@@ -99,6 +101,8 @@ export interface AppConfig {
   trustProxy: boolean | number | string[];
   csrfSecret: string;
   sessionSecret: string;
+  /** Built web app directory served by the server (production image); null in dev (Vite serves it). */
+  webDistDir: string | null;
   oidc: OidcConfig;
 }
 
@@ -247,6 +251,7 @@ export function loadConfig(env: Env, readFile: ReadFile = defaultReadFile): AppC
             : parseProxyAddresses(c.TRUST_PROXY)!,
     csrfSecret: c.CSRF_SECRET,
     sessionSecret: c.SESSION_SECRET,
+    webDistDir: c.WEB_DIST_DIR ?? null,
     oidc: {
       issuer: c.OIDC_ISSUER,
       internalUrl: c.OIDC_INTERNAL_URL ?? c.OIDC_ISSUER,

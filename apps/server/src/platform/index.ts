@@ -5,8 +5,16 @@ import { registerCsrfProtection, registerSecurityHeaders } from './security.js';
 
 export { ConfigError, loadConfig, loadDatabaseConfig, trustProxyWarning } from './config.js';
 export type { AppConfig, DatabaseConfig, OidcConfig } from './config.js';
-export { checkDatabaseReady, createPool, withTransaction } from './db.js';
-export type { Pool, Queryable, Tx } from './db.js';
+export {
+  checkDatabaseReady,
+  createPool,
+  databaseRoleProblems,
+  readDatabaseRoleFacts,
+  withTransaction,
+} from './db.js';
+export type { DatabaseRoleFacts, Pool, Queryable, Tx } from './db.js';
+export { loadSpaAssets, registerSpaRoutes } from './spa.js';
+export type { SpaAssets } from './spa.js';
 export { AppError, errorBody, generateCorrelationId, toErrorBody } from './errors.js';
 export { parseIfMatchHeader } from './http.js';
 export { buildLoggerOptions, REDACT_PATHS } from './logging.js';
@@ -16,6 +24,7 @@ export {
   parseIdempotencyKey,
   requestHash,
   runIdempotent,
+  startPeriodicSweep,
   sweepExpiredKeys,
 } from './idempotency.js';
 export type { IdempotencyScope, IdempotentOutcome } from './idempotency.js';

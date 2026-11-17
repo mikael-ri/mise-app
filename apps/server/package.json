@@ -9,6 +9,7 @@
     "cli:revoke-sessions": "tsx src/cli/revoke-sessions.ts",
     "cli:export-recipes": "tsx src/cli/export-recipes.ts",
     "cli:load-recipes": "tsx src/cli/load-recipes.ts",
+    "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p .",
     "test": "vitest run --exclude \"**/*.int.test.ts\"",
     "test:int": "vitest run --config vitest.int.config.ts"

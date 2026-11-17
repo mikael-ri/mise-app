@@ -37,6 +37,9 @@ services:
       - authelia_data:/data
     networks:
       - authelia
+      # Shared with the Mise app only (infra/compose.yaml): Mise calls OIDC_INTERNAL_URL=http://authelia:9091.
+      # authelia_db is not on it.
+      - mise_oidc
     secrets:
       - session-secret
       - storage-encryption-key
@@ -82,6 +85,9 @@ volumes:
 
 networks:
   authelia:
+    external: true
+  # `docker network create --internal mise_oidc` (internal: no route out of the host).
+  mise_oidc:
     external: true
 
 secrets:

@@ -72,6 +72,13 @@ command creates a session: every new session still needs a fresh Authelia login 
 - Relink a member to a new Authelia identity (for example after renaming the Authelia user); also revokes that member's
   sessions: `pnpm --filter @mise/server cli:provision-user --member <memberId> --issuer <OIDC_ISSUER> --subject <sub>`.
 
+**Production (container form, A19).** On the Mise host the same commands run inside the app container, which already has
+`DATABASE_URL_FILE` (the app role) set; run them from the repo's `infra/` folder:
+
+- Find member IDs: `docker exec -it mise_postgres psql -U postgres -d mise -c "SELECT m.id, u.display_name, m.role FROM household_members m JOIN users u ON u.id = m.user_id"`
+- Revoke sessions: `docker compose exec mise node dist/cli/revoke-sessions.js --member <memberId>` (or `--all`).
+- Relink a member: `docker compose exec mise node dist/cli/provision-user.js --member <memberId> --issuer <OIDC_ISSUER> --subject <sub>`.
+
 ## Optional: passkeys (not enabled in P0)
 
 Only if passkeys are later enabled (`MISE_AUTH_WEBAUTHN_DISABLE=false`, passkey + password path). List with

@@ -9,6 +9,10 @@ test-results
 !.env.example
 .claude/settings.local.json
 
+# Production Mise stack: app config and secret files on the Mise host (infra/compose.yaml)
+infra/.secrets/
+infra/mise.env
+
 # Authelia stack runtime state (secrets, DB, rendered config, users, TLS)
 infra/authelia/secrets/
 infra/authelia/.secrets/

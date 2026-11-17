@@ -4,6 +4,7 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p .",
     "test": "vitest run --passWithNoTests"
   },

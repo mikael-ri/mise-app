@@ -1,0 +1,95 @@
+# Production stack for the Mise app on the Mise host (A19, tech §3, ADR-012, ADR-018).
+# Authelia is a separate Compose project (infra/authelia/compose.yaml); the two share only the
+# external `mise_oidc` network, so Mise reaches Authelia's internal URL without touching its DB.
+#
+# One-time setup and every value below: docs/runbooks/go-live.md. Files this stack reads that are
+# never committed: infra/.env (interpolation), infra/mise.env (app config), infra/.secrets/*.
+#   docker compose -f infra/compose.yaml up -d
+name: mise
+
+services:
+  mise:
+    image: 'mise-app:${MISE_IMAGE_TAG:?set MISE_IMAGE_TAG to the deployed git revision}'
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: mise
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    tmpfs: ['/tmp']
+    pids_limit: 200
+    ports:
+      # The Mise host's LAN address only (never 0.0.0.0); host firewall allows only the proxy Pi.
+      - '${MISE_BIND_ADDRESS:?set MISE_BIND_ADDRESS to the LAN address}:${MISE_BIND_PORT:-3000}:3000'
+    env_file: [mise.env]
+    environment:
+      NODE_ENV: production
+      DATABASE_URL_FILE: /run/secrets/mise_database_url
+      CSRF_SECRET_FILE: /run/secrets/mise_csrf_secret
+      SESSION_SECRET_FILE: /run/secrets/mise_session_secret
+      OIDC_CLIENT_SECRET_FILE: /run/secrets/mise_oidc_client_secret
+    secrets:
+      - mise_database_url
+      - mise_csrf_secret
+      - mise_session_secret
+      - mise_oidc_client_secret
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [mise_db, mise_oidc]
+    logging:
+      driver: json-file
+      options: { max-size: '10m', max-file: '5' }
+
+  postgres:
+    image: postgres:17.8-alpine
+    container_name: mise_postgres
+    restart: unless-stopped
+    shm_size: 128m
+    environment:
+      # Bootstrap superuser: used only to create the roles by hand (go-live runbook), never by the app.
+      POSTGRES_USER: postgres
+      POSTGRES_DB: mise
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets: [postgres_password]
+    volumes:
+      - mise_pgdata:/var/lib/postgresql/data
+    ports:
+      # Loopback only: `pnpm db:migrate` and the A18 backup dump run on the host. Never on the LAN.
+      - '127.0.0.1:${MISE_DB_BIND_PORT:-5432}:5432'
+    networks: [mise_db]
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d mise']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    logging:
+      driver: json-file
+      options: { max-size: '10m', max-file: '5' }
+
+volumes:
+  mise_pgdata:
+
+networks:
+  # Fixed subnet so the host firewall can block new outbound connections from it (DOCKER-USER rule
+  # in the go-live runbook). Milestone A needs no internet egress from the app or the database.
+  mise_db:
+    ipam:
+      config: [{ subnet: '${MISE_DB_SUBNET:-172.30.10.0/24}' }]
+  # Created once with `docker network create --internal mise_oidc`; joined by the `authelia` service.
+  mise_oidc:
+    external: true
+
+secrets:
+  mise_database_url:
+    file: .secrets/mise_database_url
+  mise_csrf_secret:
+    file: .secrets/mise_csrf_secret
+  mise_session_secret:
+    file: .secrets/mise_session_secret
+  mise_oidc_client_secret:
+    file: .secrets/mise_oidc_client_secret
+  postgres_password:
+    file: .secrets/postgres_password
