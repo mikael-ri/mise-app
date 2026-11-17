@@ -212,17 +212,18 @@ export async function runLoadRecipes(
       }
       for (const entry of entries) {
         try {
-          if ((await service.loadRecipe(actor, entry)) === 'created') created += 1;
-          else skipped += 1;
+          const outcome = await service.loadRecipe(actor, entry);
+          if (outcome === 'skipped') skipped += 1;
+          else created += 1; // 'completed' = missing versions appended to a partial recipe
         } catch {
-          // Loading is not atomic: a half-built recipe stays and a rerun skips it by title.
+          // Recipe + version 1 are atomic; if a later version failed, a rerun completes the recipe.
           failed.push(`"${entry.title}"`);
         }
       }
     }
     if (failed.length > 0) {
       for (const f of failed)
-        io.error(`could not load ${f}${f.startsWith('"') ? ' (check for a partial recipe)' : ''}`);
+        io.error(`could not load ${f}${f.startsWith('"') ? ' (rerun to complete it)' : ''}`);
       io.log(`loaded ${created} recipe(s), skipped ${skipped} existing, failed ${failed.length}`);
       throw new AppError('validation_failed', `${failed.length} file(s) failed`);
     }

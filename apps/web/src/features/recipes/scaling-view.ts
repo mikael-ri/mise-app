@@ -43,6 +43,25 @@ export function toQuantity(line: Line): LineQuantity {
   return { kind: 'range', min, max, unit };
 }
 
+export type SavedYield = RecipeContentV1['yield'];
+
+/**
+ * The one place that reads a content yield. `kind: 'none'` means servings are not set (null yield);
+ * `invalid` is a stored yield that is not a positive number (cannot be scaled by servings).
+ */
+export function readYield(
+  y: SavedYield,
+):
+  | { kind: 'none' }
+  | { kind: 'invalid'; unit: string }
+  | { kind: 'set'; base: Rational; unit: string; quantity: string } {
+  if (y === null) return { kind: 'none' };
+  const base = parseYield(y.quantity);
+  return base === null
+    ? { kind: 'invalid', unit: y.unit }
+    : { kind: 'set', base, unit: y.unit, quantity: y.quantity };
+}
+
 export function parseYield(quantity: string): Rational | null {
   const value = parseRational(quantity);
   return value !== null && isPositive(value) ? value : null;

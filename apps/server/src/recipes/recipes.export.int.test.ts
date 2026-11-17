@@ -137,6 +137,38 @@ describe('recipe export and load (FR-32)', () => {
     ]);
   });
 
+  it('FR-32: a failure after version 1 leaves a recipe a rerun completes, then skips', async () => {
+    const o = actor((await createTwoHouseholds(pool)).a);
+    const v1 = soupContent('100');
+    const v2 = soupContent('200');
+    const bad = {
+      ...v2,
+      ingredients: [{ ...v2.ingredients[0]!, amount_min: '3', amount_max: '2' }],
+    };
+    const entry = (second: typeof v2) => ({
+      title: 'Osittainen keitto',
+      description: null,
+      tags: [],
+      generalNotes: null,
+      sourceUrl: null,
+      archived: false,
+      versions: [
+        { content: v1, changeReason: null },
+        { content: second, changeReason: 'toinen' },
+      ],
+    });
+    await expect(service.loadRecipe(o, entry(bad))).rejects.toThrow();
+    const partial = await service.exportRecipes(o);
+    expect(partial.recipes).toHaveLength(1);
+    expect(partial.recipes[0]!.versions).toHaveLength(1); // recipe + version 1 were atomic
+
+    expect(await service.loadRecipe(o, entry(v2))).toBe('completed');
+    const done = (await service.exportRecipes(o)).recipes[0]!;
+    expect(done.versions.map((v) => v.version_no)).toEqual([1, 2]);
+    expect(done.current_version_id).toBe(done.versions[1]!.id);
+    expect(await service.loadRecipe(o, entry(v2))).toBe('skipped');
+  });
+
   it('FR-32: loader refuses a member of another household', async () => {
     const err: string[] = [];
     const io = { log: () => {}, error: (l: string) => err.push(l) };

@@ -458,18 +458,34 @@ export async function listVersionsForExport(
 }
 
 /** Loader duplicate check: same title and same source link (both null counts as equal). */
-export async function recipeExists(
+export async function findRecipeForLoad(
   q: Queryable,
   householdId: string,
   title: string,
   sourceUrl: string | null,
-): Promise<boolean> {
-  const { rowCount } = await scopedQuery(
+): Promise<{ id: string; revision: number; versionCount: number; archived: boolean } | null> {
+  const { rows } = await scopedQuery<{
+    id: string;
+    revision: number;
+    version_count: number;
+    archived_at: Date | null;
+  }>(
     q,
     householdId,
-    `SELECT 1 FROM recipes
-      WHERE household_id = $1 AND title = $2 AND source_url IS NOT DISTINCT FROM $3 LIMIT 1`,
+    `SELECT r.id, r.revision, r.archived_at,
+            (SELECT count(*)::int FROM recipe_versions v WHERE v.recipe_id = r.id) AS version_count
+       FROM recipes r
+      WHERE r.household_id = $1 AND r.title = $2 AND r.source_url IS NOT DISTINCT FROM $3
+      ORDER BY r.created_at, r.id LIMIT 1`,
     [title, sourceUrl],
   );
-  return (rowCount ?? 0) > 0;
+  const r = rows[0];
+  return r
+    ? {
+        id: r.id,
+        revision: r.revision,
+        versionCount: r.version_count,
+        archived: r.archived_at !== null,
+      }
+    : null;
 }

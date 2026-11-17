@@ -64,10 +64,10 @@ export interface RecipesService {
   /**
    * Ops loader (not the importer): creates the recipe through the normal create/patch path, so
    * versions stay immutable. Skips when the household already has the same title and source link.
-   * Not atomic across versions: a failure midway leaves a partial recipe that a rerun will skip
-   * (same title), so the CLI reports the failed title and the operator must fix it by hand.
+   * Recipe + version 1 are atomic; later versions are not. A rerun completes a recipe that has fewer
+   * versions than the file ('completed'); the CLI reports the failed title either way.
    */
-  loadRecipe(actor: RecipeActor, entry: LoadEntry): Promise<'created' | 'skipped'>;
+  loadRecipe(actor: RecipeActor, entry: LoadEntry): Promise<'created' | 'completed' | 'skipped'>;
 }
 
 const iso = (d: Date): string => d.toISOString();
@@ -451,29 +451,50 @@ export function createRecipesService(pool: Pool): RecipesService {
     },
 
     async loadRecipe(actor, entry) {
-      if (await repo.recipeExists(pool, actor.householdId, entry.title, entry.sourceUrl)) {
-        return 'skipped';
-      }
       const [first, ...rest] = entry.versions;
       if (!first) throw new AppError('validation_failed', 'recipe has no versions');
-      let { recipe } = await service.createRecipe(actor, randomUUID(), {
-        title: entry.title,
-        ...(entry.description === null ? {} : { description: entry.description }),
-        tags: entry.tags,
-        ...(entry.generalNotes === null ? {} : { generalNotes: entry.generalNotes }),
-        ...(entry.sourceUrl === null ? {} : { sourceUrl: entry.sourceUrl }),
-        content: first.content,
-      });
-      for (const v of rest) {
-        recipe = await service.patchRecipe(actor, recipe.id, recipe.revision, {
+      const existing = await repo.findRecipeForLoad(
+        pool,
+        actor.householdId,
+        entry.title,
+        entry.sourceUrl,
+      );
+      // Recipe plus version 1 is one transaction (createRecipe). Later versions are separate
+      // commits, so a recipe with fewer versions than the file is incomplete: a rerun appends
+      // the missing ones instead of skipping it.
+      let id: string;
+      let revision: number;
+      let have: number;
+      let outcome: 'created' | 'completed';
+      if (existing) {
+        if (existing.versionCount >= entry.versions.length) return 'skipped';
+        ({ id, revision } = existing);
+        have = existing.versionCount;
+        outcome = 'completed';
+      } else {
+        const { recipe } = await service.createRecipe(actor, randomUUID(), {
+          title: entry.title,
+          ...(entry.description === null ? {} : { description: entry.description }),
+          tags: entry.tags,
+          ...(entry.generalNotes === null ? {} : { generalNotes: entry.generalNotes }),
+          ...(entry.sourceUrl === null ? {} : { sourceUrl: entry.sourceUrl }),
+          content: first.content,
+        });
+        ({ id, revision } = recipe);
+        have = 1;
+        outcome = 'created';
+      }
+      for (const v of rest.slice(have - 1)) {
+        const recipe = await service.patchRecipe(actor, id, revision, {
           content: v.content,
           ...(v.changeReason === null ? {} : { changeReason: v.changeReason }),
         });
+        revision = recipe.revision;
       }
       if (entry.archived) {
-        await service.patchRecipe(actor, recipe.id, recipe.revision, { archived: true });
+        await service.patchRecipe(actor, id, revision, { archived: true });
       }
-      return 'created';
+      return outcome;
     },
   };
   return service;

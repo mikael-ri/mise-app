@@ -10,7 +10,7 @@ import {
   isPreview,
   lineView,
   parseTarget,
-  parseYield,
+  readYield,
   stepTarget,
 } from './scaling-view.js';
 import type { LineView } from './scaling-view.js';
@@ -186,14 +186,10 @@ export function RecipeBody({
   /** Where "Set servings" leads; omitted for old versions, which cannot be edited. */
   editHref?: string;
 }) {
-  const savedQuantity = content.yield?.quantity ?? null;
-  const noYield = content.yield === null;
-  const parsedBase = useMemo(
-    () => (savedQuantity === null ? null : parseYield(savedQuantity)),
-    [savedQuantity],
-  );
+  const saved = useMemo(() => readYield(content.yield), [content.yield]);
+  const noYield = saved.kind === 'none';
   // Without a yield the base is 1 and the "target" is a plain factor.
-  const base = noYield ? ONE : parsedBase;
+  const base = saved.kind === 'set' ? saved.base : noYield ? ONE : null;
   const [target, setTarget] = useState<Rational | null>(null);
   const effective = target ?? base;
 
@@ -221,10 +217,10 @@ export function RecipeBody({
       {noYield && effective !== null && (
         <NoYieldPanel factor={effective} onFactor={setTarget} editHref={editHref} />
       )}
-      {content.yield !== null && base !== null && effective !== null && (
+      {saved.kind === 'set' && effective !== null && (
         <ServingsConverter
-          base={base}
-          unit={content.yield.unit}
+          base={saved.base}
+          unit={saved.unit}
           target={effective}
           onTarget={setTarget}
         />

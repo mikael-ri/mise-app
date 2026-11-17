@@ -1,6 +1,6 @@
 // Admin CLI: load recipe JSON files (fixture or export format) into a provisioned household (FR-32).
-// An ops tool, not the importer. Not atomic per recipe: a failure midway can leave a partial recipe, which a rerun skips by title;
-// the failed title is reported so the operator can fix it. `pnpm db:seed` runs this on
+// An ops tool, not the importer. Recipe + version 1 are atomic; a failure on a later version leaves a recipe with fewer versions
+// than the file, which is reported by title and completed by a rerun. `pnpm db:seed` runs this on
 // tests/fixtures/recipes. The owner is looked up when exactly one household with one owner exists;
 // otherwise pass --member <id> (and optionally --household <id>). Refused when NODE_ENV=production.
 // Usage:

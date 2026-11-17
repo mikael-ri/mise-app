@@ -5,6 +5,7 @@ import { Revision } from './common.js';
  * Error codes and their HTTP status. Convention (ADR-013 addendum, A04):
  * - stale `If-Match` revision -> 409 `stale_revision` (never 412)
  * - missing `If-Match` on a route that requires it -> 428 `precondition_required`
+ * - invalid body, query or params (Zod, bad headers) -> 400 `validation_failed` on every route, never 422
  * - `Idempotency-Key` reused with a different payload -> 422 `idempotency_key_reused`
  */
 export const ERROR_STATUS = {

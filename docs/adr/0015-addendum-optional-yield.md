@@ -11,3 +11,9 @@
 4. **Planning rule (Milestone B, not built).** Plan approval pins version and target yield (ADR-005). When a recipe without a yield is added to a plan, the planner must ask for the servings (or an explicit factor), and the pinned target yield is then stored on the plan slot, never inferred.
 **Consequences:** Consumers of content must handle `yield === null`. Old versions are unchanged.
 **Change request:** the frozen spec and technical design describe the yield as part of recipe content without saying it can be absent; the owner decides whether to amend them at the next baseline revision.
+
+## Backlog notes (A17 follow-ups, document only)
+- **Locale:** the Markdown export uses fixed English headings. When localisation is built, the export should use the household's or user's locale.
+- **Finnish strings:** only `en.json` exists. Add `fi.json` (including the optional-yield keys) with a locale key-parity test.
+- **Dev-only reload:** loading an export into a household creates new version ids and timestamps (history is replayed, not copied). Accepted for development and seeding only, not a restore tool.
+- **API notes:** invalid body, query and params return 400 `validation_failed` on every route (see `ERROR_STATUS` in `packages/contracts/src/errors.ts`).
