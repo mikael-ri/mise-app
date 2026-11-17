@@ -24,3 +24,10 @@ limits general traffic (30 r/s, burst 100, 429), leaves `/static/` unlimited (a 
 **Consequences:** A07 configures the OIDC client with a public issuer and internal endpoints; A19 reuses `infra/authelia/nginx/`.
 **Still to verify:** **pending:** the same checks on the real proxy Pi and real domains (real-host check in `infra/authelia/README.md`); TLS on the proxy-to-host hop.
 **Change request:** none.
+
+## Addendum (2026-11-17): Mise nginx config location, proxy-to-host hop (card A19)
+**Location:** the Mise nginx server block and proxy snippet live in `infra/nginx/` (`mise.example.conf`, `mise-proxy.conf`). The 2026-11-10 addendum's "A19 reuses `infra/authelia/nginx/`" now applies to the Authelia block only; the earlier Mise drafts in that folder were removed.
+**Accepted risk (owner decision):** no TLS on the proxy-to-host hop in P0. The app (`:3000`) and Authelia (`:9091`) are plain HTTP on the LAN, firewalled to the proxy Pi. Authelia login traffic (credentials and TOTP codes) crosses this hop too.
+**Condition:** the proxy Pi and the Mise host are on a trusted wired segment with no untrusted devices. The go-live checklist makes the owner confirm this.
+**Later:** steps to add TLS on this hop are in `docs/runbooks/go-live.md`, Appendix A.
+
