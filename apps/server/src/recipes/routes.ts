@@ -3,6 +3,7 @@ import {
   API_PREFIX,
   CreateRecipeRequest,
   PatchRecipeRequest,
+  RecipeExportQuery,
   RecipeParams,
   RecipeSearchQuery,
   RecipeVersionParams,
@@ -27,6 +28,21 @@ export function registerRecipeRoutes(app: FastifyInstance, service: RecipesServi
   app.get(base, async (request) => {
     const query = RecipeSearchQuery.parse(request.query);
     return service.searchRecipes(requireActor(request), query);
+  });
+
+  // Registered as a static path; find-my-way prefers it over `/:id`.
+  app.get(`${base}/export`, async (request, reply) => {
+    const { format } = RecipeExportQuery.parse(request.query);
+    const actor = requireActor(request);
+    if (format === 'md') {
+      const md = await service.exportRecipesMarkdown(actor);
+      return reply
+        .header('content-type', 'text/markdown; charset=utf-8')
+        .header('content-disposition', 'attachment; filename="recipes.md"')
+        .send(md);
+    }
+    reply.header('content-disposition', 'attachment; filename="recipes.json"');
+    return service.exportRecipes(actor);
   });
 
   app.post(base, async (request, reply) => {

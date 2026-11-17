@@ -114,3 +114,26 @@ export async function insertUserAndMember(
   );
   return { userId, memberId: member.rows[0]!.id };
 }
+
+export interface ProvisionedMemberRow {
+  householdId: string;
+  memberId: string;
+  role: 'owner' | 'member';
+}
+
+/**
+ * Operator CLI lookup (recipe loader): members across households, optionally narrowed to one.
+ * Deliberately not household-scoped, like `findMembershipByUserId`; never reachable from HTTP.
+ */
+export async function listProvisionedMembers(
+  q: Queryable,
+  householdId?: string,
+): Promise<ProvisionedMemberRow[]> {
+  const { rows } = await q.query<{ household_id: string; id: string; role: 'owner' | 'member' }>(
+    `SELECT household_id, id, role FROM household_members
+      WHERE ($1::uuid IS NULL OR household_id = $1::uuid)
+      ORDER BY household_id, joined_at, id`,
+    [householdId ?? null],
+  );
+  return rows.map((r) => ({ householdId: r.household_id, memberId: r.id, role: r.role }));
+}

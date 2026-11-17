@@ -822,6 +822,87 @@
         }
       }
     },
+    "/api/v1/recipes/export": {
+      "get": {
+        "operationId": "exportRecipes",
+        "tags": [
+          "recipes"
+        ],
+        "summary": "Export all household recipes with every version (format=json) or as readable Markdown (format=md, text/markdown)",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": "json",
+              "type": "string",
+              "enum": [
+                "json",
+                "md"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "JSON export (application/json) for format=json; for format=md the body is text/markdown (UTF-8). Sent as an attachment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipeExport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: validation_failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error: unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error: rate_limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error: internal_error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/recipes/{id}": {
       "get": {
         "operationId": "getRecipe",
@@ -3330,25 +3411,32 @@
             "const": 1
           },
           "yield": {
-            "type": "object",
-            "properties": {
-              "quantity": {
-                "type": "string",
-                "maxLength": 40,
-                "pattern": "^((0|[1-9]\\d*)(\\.\\d+)?|(0|[1-9]\\d*)\\/[1-9]\\d*)$"
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "quantity": {
+                    "type": "string",
+                    "maxLength": 40,
+                    "pattern": "^((0|[1-9]\\d*)(\\.\\d+)?|(0|[1-9]\\d*)\\/[1-9]\\d*)$"
+                  },
+                  "unit": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 40,
+                    "pattern": "^[^\\r\\n]*$"
+                  }
+                },
+                "required": [
+                  "quantity",
+                  "unit"
+                ],
+                "additionalProperties": false
               },
-              "unit": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 40,
-                "pattern": "^[^\\r\\n]*$"
+              {
+                "type": "null"
               }
-            },
-            "required": [
-              "quantity",
-              "unit"
-            ],
-            "additionalProperties": false
+            ]
           },
           "prep_minutes": {
             "anyOf": [
@@ -3622,6 +3710,163 @@
           "ingredient_groups",
           "ingredients",
           "instructions"
+        ],
+        "additionalProperties": false
+      },
+      "RecipeExport": {
+        "$id": "#/components/schemas/RecipeExport",
+        "type": "object",
+        "properties": {
+          "format_version": {
+            "type": "number",
+            "const": 1
+          },
+          "exported_at": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "recipes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "general_notes": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "source_type": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "manual",
+                        "url",
+                        "text",
+                        "photo"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "source_url": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "archived": {
+                  "type": "boolean"
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                },
+                "updated_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                },
+                "current_version_id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "versions": {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "version_no": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "schema_version": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "change_reason": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      },
+                      "content": {
+                        "$ref": "#/components/schemas/RecipeContentV1"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "version_no",
+                      "schema_version",
+                      "change_reason",
+                      "created_at",
+                      "content"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "description",
+                "tags",
+                "general_notes",
+                "source_type",
+                "source_url",
+                "archived",
+                "created_at",
+                "updated_at",
+                "current_version_id",
+                "versions"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "format_version",
+          "exported_at",
+          "recipes"
         ],
         "additionalProperties": false
       },

@@ -171,7 +171,11 @@ export function RecipeDetailPage() {
         </div>
       )}
       <RecipeMeta recipe={data} />
-      <RecipeBody key={data.currentVersion.id} content={data.content} />
+      <RecipeBody
+        key={data.currentVersion.id}
+        content={data.content}
+        editHref={`/recipes/${id}/edit`}
+      />
       <section aria-labelledby="notes-heading" className="mt-6">
         <h2 id="notes-heading" className="mb-2 text-lg font-semibold">
           {t('recipes.detail.notes')}

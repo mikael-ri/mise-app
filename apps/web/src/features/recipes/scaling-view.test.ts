@@ -39,6 +39,6 @@ describe('servings converter view (FR-06, AC-14)', () => {
     expect(parseTarget('abc')).toBeNull();
     expect(stepTarget(rational(1n), -1)).toEqual(rational(1n));
     expect(stepTarget(rational(4n), 1)).toEqual(rational(5n));
-    expect(parseYield(salmonRecipe().content.yield.quantity)).toEqual(rational(4n));
+    expect(parseYield(salmonRecipe().content.yield?.quantity ?? '')).toEqual(rational(4n));
   });
 });

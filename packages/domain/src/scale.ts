@@ -81,3 +81,10 @@ export const scale = (
     warnings,
   };
 };
+
+/**
+ * Scales one line by a plain factor (x1/2, x2). This is the only scaling available for a recipe
+ * with no stated yield: there is no servings base, and none is ever assumed. Same rules as `scale`.
+ */
+export const scaleByFactor = (line: ScaleInput, factor: Rational): ScaleOutput =>
+  scale(line, ONE, factor);

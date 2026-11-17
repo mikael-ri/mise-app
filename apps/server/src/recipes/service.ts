@@ -1,7 +1,10 @@
+import { randomUUID } from 'node:crypto';
 import {
   RECIPE_CONTENT_SCHEMA_VERSION,
   Recipe,
+  RECIPE_EXPORT_FORMAT_VERSION,
   RecipeContent,
+  RecipeExport,
   RecipeList,
   RecipeVersion,
   RecipeVersionList,
@@ -15,6 +18,8 @@ import type {
 import { AppError, canonicalJson, runIdempotent, withTransaction } from '../platform/index.js';
 import type { Pool, RequestContext, Tx } from '../platform/index.js';
 import { assertContentValid, buildSearchProjection } from './content-rules.js';
+import type { LoadEntry } from './loader.js';
+import { renderRecipesMarkdown } from './markdown.js';
 import * as repo from './repository.js';
 
 /** Only the session-derived household and member are needed (hard rule 2). */
@@ -52,6 +57,17 @@ export interface RecipesService {
     idempotencyKey: string,
     input: RestoreRecipeRequest,
   ): Promise<RecipeResult>;
+  /** FR-32: every recipe of the household with all versions, archived included. */
+  exportRecipes(actor: Pick<RecipeActor, 'householdId'>): Promise<RecipeExport>;
+  /** FR-32: the current version of every recipe as readable Markdown. */
+  exportRecipesMarkdown(actor: Pick<RecipeActor, 'householdId'>): Promise<string>;
+  /**
+   * Ops loader (not the importer): creates the recipe through the normal create/patch path, so
+   * versions stay immutable. Skips when the household already has the same title and source link.
+   * Not atomic across versions: a failure midway leaves a partial recipe that a rerun will skip
+   * (same title), so the CLI reports the failed title and the operator must fix it by hand.
+   */
+  loadRecipe(actor: RecipeActor, entry: LoadEntry): Promise<'created' | 'skipped'>;
 }
 
 const iso = (d: Date): string => d.toISOString();
@@ -123,7 +139,45 @@ export function createRecipesService(pool: Pool): RecipesService {
     }
   };
 
-  return {
+  async function buildExport(actor: Pick<RecipeActor, 'householdId'>): Promise<RecipeExport> {
+    // One repeatable-read snapshot, so recipes and their versions always agree.
+    const { recipes, versions } = await withTransaction(pool, async (tx) => {
+      await tx.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
+      return {
+        recipes: await repo.listRecipesForExport(tx, actor.householdId),
+        versions: await repo.listVersionsForExport(tx, actor.householdId),
+      };
+    });
+    return RecipeExport.parse({
+      format_version: RECIPE_EXPORT_FORMAT_VERSION,
+      exported_at: iso(new Date()),
+      recipes: recipes.map((r) => ({
+        id: r.id,
+        title: r.title,
+        description: r.description,
+        tags: r.tags,
+        general_notes: r.generalNotes,
+        source_type: r.sourceType,
+        source_url: r.sourceUrl,
+        archived: r.archivedAt !== null,
+        created_at: iso(r.createdAt),
+        updated_at: iso(r.updatedAt),
+        current_version_id: r.currentVersionId,
+        versions: versions
+          .filter((v) => v.recipeId === r.id)
+          .map((v) => ({
+            id: v.id,
+            version_no: v.versionNo,
+            schema_version: v.schemaVersion,
+            change_reason: v.changeReason,
+            created_at: iso(v.createdAt),
+            content: parseStoredContent(v),
+          })),
+      })),
+    });
+  }
+
+  const service: RecipesService = {
     async createRecipe(actor, idempotencyKey, input) {
       assertContentValid(input.content);
       const outcome = await runIdempotent(
@@ -389,5 +443,38 @@ export function createRecipesService(pool: Pool): RecipesService {
       );
       return { recipe: toRecipeDto(await load(actor, outcome.resultRef.resourceId)), status: 200 };
     },
+
+    exportRecipes: buildExport,
+
+    async exportRecipesMarkdown(actor) {
+      return renderRecipesMarkdown(await buildExport(actor));
+    },
+
+    async loadRecipe(actor, entry) {
+      if (await repo.recipeExists(pool, actor.householdId, entry.title, entry.sourceUrl)) {
+        return 'skipped';
+      }
+      const [first, ...rest] = entry.versions;
+      if (!first) throw new AppError('validation_failed', 'recipe has no versions');
+      let { recipe } = await service.createRecipe(actor, randomUUID(), {
+        title: entry.title,
+        ...(entry.description === null ? {} : { description: entry.description }),
+        tags: entry.tags,
+        ...(entry.generalNotes === null ? {} : { generalNotes: entry.generalNotes }),
+        ...(entry.sourceUrl === null ? {} : { sourceUrl: entry.sourceUrl }),
+        content: first.content,
+      });
+      for (const v of rest) {
+        recipe = await service.patchRecipe(actor, recipe.id, recipe.revision, {
+          content: v.content,
+          ...(v.changeReason === null ? {} : { changeReason: v.changeReason }),
+        });
+      }
+      if (entry.archived) {
+        await service.patchRecipe(actor, recipe.id, recipe.revision, { archived: true });
+      }
+      return 'created';
+    },
   };
+  return service;
 }

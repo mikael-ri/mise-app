@@ -416,3 +416,60 @@ export async function searchRecipes(
         : null,
   }));
 }
+
+export interface ExportRecipeRow extends RecipeRow {
+  currentVersionId: string;
+}
+
+/** Every recipe of the household (archived included) for export, with its pointer. */
+export async function listRecipesForExport(
+  q: Queryable,
+  householdId: string,
+): Promise<ExportRecipeRow[]> {
+  const { rows } = await scopedQuery<RawRecipe & { current_version_id: string }>(
+    q,
+    householdId,
+    `SELECT ${RECIPE_COLUMNS}, r.current_version_id
+       FROM recipes r
+      WHERE r.household_id = $1 AND r.current_version_id IS NOT NULL
+      ORDER BY lower(r.title), r.id`,
+  );
+  return rows.map((r) => ({ ...toRecipe(r), currentVersionId: r.current_version_id }));
+}
+
+export interface ExportVersionRow extends VersionRow {
+  recipeId: string;
+}
+
+/** Every version of every recipe of the household, oldest version first. */
+export async function listVersionsForExport(
+  q: Queryable,
+  householdId: string,
+): Promise<ExportVersionRow[]> {
+  const { rows } = await scopedQuery<RawVersion & { recipe_id: string }>(
+    q,
+    householdId,
+    `SELECT ${VERSION_COLUMNS}, v.recipe_id
+       FROM recipe_versions v JOIN recipes r ON r.id = v.recipe_id
+      WHERE r.household_id = $1
+      ORDER BY v.recipe_id, v.version_no`,
+  );
+  return rows.map((r) => ({ ...toVersion(r), recipeId: r.recipe_id }));
+}
+
+/** Loader duplicate check: same title and same source link (both null counts as equal). */
+export async function recipeExists(
+  q: Queryable,
+  householdId: string,
+  title: string,
+  sourceUrl: string | null,
+): Promise<boolean> {
+  const { rowCount } = await scopedQuery(
+    q,
+    householdId,
+    `SELECT 1 FROM recipes
+      WHERE household_id = $1 AND title = $2 AND source_url IS NOT DISTINCT FROM $3 LIMIT 1`,
+    [title, sourceUrl],
+  );
+  return (rowCount ?? 0) > 0;
+}

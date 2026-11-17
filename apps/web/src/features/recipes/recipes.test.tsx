@@ -120,6 +120,24 @@ describe('recipe list (FR-01, FR-02, FR-07, AC-02, AC-18)', () => {
 });
 
 describe('recipe detail and servings converter (FR-06, AC-14)', () => {
+  it('FR-06: without a yield the servings control is disabled, factors still scale, edit link is offered', async () => {
+    const base = salmonRecipe();
+    const noYield = { ...base, content: { ...base.content, yield: null } };
+    const api = fakeRecipes({ get: vi.fn().mockResolvedValue(noYield) });
+    renderApp(`/recipes/${RECIPE_ID}`, undefined, api);
+    expect(await screen.findByTestId('servings-not-set')).toHaveTextContent('Servings not set');
+    expect(screen.getByTestId('servings-input')).toBeDisabled();
+    expect(screen.getByRole('link', { name: 'Set servings' })).toHaveAttribute(
+      'href',
+      `/recipes/${RECIPE_ID}/edit`,
+    );
+    expect(screen.getAllByTestId('ingredient-line')[0]).toHaveTextContent('600 g');
+    await userEvent.click(screen.getByRole('button', { name: '×½' }));
+    expect(screen.getAllByTestId('ingredient-line')[0]).toHaveTextContent('300 g');
+    await userEvent.click(screen.getByRole('button', { name: '×2' }));
+    expect(screen.getAllByTestId('ingredient-line')[0]).toHaveTextContent('1200 g');
+  });
+
   it('AC-14: previews 3 servings without calling the API, then resets', async () => {
     const api = fakeRecipes();
     renderApp(`/recipes/${RECIPE_ID}`, undefined, api);

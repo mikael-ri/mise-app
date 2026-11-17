@@ -134,9 +134,9 @@ export function draftFromRecipe(recipe: Recipe): RecipeDraft {
     sourceUrl: recipe.sourceUrl ?? '',
     tags: [...recipe.tags],
     generalNotes: recipe.generalNotes ?? '',
-    yieldQuantity: formatInput(content.yield.quantity),
-    yieldSource: content.yield.quantity,
-    yieldUnit: content.yield.unit,
+    yieldQuantity: content.yield === null ? '' : formatInput(content.yield.quantity),
+    yieldSource: content.yield?.quantity ?? null,
+    yieldUnit: content.yield?.unit ?? 'servings',
     prepMinutes: content.prep_minutes === null ? '' : String(content.prep_minutes),
     cookMinutes: content.cook_minutes === null ? '' : String(content.cook_minutes),
     groups,
@@ -448,7 +448,8 @@ export function buildContent(draft: RecipeDraft): RecipeContentV1 {
       : (toRationalString(yieldText) ?? yieldText);
   return {
     schema_version: 1,
-    yield: { quantity, unit: draft.yieldUnit.trim() },
+    // An empty yield field means "servings not set" (null), never a made-up number.
+    yield: yieldText === '' ? null : { quantity, unit: draft.yieldUnit.trim() },
     prep_minutes: minutes(draft.prepMinutes),
     cook_minutes: minutes(draft.cookMinutes),
     ingredient_groups: ordered.groups.map((g, i) => ({
@@ -511,8 +512,7 @@ export function validateDraft(draft: RecipeDraft): DraftErrors {
   const errors: DraftErrors = { groups: {}, lines: {} };
   if (draft.title.trim() === '') errors.title = 'required';
   const yieldText = draft.yieldQuantity.trim();
-  if (yieldText === '') errors.yieldQuantity = 'required';
-  else {
+  if (yieldText !== '') {
     const value = toRationalString(yieldText);
     const parsed = value === null ? null : parseRational(value);
     if (parsed === null || compare(parsed, rational(0n)) <= 0) errors.yieldQuantity = 'positive';

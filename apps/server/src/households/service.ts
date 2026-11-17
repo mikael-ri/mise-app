@@ -52,10 +52,14 @@ export interface HouseholdsService {
   /** Minimum-data member directory for the API: member id and display name only. */
   listHouseholdMembers(actor: ActorMembership): Promise<HouseholdMember[]>;
   provisionHousehold(input: ProvisionHouseholdInput): Promise<HouseholdView>;
+  /** Operator CLI only (ids and roles, no names): members of one or all households. */
+  listProvisionedMembers(householdId?: string): Promise<repo.ProvisionedMemberRow[]>;
 }
 
 export function createHouseholdsService(pool: Pool): HouseholdsService {
   return {
+    listProvisionedMembers: (householdId) => repo.listProvisionedMembers(pool, householdId),
+
     // The only deliberate exception to household scoping: it starts from the session user.
     async resolveActor(userId) {
       const m = await repo.findMembershipByUserId(pool, userId);
