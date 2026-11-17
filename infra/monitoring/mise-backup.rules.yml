@@ -1,0 +1,29 @@
+# Prometheus alert rules for the Mise pre-backup dump (A18). Copy into your rules directory; nothing is applied for you.
+# Metrics come from the node_exporter textfile collector file written by infra/backup/dump-databases.sh (METRICS_FILE).
+# This covers the dump step only. Whether restic itself succeeded is covered by your existing restic monitoring.
+groups:
+  - name: mise-backup
+    rules:
+      - alert: MiseBackupStale
+        # 26 h = 24 h RPO + 2 h slack. Also fires if the metric file disappears (absent).
+        expr: (time() - mise_backup_last_success_timestamp_seconds) > 26 * 3600 or absent(mise_backup_last_success_timestamp_seconds)
+        for: 10m
+        labels: { severity: critical, service: mise }
+        annotations:
+          summary: 'Mise database dump is older than 26 h (or missing)'
+          runbook: 'docs/runbooks/restore.md#monitoring-and-alerts'
+      - alert: MiseBackupLastRunFailed
+        expr: mise_backup_last_run_success == 0
+        for: 5m
+        labels: { severity: critical, service: mise }
+        annotations:
+          summary: 'The last Mise database dump run failed'
+          runbook: 'docs/runbooks/restore.md#monitoring-and-alerts'
+      - alert: MiseBackupDumpShrank
+        # Cheap sanity check: a dump below half of its size 24 h ago usually means an empty or partial database.
+        expr: mise_backup_dump_size_bytes < 0.5 * (mise_backup_dump_size_bytes offset 1d) and (mise_backup_dump_size_bytes offset 1d) > 0
+        for: 5m
+        labels: { severity: warning, service: mise }
+        annotations:
+          summary: "Dump of {{ $labels.database }} is less than half of yesterday's size"
+          runbook: 'docs/runbooks/restore.md#monitoring-and-alerts'

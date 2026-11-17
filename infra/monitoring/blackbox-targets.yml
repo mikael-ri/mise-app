@@ -1,0 +1,9 @@
+# file_sd targets for your blackbox exporter job (A18). Replace mydomain.com. Scrape job: see README.md.
+# Health paths (from the code and compose files):
+#   Mise      /api/v1/health/ready  readiness, 503 when the DB is down (apps/server/src/health/routes.ts, public)
+#   Authelia  /api/health           the path its own compose healthcheck uses (infra/authelia/compose.yaml)
+# The SSE stream (/api/v1/lists/:id/events) is deliberately not probed.
+- targets: ['https://mise.mydomain.com/api/v1/health/ready']
+  labels: { service: mise, check: ready }
+- targets: ['https://auth.mydomain.com/api/health']
+  labels: { service: authelia, check: health }

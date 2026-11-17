@@ -1,0 +1,24 @@
+# Prometheus alert rules for the blackbox probes in blackbox-targets.yml (A18). Copy into your rules directory.
+groups:
+  - name: mise-probes
+    rules:
+      - alert: MiseDown
+        expr: probe_success{service="mise"} == 0
+        for: 3m
+        labels: { severity: critical, service: mise }
+        annotations:
+          summary: 'Mise health/ready probe failing (app or database down)'
+          runbook: 'docs/runbooks/restore.md#monitoring-and-alerts'
+      - alert: AutheliaDown
+        expr: probe_success{service="authelia"} == 0
+        for: 3m
+        labels: { severity: critical, service: authelia }
+        annotations:
+          summary: 'Authelia health probe failing: nobody can sign in to Mise'
+          runbook: 'docs/runbooks/restore.md#monitoring-and-alerts'
+      - alert: MiseTlsCertExpiring
+        expr: probe_ssl_earliest_cert_expiry{service=~"mise|authelia"} - time() < 14 * 86400
+        for: 1h
+        labels: { severity: warning }
+        annotations:
+          summary: 'TLS certificate for {{ $labels.instance }} expires in under 14 days'
