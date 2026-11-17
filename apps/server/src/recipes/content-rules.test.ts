@@ -8,6 +8,44 @@ const withLine = (patch: Record<string, unknown>) => {
   return { ...c, ingredients: [{ ...c.ingredients[0]!, ...patch }] };
 };
 
+describe('FR-05: service enforces the contract schema refinements', () => {
+  const u = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
+  const soup = soupContent();
+  const line = soup.ingredients[0]!;
+  it.each([
+    ['unknown group_id', { ...soup, ingredients: [{ ...line, group_id: u(9) }] }],
+    ['duplicate ingredient ids', { ...soup, ingredients: [line, { ...line }] }],
+    [
+      'duplicate group ids',
+      {
+        ...soup,
+        ingredient_groups: [
+          { id: u(1), name: 'A', order: 1 },
+          { id: u(1), name: 'B', order: 2 },
+        ],
+      },
+    ],
+    [
+      'duplicate step order',
+      {
+        ...soup,
+        instructions: [
+          { id: u(2), order: 1, text: 'a' },
+          { id: u(3), order: 1, text: 'b' },
+        ],
+      },
+    ],
+    ['zero yield', { ...soup, yield: { quantity: '0', unit: 'servings' } }],
+  ])('rejects %s without echoing values', (_name, content) => {
+    expect(contentIssues(content).length).toBeGreaterThan(0);
+    expect(() => assertContentValid(content)).toThrow(AppError);
+  });
+
+  it('accepts valid content', () => {
+    expect(contentIssues(soup)).toEqual([]);
+  });
+});
+
 describe('FR-05: ingredient content rules (schema v1)', () => {
   it.each([
     ['equal bounds', { amount_min: '1', amount_max: '1' }, 0],

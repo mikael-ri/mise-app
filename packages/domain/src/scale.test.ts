@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import type { LineQuantity } from './quantity.js';
 import { parseRational, rational, toDecimalString, type Rational } from './rational.js';
-import { scale, type ScalePolicy } from './scale.js';
+import { scale, scaleByFactor, type ScalePolicy } from './scale.js';
 import { formatQuantity } from './format.js';
 
 const p = (s: string): Rational => {
@@ -170,5 +170,30 @@ describe('AC-14: preview-scale a whole recipe without mutation', () => {
       expect(line.original_quantity_text).toBe(original[idx]?.original_quantity_text);
       if (res.quantity.kind !== 'vague') expect(res.quantity.unit).toBe(line.original_unit);
     });
+  });
+});
+
+describe('scaleByFactor (no stated yield, FR-06)', () => {
+  const exact = (amount: Rational, unit: string): LineQuantity => ({ kind: 'exact', amount, unit });
+  it.each<[string, ScalePolicy, string, string, string]>([
+    ['half of a linear amount', 'linear', '300', '1/2', '150 g'],
+    ['double of a linear amount', 'linear', '300', '2', '600 g'],
+    ['factor one keeps the amount', 'linear', '300', '1', '300 g'],
+    ['round_to_whole rounds', 'round_to_whole', '3', '1/2', '2 g'],
+    ['not_scalable stays', 'not_scalable', '300', '2', '300 g'],
+    ['to_taste stays', 'to_taste', '300', '2', '300 g'],
+  ])('%s', (_name, policy, amount, factor, expected) => {
+    const out = scaleByFactor({ quantity: exact(p(amount), 'g'), scalePolicy: policy }, p(factor));
+    expect(formatQuantity(out.quantity)).toBe(expected);
+  });
+
+  it('vague text is returned unchanged and a non-positive factor throws', () => {
+    const vague: LineQuantity = { kind: 'vague', text: 'maun mukaan' };
+    expect(scaleByFactor({ quantity: vague, scalePolicy: 'linear' }, p('2')).quantity).toEqual(
+      vague,
+    );
+    expect(() =>
+      scaleByFactor({ quantity: exact(p('1'), 'g'), scalePolicy: 'linear' }, p('0')),
+    ).toThrow(RangeError);
   });
 });

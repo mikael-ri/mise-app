@@ -1,5 +1,5 @@
 import { UNIT_TABLE, compare, parseRational } from '@mise/domain';
-import type { RecipeContentV1 } from '@mise/contracts';
+import { RecipeContentV1 } from '@mise/contracts';
 import { AppError } from '../platform/index.js';
 import type { SearchProjection } from './repository.js';
 
@@ -14,7 +14,15 @@ interface Issue {
 }
 
 export function contentIssues(content: RecipeContentV1): Issue[] {
-  const issues: Issue[] = [];
+  // Same schema the HTTP boundary uses (refinements included), so service callers such as the
+  // loader cannot store content the API would reject.
+  const parsed = RecipeContentV1.safeParse(content);
+  const issues: Issue[] = parsed.success
+    ? []
+    : parsed.error.issues.map((i) => ({
+        path: ['content', ...i.path.map(String)],
+        message: i.message,
+      }));
   content.ingredients.forEach((line, i) => {
     const at = (field: string): string[] => ['content', 'ingredients', String(i), field];
     if (line.amount_min !== null && line.amount_max !== null) {

@@ -72,7 +72,7 @@ const duplicates = (values: readonly (string | number)[]): boolean =>
 export const RecipeContentV1 = z
   .strictObject({
     schema_version: z.literal(RECIPE_CONTENT_SCHEMA_VERSION),
-    yield: RecipeYieldV1,
+    yield: RecipeYieldV1.nullable(), // null: servings not stated (ADR-015 addendum); no version bump
     prep_minutes: z.int().min(0).max(10_000).nullable(),
     cook_minutes: z.int().min(0).max(10_000).nullable(),
     ingredient_groups: z.array(IngredientGroupV1).max(30),
@@ -269,3 +269,103 @@ export const RecipeVersion = z
   .strictObject({ version: RecipeVersionMeta, content: RecipeContentV1 })
   .meta({ id: 'RecipeVersion' });
 export type RecipeVersion = z.infer<typeof RecipeVersion>;
+
+// ---------------------------------------------------------------------------------------------
+// Export (FR-32) and the file format of the ops loader. Both are snake_case like the stored content.
+// ---------------------------------------------------------------------------------------------
+
+export const RECIPE_EXPORT_FORMAT_VERSION = 1;
+
+export const RecipeExportVersion = z.strictObject({
+  id: RecipeVersionId,
+  version_no: z.int().min(1),
+  schema_version: z.int().min(1),
+  change_reason: z.string().nullable(),
+  created_at: Instant,
+  content: RecipeContentV1,
+});
+export type RecipeExportVersion = z.infer<typeof RecipeExportVersion>;
+
+export const RecipeExportRecipe = z.strictObject({
+  id: RecipeId,
+  title: z.string(),
+  description: z.string().nullable(),
+  tags: z.array(z.string()),
+  general_notes: z.string().nullable(),
+  source_type: z.enum(RECIPE_SOURCE_TYPES).nullable(),
+  source_url: z.string().nullable(),
+  archived: z.boolean(),
+  created_at: Instant,
+  updated_at: Instant,
+  current_version_id: RecipeVersionId,
+  /** Every immutable version, oldest first. */
+  versions: z.array(RecipeExportVersion).min(1),
+});
+export type RecipeExportRecipe = z.infer<typeof RecipeExportRecipe>;
+
+/** GET /recipes/export?format=json. All recipes of the household, archived ones included. */
+export const RecipeExport = z
+  .strictObject({
+    format_version: z.literal(RECIPE_EXPORT_FORMAT_VERSION),
+    exported_at: Instant,
+    recipes: z.array(RecipeExportRecipe),
+  })
+  .meta({ id: 'RecipeExport' });
+export type RecipeExport = z.infer<typeof RecipeExport>;
+
+export const RecipeExportQuery = z.strictObject({
+  format: z.enum(['json', 'md']).default('json'),
+});
+export type RecipeExportQuery = z.infer<typeof RecipeExportQuery>;
+
+const FileId = nonEmptyText(100); // human-written ids such as "g1" or "l3"
+
+/**
+ * One recipe file as read by the loader and stored in `tests/fixtures/recipes/*.json`. Ids are
+ * file-local labels (the loader derives UUIDs); times live at the top level and move into the content.
+ * `yield_text`, `time_text`, `total_minutes` and `passive_minutes` are descriptive only and not stored.
+ */
+export const RecipeLoadFile = z.strictObject({
+  title: nonEmptyText(200),
+  tags: z.array(nonEmptyText(50)).max(30),
+  source_url: z
+    .url({ protocol: /^https?$/ })
+    .max(2048)
+    .nullable(),
+  yield_text: z.string().nullable().optional(),
+  time_text: z.string().nullable().optional(),
+  prep_minutes: z.int().min(0).max(10_000).nullable(),
+  cook_minutes: z.int().min(0).max(10_000).nullable(),
+  total_minutes: z.int().min(0).nullable().optional(),
+  passive_minutes: z.int().min(0).nullable().optional(),
+  general_notes: multilineText(10_000).nullable(),
+  _flags: z.array(z.string()).optional(), // reviewer notes about the source, ignored by the loader
+  content: z.strictObject({
+    schema_version: z.literal(RECIPE_CONTENT_SCHEMA_VERSION),
+    yield: RecipeYieldV1.nullable(), // null when the source states no servings
+    ingredient_groups: z.array(
+      z.strictObject({ id: FileId, name: nonEmptyText(200), order: z.int().min(1) }),
+    ),
+    ingredients: z.array(
+      z.strictObject({
+        id: FileId,
+        group_id: FileId.nullable(),
+        display_name: nonEmptyText(200),
+        normalized_key: NormalizedKey.nullable().optional(),
+        original_quantity_text: nullableText(100),
+        amount_min: RationalString.nullable(),
+        amount_max: RationalString.nullable(),
+        original_unit: nullableText(40),
+        canonical_unit_code: nullableText(40).optional(),
+        preparation_note: nullableText(500).optional(),
+        scale_policy: z.enum(SCALE_POLICIES),
+        alternatives: z.array(nonEmptyText(200)).optional(), // plain text in files
+        uncertainties: z.array(nonEmptyText(300)).optional(),
+      }),
+    ),
+    instructions: z.array(
+      z.strictObject({ id: FileId, order: z.int().min(1), text: multilineText(4000) }),
+    ),
+  }),
+});
+export type RecipeLoadFile = z.infer<typeof RecipeLoadFile>;

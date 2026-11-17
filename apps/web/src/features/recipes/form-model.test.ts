@@ -167,6 +167,15 @@ describe('form model: validation, dirty detection, submission (FR-01, FR-03)', (
     expect(hasErrors(validateDraft(draftFromRecipe(recipe)))).toBe(false);
   });
 
+  it('FR-01: an empty yield is allowed and saved as null; a loaded null yield stays empty', () => {
+    const empty = { ...draftFromRecipe(recipe), yieldQuantity: '', yieldSource: null };
+    expect(validateDraft(empty).yieldQuantity).toBeUndefined();
+    expect(buildContent(empty).yield).toBeNull();
+    const loaded = draftFromRecipe({ ...recipe, content: { ...recipe.content, yield: null } });
+    expect(loaded.yieldQuantity).toBe('');
+    expect(buildContent(loaded).yield).toBeNull();
+  });
+
   it('a named line without a name is flagged, a fully blank new row is ignored', () => {
     const draft = addLine(draftFromRecipe(recipe), uuid(50));
     expect(hasErrors(validateDraft(draft))).toBe(false);

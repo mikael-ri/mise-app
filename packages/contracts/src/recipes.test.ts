@@ -83,6 +83,7 @@ describe('RecipeContentV1 (FR-01, FR-05)', () => {
       }),
     ],
     ['decimal yield', content({ yield: { quantity: '2.5', unit: 'dl' } })],
+    ['no yield (servings not set)', content({ yield: null })],
     ['ungrouped line', content({ ingredients: [line({ group_id: null })] })],
     ['empty recipe body', content({ ingredient_groups: [], ingredients: [], instructions: [] })],
   ])('accepts %s', (_name, value) => {

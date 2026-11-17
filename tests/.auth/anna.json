@@ -1,0 +1,15 @@
+{
+  "cookies": [
+    {
+      "name": "__Host-mise_session",
+      "value": "peWPM-lZRsAceZfn6V47r-fiND89Io_E1Gs0V9amSd4",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1810448165.716721,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": []
+}

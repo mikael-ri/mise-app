@@ -13,6 +13,8 @@ import {
   CreateRecipeRequest,
   PatchRecipeRequest,
   Recipe,
+  RecipeExport,
+  RecipeExportQuery,
   RecipeList,
   RecipeParams,
   RecipeSearchQuery,
@@ -187,6 +189,23 @@ export const ROUTES: readonly RouteDef[] = [
     auth: true,
     query: RecipeSearchQuery,
     responses: { 200: { description: 'Matching recipes', schema: RecipeList } },
+  },
+  {
+    operationId: 'exportRecipes',
+    method: 'get',
+    path: '/recipes/export',
+    tag: 'recipes',
+    summary:
+      'Export all household recipes with every version (format=json) or as readable Markdown (format=md, text/markdown)',
+    auth: true,
+    query: RecipeExportQuery,
+    responses: {
+      200: {
+        description:
+          'JSON export (application/json) for format=json; for format=md the body is text/markdown (UTF-8). Sent as an attachment.',
+        schema: RecipeExport,
+      },
+    },
   },
   {
     operationId: 'createRecipe',

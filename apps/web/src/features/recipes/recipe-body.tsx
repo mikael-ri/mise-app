@@ -1,15 +1,16 @@
 import type { RecipeContentV1 } from '@mise/contracts';
-import { ONE, compare } from '@mise/domain';
+import { ONE, compare, rational } from '@mise/domain';
 import type { Rational } from '@mise/domain';
 import { useMemo, useState } from 'react';
 import { Button } from '../../components/button.js';
+import { Link } from 'react-router';
 import { t } from '../../i18n/index.js';
 import {
   formatServings,
   isPreview,
   lineView,
   parseTarget,
-  parseYield,
+  readYield,
   stepTarget,
 } from './scaling-view.js';
 import type { LineView } from './scaling-view.js';
@@ -102,6 +103,65 @@ function ServingsConverter({
   );
 }
 
+const FACTORS = [
+  { id: 'half', value: rational(1n, 2n), labelKey: 'recipes.converter.factor.half' },
+  { id: 'one', value: ONE, labelKey: 'recipes.converter.factor.one' },
+  { id: 'double', value: rational(2n), labelKey: 'recipes.converter.factor.double' },
+] as const;
+
+/** No saved yield: the servings control is disabled (no base to invent), plain factors still scale. */
+function NoYieldPanel({
+  factor,
+  onFactor,
+  editHref,
+}: {
+  factor: Rational;
+  onFactor: (value: Rational) => void;
+  editHref: string | undefined;
+}) {
+  return (
+    <section aria-labelledby="servings-label" className="rounded-lg border border-border p-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <label id="servings-label" htmlFor="servings-input" className="font-medium">
+          {t('recipes.converter.label')}
+        </label>
+        <input
+          id="servings-input"
+          data-testid="servings-input"
+          className={`${INPUT} w-24`}
+          disabled
+          value=""
+          readOnly
+        />
+        <span data-testid="servings-not-set" className="text-text-muted">
+          {t('recipes.converter.notSet')}
+        </span>
+        {editHref !== undefined && (
+          <Link to={editHref} className="underline">
+            {t('recipes.converter.setServings')}
+          </Link>
+        )}
+      </div>
+      <div
+        className="mt-3 flex flex-wrap items-center gap-2"
+        role="group"
+        aria-label={t('recipes.converter.factorLabel')}
+      >
+        {FACTORS.map((f) => (
+          <Button
+            key={f.id}
+            variant={compare(f.value, factor) === 0 ? 'primary' : 'secondary'}
+            aria-pressed={compare(f.value, factor) === 0}
+            onClick={() => onFactor(f.value)}
+          >
+            {t(f.labelKey)}
+          </Button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function IngredientRow({ view }: { view: LineView }) {
   return (
     <li data-testid="ingredient-line" className="flex gap-3 py-1">
@@ -118,8 +178,18 @@ function IngredientRow({ view }: { view: LineView }) {
  * Yield converter, ingredients and directions (R2). The converter is local state only: nothing is
  * saved or sent, and it resets when the page unmounts (AC-14).
  */
-export function RecipeBody({ content }: { content: RecipeContentV1 }) {
-  const base = useMemo(() => parseYield(content.yield.quantity), [content.yield.quantity]);
+export function RecipeBody({
+  content,
+  editHref,
+}: {
+  content: RecipeContentV1;
+  /** Where "Set servings" leads; omitted for old versions, which cannot be edited. */
+  editHref?: string;
+}) {
+  const saved = useMemo(() => readYield(content.yield), [content.yield]);
+  const noYield = saved.kind === 'none';
+  // Without a yield the base is 1 and the "target" is a plain factor.
+  const base = saved.kind === 'set' ? saved.base : noYield ? ONE : null;
   const [target, setTarget] = useState<Rational | null>(null);
   const effective = target ?? base;
 
@@ -144,10 +214,13 @@ export function RecipeBody({ content }: { content: RecipeContentV1 }) {
 
   return (
     <div className="flex flex-col gap-6">
-      {base !== null && effective !== null && (
+      {noYield && effective !== null && (
+        <NoYieldPanel factor={effective} onFactor={setTarget} editHref={editHref} />
+      )}
+      {saved.kind === 'set' && effective !== null && (
         <ServingsConverter
-          base={base}
-          unit={content.yield.unit}
+          base={saved.base}
+          unit={saved.unit}
           target={effective}
           onTarget={setTarget}
         />
