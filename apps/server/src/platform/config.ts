@@ -120,6 +120,57 @@ const SECRET_NAMES = [
 
 export class ConfigError extends Error {}
 
+/**
+ * Secret values that belong to test and example setups (A16). In production the server refuses them,
+ * so a test configuration cannot leak into a real deployment. Compared after trim and lower-casing.
+ * `test-client-secret` is the fake OIDC provider's client secret (`auth/test-idp.ts`), also used by E2E.
+ */
+export const KNOWN_TEST_SECRET_VALUES: readonly string[] = [
+  'test-client-secret',
+  'client-secret-value',
+  'int-test-session-secret-0123456789',
+  'changeme',
+  'change-me',
+  'secret',
+  'password',
+  // Placeholders from .env.example
+  'change-me-at-least-32-characters-long',
+];
+
+/** Minimum number of different characters in SESSION_SECRET and CSRF_SECRET in production. */
+export const MIN_DISTINCT_SECRET_CHARS = 10;
+
+/**
+ * Production only. Names variables, never values. This rule catches mistakes, such as leaving a test value
+ * or an `.env.example` placeholder in a deployment; it is not a measure of secret strength. E2E generates
+ * the session and CSRF secrets randomly per run, which an exact list cannot catch, so those two also need
+ * the schema's 32-character minimum and at least MIN_DISTINCT_SECRET_CHARS different characters.
+ * (`openssl rand -base64 32` passes easily.)
+ */
+function assertProductionSecrets(c: {
+  CSRF_SECRET: string;
+  SESSION_SECRET: string;
+  OIDC_CLIENT_SECRET: string;
+}): void {
+  const problems: string[] = [];
+  const known = new Set(KNOWN_TEST_SECRET_VALUES);
+  for (const name of ['SESSION_SECRET', 'CSRF_SECRET', 'OIDC_CLIENT_SECRET'] as const) {
+    if (known.has(c[name].trim().toLowerCase())) {
+      problems.push(`${name}: is a known test or example value`);
+    }
+  }
+  for (const name of ['SESSION_SECRET', 'CSRF_SECRET'] as const) {
+    if (new Set(c[name]).size < MIN_DISTINCT_SECRET_CHARS) {
+      problems.push(
+        `${name}: must contain at least ${MIN_DISTINCT_SECRET_CHARS} different characters`,
+      );
+    }
+  }
+  if (problems.length > 0) {
+    throw new ConfigError(`invalid production configuration: ${problems.join('; ')}`);
+  }
+}
+
 type Env = Readonly<Record<string, string | undefined>>;
 
 type ReadFile = (path: string) => string;
@@ -177,6 +228,7 @@ export function loadDatabaseConfig(env: Env, readFile: ReadFile = defaultReadFil
  */
 export function loadConfig(env: Env, readFile: ReadFile = defaultReadFile): AppConfig {
   const c = parseOrThrow(ConfigSchema, mergeSecretFiles(env, SECRET_NAMES, readFile));
+  if (c.NODE_ENV === 'production') assertProductionSecrets(c);
   return {
     nodeEnv: c.NODE_ENV,
     host: c.HOST,

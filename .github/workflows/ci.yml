@@ -54,3 +54,45 @@ jobs:
       - run: pnpm --filter @mise/database test:int
       - run: pnpm --filter @mise/server test:int
       - run: pnpm --filter @mise/database db:drift
+
+  # A16 gate: browser E2E against the real stack. `pnpm e2e` starts the fake OIDC provider, the API and Vite
+  # itself (playwright.config.ts); only PostgreSQL comes from the service container, with the same roles
+  # as the integration tests. No AI is configured, which is the AC-10 run.
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: mise
+          POSTGRES_PASSWORD: mise_ci_only
+          POSTGRES_DB: mise
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U mise" --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      CI: '1'
+      TEST_DATABASE_URL: postgres://mise_test_app:mise_test@localhost:5432/mise_test
+      TEST_MIGRATION_DATABASE_URL: postgres://mise_test_owner:mise_test@localhost:5432/mise_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Provision database roles (ADR-018)
+        env:
+          PGPASSWORD: mise_ci_only
+        run: psql -v ON_ERROR_STOP=1 -v allow_dev=1 -h localhost -U mise -d postgres -f infra/postgres/provision-roles.sql
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results

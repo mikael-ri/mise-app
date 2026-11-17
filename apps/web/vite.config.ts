@@ -6,7 +6,8 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     port: 5173,
-    proxy: { '/api': 'http://127.0.0.1:3000' },
+    // MISE_API_ORIGIN lets the E2E stack run beside `pnpm dev` on other ports (playwright.config.ts).
+    proxy: { '/api': process.env['MISE_API_ORIGIN'] ?? 'http://127.0.0.1:3000' },
   },
   test: {
     projects: [

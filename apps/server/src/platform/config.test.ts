@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { ConfigError, loadConfig, loadDatabaseConfig, trustProxyWarning } from './config.js';
+import {
+  ConfigError,
+  KNOWN_TEST_SECRET_VALUES,
+  loadConfig,
+  loadDatabaseConfig,
+  trustProxyWarning,
+} from './config.js';
 
 const base = {
   DATABASE_URL: 'postgres://u:topsecret@localhost:5432/mise',
@@ -46,7 +52,13 @@ describe('loadConfig (NFR-01)', () => {
   });
 
   it('warns at startup in production when TRUST_PROXY is false or true (NFR-01)', () => {
-    const prod = { ...base, NODE_ENV: 'production' };
+    const prod = {
+      ...base,
+      NODE_ENV: 'production',
+      SESSION_SECRET: 'q7Vf2LmX9pRtZ4cKd8Hs1WbN6yUa3JeG',
+      CSRF_SECRET: 'Gx3aUy6NbW1sHd8cKZt4RpX9mL2fV7qJ',
+      OIDC_CLIENT_SECRET: 'oidc-Pm4Zr8Tn2Kd7Vb1Xw',
+    };
     expect(trustProxyWarning(loadConfig(prod))).toMatch(/TRUST_PROXY is false/);
     expect(trustProxyWarning(loadConfig({ ...prod, TRUST_PROXY: 'true' }))).toMatch(
       /TRUST_PROXY is true/,
@@ -167,5 +179,86 @@ describe('loadDatabaseConfig', () => {
   it('reads DATABASE_URL_FILE and trims one trailing newline', () => {
     const cfg = loadDatabaseConfig({ DATABASE_URL_FILE: '/f' }, () => 'postgres://x/y\n');
     expect(cfg.databaseUrl).toBe('postgres://x/y');
+  });
+});
+
+describe('production secret rule (A16 startup rule)', () => {
+  const prod = { ...base, NODE_ENV: 'production' };
+  const random = 'q7Vf2LmX9pRtZ4cKd8Hs1WbN6yUa3JeG';
+  const names = ['SESSION_SECRET', 'CSRF_SECRET', 'OIDC_CLIENT_SECRET'] as const;
+  // SESSION_SECRET and CSRF_SECRET also have a 32-character minimum everywhere, so only list entries
+  // that long can reach the list check for them; every entry is checked for OIDC_CLIENT_SECRET.
+  const cases = names.flatMap((name) =>
+    KNOWN_TEST_SECRET_VALUES.filter((v) => name === 'OIDC_CLIENT_SECRET' || v.length >= 32).map(
+      (value) => ({ name, value }),
+    ),
+  );
+
+  it.each(cases)('known test value refused in production: $name = $value', ({ name, value }) => {
+    expect(() => loadConfig({ ...prod, [name]: value })).toThrow(
+      new RegExp(`${name}: is a known test or example value`),
+    );
+  });
+
+  it.each(cases)(
+    'known test value accepted outside production: $name = $value',
+    ({ name, value }) => {
+      expect(() => loadConfig({ ...base, NODE_ENV: 'test', [name]: value })).not.toThrow();
+    },
+  );
+
+  it.each([
+    ['one repeated character', 'a'.repeat(40)],
+    ['a repeating pattern', 'abab'.repeat(10)],
+    ['nine different characters', '123456789'.repeat(4)],
+  ])('refuses %s for SESSION_SECRET and CSRF_SECRET in production', (_label, value) => {
+    expect(() => loadConfig({ ...prod, SESSION_SECRET: value })).toThrow(
+      /SESSION_SECRET: must contain at least 10 different characters/,
+    );
+    expect(() => loadConfig({ ...prod, CSRF_SECRET: value })).toThrow(
+      /CSRF_SECRET: must contain at least 10 different characters/,
+    );
+  });
+
+  it('accepts an openssl-style base64 secret in production', () => {
+    const secret = 'kXn3+Qe0/vV8mZpTb2yHc7LwJ9sUa4RdF1gYtNo6iAE=';
+    expect(() =>
+      loadConfig({
+        ...prod,
+        SESSION_SECRET: secret,
+        CSRF_SECRET: secret + 'x',
+        OIDC_CLIENT_SECRET: 'oidc-Pm4Zr8Tn2Kd7Vb1Xw',
+      }),
+    ).not.toThrow();
+  });
+
+  it('accepts the same repeated-character secrets outside production', () => {
+    expect(() => loadConfig({ ...base, NODE_ENV: 'test' })).not.toThrow();
+  });
+
+  it('accepts normal random secrets in production', () => {
+    expect(() =>
+      loadConfig({
+        ...prod,
+        SESSION_SECRET: random,
+        CSRF_SECRET: random.split('').reverse().join(''),
+        OIDC_CLIENT_SECRET: 'oidc-' + random,
+      }),
+    ).not.toThrow();
+  });
+
+  it('never puts the offending value in the error', () => {
+    try {
+      loadConfig({
+        ...prod,
+        SESSION_SECRET: random,
+        CSRF_SECRET: random,
+        OIDC_CLIENT_SECRET: 'password',
+      });
+      expect.unreachable();
+    } catch (e) {
+      expect((e as Error).message).toContain('OIDC_CLIENT_SECRET');
+      expect((e as Error).message).not.toContain('password');
+    }
   });
 });

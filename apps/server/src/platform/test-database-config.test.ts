@@ -3,6 +3,7 @@ import {
   DEFAULT_TEST_DATABASE_URL,
   DEFAULT_TEST_MIGRATION_DATABASE_URL,
   assertSafeTestDatabase,
+  loadE2eDatabaseConfig,
   loadTestDatabaseConfig,
 } from '../../../../tests/support/test-database-config.js';
 
@@ -29,6 +30,17 @@ describe('shared test database config (ADR-018)', () => {
     expect(c.databaseName).toBe('mise_test_a');
     expect(new URL(c.ownerUrl).pathname).toBe('/mise_test_a');
     expect(() => assertSafeTestDatabase(c)).not.toThrow();
+  });
+
+  it('the E2E lane has its own database, derived from the same URLs and roles', () => {
+    const c = loadE2eDatabaseConfig({});
+    expect([c.databaseName, c.appRole, c.ownerRole]).toEqual([
+      'mise_test_e2e',
+      'mise_test_app',
+      'mise_test_owner',
+    ]);
+    expect(() => assertSafeTestDatabase(c)).not.toThrow();
+    expect(loadE2eDatabaseConfig({ MISE_TEST_DB_SUFFIX: 'a' }).databaseName).toBe('mise_test_ae2e');
   });
 
   it.each(['A', 'a-b', 'a b', '', 'x'.repeat(17)].filter((s) => s !== ''))(

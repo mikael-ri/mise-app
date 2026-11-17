@@ -17,3 +17,6 @@ infra/authelia/tls/
 infra/authelia/configuration.yml
 infra/authelia/users.yml
 infra/authelia/spike/.out/
+
+# E2E session state (test cookies, written by tests/support/global-setup.ts)
+tests/.auth/

@@ -41,6 +41,15 @@ function withSuffix(raw: string, suffix: string | undefined): string {
   return url.toString();
 }
 
+/**
+ * The browser E2E suite's own lane: `mise_test_e2e` (or `mise_test_<suffix>e2e` when MISE_TEST_DB_SUFFIX is
+ * set), so `pnpm e2e` and the integration tests never reset each other's database.
+ */
+export function loadE2eDatabaseConfig(env: Env = process.env): TestDatabaseConfig {
+  const lane = env['MISE_TEST_DB_SUFFIX'] || '';
+  return loadTestDatabaseConfig({ ...env, MISE_TEST_DB_SUFFIX: `${lane}e2e` });
+}
+
 export function loadTestDatabaseConfig(env: Env = process.env): TestDatabaseConfig {
   const suffix = env['MISE_TEST_DB_SUFFIX'] || undefined;
   if (suffix !== undefined && !SUFFIX.test(suffix)) {

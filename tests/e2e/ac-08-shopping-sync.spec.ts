@@ -1,13 +1,16 @@
-import { expect, test } from '@playwright/test';
-import type { Page } from '@playwright/test';
+import type { Page, Route } from '@playwright/test';
 import { COLOR_SCHEMES, expectNoAxeViolations } from '../support/axe.js';
-import { FakeShoppingServer, SECOND_MEMBER } from '../support/fake-shopping-api.js';
+import { expect, test } from '../support/fixtures.js';
+import { runToken } from '../support/seed.js';
+import { cutStreams, restoreStreams } from '../support/stream-control.js';
 
-// UI-ONLY (card A15): stubbed API and a fake EventSource (see tests/support/fake-shopping-api.ts).
-// A16 must replace the fake with the real sign-in helper and rerun this flow against the real
-// server and the real SSE stream (AC-08, FR-34, FR-37).
-test.describe('UI-only (stubbed API): AC-08 live shopping list on two devices', () => {
-  const viewport = { width: 390, height: 844 };
+// Real server, real SSE stream and real sign-in (card A16): Anna and Ankka are two member sessions,
+// i.e. two devices. The connection loss is real too: tests/support/connection-proxy.ts drops the open event
+// streams (Chromium's offline mode does not close a stream that is already open). The only stub is the delayed item response in the pending-row test.
+test.describe('AC-08 live shopping list on two devices (real server)', () => {
+  test.afterEach(async () => {
+    await restoreStreams(); // never leave the streams cut for the next test
+  });
 
   const row = (page: Page, name: string) =>
     page.getByTestId('shopping-item').filter({ hasText: name });
@@ -21,34 +24,50 @@ test.describe('UI-only (stubbed API): AC-08 live shopping list on two devices', 
     }
   }
 
+  // The server's categorizer puts a new free-text item in Other until someone files it (or the household
+  // remembers a category for the name); filing is a real item edit, so it also exercises the sheet.
+  async function fileUnder(page: Page, name: string, category: string) {
+    await page.getByRole('button', { name: `Edit ${name}` }).click();
+    const sheet = page.getByTestId('item-sheet');
+    await sheet.getByLabel('Category').selectOption({ label: category });
+    await sheet.getByRole('button', { name: 'Save' }).click();
+    await expect(sheet).toBeHidden();
+  }
+
+  async function createList(page: Page, name: string) {
+    await page.goto('/shopping');
+    await page.getByRole('button', { name: 'New list' }).click();
+    await page.getByRole('dialog').getByLabel('List name').fill(name);
+    await page.getByRole('button', { name: 'Create' }).click();
+    await expect(page).toHaveURL(/\/shopping\/[0-9a-f-]+$/);
+    await expect(page.getByRole('heading', { name, level: 1 })).toBeVisible();
+  }
+
   test('AC-08: a checkoff on one device reaches the other without reload, also after a reconnect', async ({
-    browser,
+    anna,
+    ankka,
   }) => {
-    const server = new FakeShoppingServer();
-    const contextA = await browser.newContext({ viewport });
-    const contextB = await browser.newContext({ viewport });
-    const a = await contextA.newPage();
-    const b = await contextB.newPage();
-    await server.attach(a);
-    const clientB = await server.attach(b, SECOND_MEMBER);
+    const a = anna.page;
+    const b = ankka.page;
 
     // Device A creates a standalone list with groceries and a non-food item (FR-34, FR-35).
-    await a.goto('/shopping');
-    await a.getByRole('button', { name: 'New list' }).click();
-    await a.getByRole('dialog').getByLabel('List name').fill('Weekend shop');
-    await a.getByRole('button', { name: 'Create' }).click();
-    await expect(a).toHaveURL(/\/shopping\/[0-9a-f-]+$/);
-    await expect(a.getByRole('heading', { name: 'Weekend shop', level: 1 })).toBeVisible();
-    await addItems(a, ['Milk', 'Carrots', 'Batteries AA']);
+    await createList(a, `Weekend shop ${runToken()}`);
+    await addItems(a, ['Maito', 'Porkkanat', 'Paristot AA']);
     await expect(a.getByTestId('sync-status')).toContainText('Live');
+    await fileUnder(a, 'Maito', 'Dairy');
+    await fileUnder(a, 'Porkkanat', 'Vegetables');
 
     // FR-36: grouped by category, Other last.
-    const headings = a.getByRole('heading', { level: 2 });
-    await expect(headings).toHaveText([/Vegetables \(1\)/, /Dairy \(1\)/, /Other \(1\)/]);
+    await expect(a.getByRole('heading', { level: 2 })).toHaveText([
+      /Vegetables \(1\)/,
+      /Dairy \(1\)/,
+      /Other \(1\)/,
+    ]);
 
     // Device B opens the same list.
-    await b.goto(new URL(a.url()).pathname);
-    await expect(row(b, 'Milk')).toBeVisible();
+    const listPath = new URL(a.url()).pathname;
+    await b.goto(listPath);
+    await expect(row(b, 'Maito')).toBeVisible();
     await expect(b.getByTestId('sync-status')).toContainText('Live');
     await expect(b.getByRole('heading', { level: 2 })).toHaveText([
       /Vegetables \(1\)/,
@@ -57,69 +76,75 @@ test.describe('UI-only (stubbed API): AC-08 live shopping list on two devices', 
     ]);
 
     // A checks off milk: B updates without a reload (FR-37).
-    await row(a, 'Milk').getByTestId('item-checkbox').click();
+    await row(a, 'Maito').getByTestId('item-checkbox').click();
     await expect(b.getByTestId('picked-section')).toContainText('Picked up (1)');
     await expect(b.getByTestId('list-progress')).toContainText('1 of 3 picked up');
-    await expect(b.getByTestId('live-announcements')).toContainText('Milk picked up by Anna');
+    await expect(b.getByTestId('live-announcements')).toContainText('Maito picked up by Anna');
     // Attribution uses the real member name (B is Ankka, A is Anna).
     await b
       .getByTestId('picked-section')
       .getByRole('button', { name: /Picked up/ })
       .click();
-    await b.getByRole('button', { name: 'Edit Milk' }).click();
+    await b.getByRole('button', { name: 'Edit Maito' }).click();
     await expect(b.getByTestId('item-sheet')).toContainText('Picked up by Anna');
     await b.keyboard.press('Escape');
     await expect(b.getByTestId('item-sheet')).toBeHidden();
 
     // B loses the connection: indicator shows Reconnecting, the list stays visible.
-    await clientB.disconnect();
+    await cutStreams();
     await expect(b.getByTestId('sync-status')).toContainText('Reconnecting...');
-    await expect(row(b, 'Carrots')).toBeVisible();
+    await expect(row(b, 'Porkkanat')).toBeVisible();
 
     // A checks off carrots while B is offline: B does not know yet.
-    await row(a, 'Carrots').getByTestId('item-checkbox').click();
+    await row(a, 'Porkkanat').getByTestId('item-checkbox').click();
     await expect(a.getByTestId('picked-section')).toContainText('Picked up (2)');
     await expect(b.getByTestId('picked-section')).toContainText('Picked up (1)');
 
-    // B reconnects: refetch brings the change, indicator is Live again.
-    await clientB.reconnect();
+    // B reconnects: the client compares the cursor from the stream with its own seq and refetches over
+    // REST (ADR-004 addendum). Wait for that refetch response, then for the result; no fixed sleeps.
+    const listUrl = new RegExp(`/api/v1/shopping-lists/${listPath.split('/').pop()}$`);
+    const refetched = b.waitForResponse(
+      (r) => listUrl.test(r.url()) && r.request().method() === 'GET' && r.ok(),
+      { timeout: 20_000 },
+    );
+    await restoreStreams();
+    await refetched;
     await expect(b.getByTestId('picked-section')).toContainText('Picked up (2)');
-    await expect(b.getByTestId('sync-status')).toContainText('Live');
+    await expect(b.getByTestId('sync-status')).toContainText('Live', { timeout: 20_000 });
 
     // Axe, both themes, on the list and with the item sheet open (cf. conventions section 6).
     for (const scheme of COLOR_SCHEMES) {
       await a.emulateMedia({ colorScheme: scheme });
       await expectNoAxeViolations(a);
-      await a.getByRole('button', { name: 'Edit Batteries AA' }).click();
+      await a.getByRole('button', { name: 'Edit Paristot AA' }).click();
       await expect(a.getByTestId('item-sheet')).toBeVisible();
       await expectNoAxeViolations(a);
       await a.keyboard.press('Escape');
       await expect(a.getByTestId('item-sheet')).toBeHidden();
     }
-
-    await contextA.close();
-    await contextB.close();
   });
 
-  test('FR-35: an added item shows an "Adding…" placeholder at once, then lands in its category; axe passes with it visible', async ({
-    browser,
+  test('FR-35: an added item shows an "Adding…" placeholder at once, then lands in Other; axe passes with it visible', async ({
+    anna,
   }) => {
-    const server = new FakeShoppingServer();
-    const context = await browser.newContext({ viewport });
-    const page = await context.newPage();
-    await server.attach(page);
-    await page.goto('/shopping');
-    await page.getByRole('button', { name: 'New list' }).click();
-    await page.getByRole('button', { name: 'Create' }).click();
-    await expect(page).toHaveURL(/\/shopping\/[0-9a-f-]+$/);
+    const { page } = anna;
+    await createList(page, `Pending ${runToken()}`);
 
-    const release = server.holdItemPosts();
+    // Hold the real server's answer to the item POST so the placeholder stays on screen.
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    await page.route('**/api/v1/shopping-lists/*/items', async (route: Route) => {
+      if (route.request().method() !== 'POST') return route.fallback();
+      await gate;
+      return route.continue();
+    });
+
     const input = page.getByTestId('add-item-input');
-    await input.fill('Milk');
+    await input.fill('Pesusieni');
     await input.press('Enter');
     const placeholder = page.getByTestId('pending-item');
-    await expect(placeholder).toContainText('Milk');
-    await expect(placeholder).toContainText('Adding\u2026');
+    await expect(placeholder).toContainText('Pesusieni');
+    await expect(placeholder).toContainText('Adding…');
     await expect(input).toBeFocused();
     await expect(input).toHaveValue('');
     for (const scheme of COLOR_SCHEMES) {
@@ -129,8 +154,7 @@ test.describe('UI-only (stubbed API): AC-08 live shopping list on two devices', 
 
     release();
     await expect(placeholder).toBeHidden();
-    await expect(row(page, 'Milk')).toBeVisible();
-    await expect(page.getByRole('heading', { level: 2 })).toHaveText([/Dairy \(1\)/]);
-    await context.close();
+    await expect(row(page, 'Pesusieni')).toBeVisible();
+    await expect(page.getByRole('heading', { level: 2 })).toHaveText([/Other \(1\)/]);
   });
 });

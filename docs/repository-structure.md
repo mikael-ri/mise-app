@@ -144,6 +144,9 @@ Integration tests (`*.int.test.ts`) run on a real PostgreSQL with the same two-r
 |---|---|---|---|
 | `mise` | `mise_migrator` (`MIGRATION_DATABASE_URL`) | `mise_app` (`DATABASE_URL`) | development data |
 | `mise_test` | `mise_test_owner` (`TEST_MIGRATION_DATABASE_URL`) | `mise_test_app` (`TEST_DATABASE_URL`) | integration tests |
+| `mise_test_e2e` | `mise_test_owner` | `mise_test_app` | browser E2E (`pnpm e2e`); reset at the start of every run |
+
+The E2E lane is the same URLs and roles with suffix `e2e` (`loadE2eDatabaseConfig`), so `pnpm e2e` and `pnpm test:int` can run side by side. With `MISE_TEST_DB_SUFFIX=a` the lanes are `mise_test_a` and `mise_test_ae2e`.
 
 An existing dev volume created before the roles existed has tables owned by the bootstrap superuser: recreate it with `docker compose -f infra/compose.dev.yaml down -v`. For the dev database run `pnpm db:migrate` with `MIGRATION_DATABASE_URL` set, then `APP_DB_ROLE=mise_app pnpm --filter @mise/database db:grants`.
 
