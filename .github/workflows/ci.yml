@@ -8,7 +8,7 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -39,7 +39,7 @@ jobs:
       TEST_DATABASE_URL: postgres://mise_test_app:mise_test@localhost:5432/mise_test
       TEST_MIGRATION_DATABASE_URL: postgres://mise_test_owner:mise_test@localhost:5432/mise_test
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -76,7 +76,7 @@ jobs:
       TEST_DATABASE_URL: postgres://mise_test_app:mise_test@localhost:5432/mise_test
       TEST_MIGRATION_DATABASE_URL: postgres://mise_test_owner:mise_test@localhost:5432/mise_test
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
