@@ -15,13 +15,14 @@
     "test:int": "vitest run --config vitest.int.config.ts"
   },
   "dependencies": {
-    "fastify": "^5.12.7",
-    "pg": "^8.23.1",
     "@mise/contracts": "workspace:*",
     "@mise/domain": "workspace:*",
+    "fastify": "^5.12.7",
+    "pg": "^8.23.1",
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@types/node": "^26.6.5",
     "@types/pg": "^8.23.1",
     "tsx": "^4.23.15"
   }
