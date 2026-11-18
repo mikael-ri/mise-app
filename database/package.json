@@ -10,7 +10,7 @@
     "db:rollback": "node src/rollback.ts",
     "db:grants": "node roles/apply-grants.ts",
     "test": "vitest run --exclude \"**/*.int.test.ts\" --exclude \"**/node_modules/**\"",
-    "test:int": "vitest run --config vitest.int.config.ts spike test",
+    "test:int": "vitest run --config vitest.int.config.ts --dir test",
     "db:roundtrip": "./scripts/migration-roundtrip.sh"
   },
   "devDependencies": {

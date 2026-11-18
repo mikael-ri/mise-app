@@ -9,7 +9,7 @@ docker run --rm -u "$(id -u):$(id -g)" \
   -e MISE_COOKIE_DOMAIN="${MISE_COOKIE_DOMAIN:-mydomain.com}" \
   -e MISE_AUTH_PUBLIC_URL="${MISE_AUTH_PUBLIC_URL:-https://auth.mydomain.com}" \
   -e MISE_AUTH_PUBLIC_HOST="${MISE_AUTH_PUBLIC_HOST:-auth.mydomain.com}" \
-  -e MISE_OIDC_REDIRECT_URI="${MISE_OIDC_REDIRECT_URI:-https://mise.mydomain.com/auth/callback}" \
+  -e MISE_OIDC_REDIRECT_URI="${MISE_OIDC_REDIRECT_URI:-https://mise.mydomain.com/api/v1/auth/oidc/callback}" \
   -e MISE_AUTH_SSO_EXPIRATION="${MISE_AUTH_SSO_EXPIRATION:-15m}" \
   -e MISE_AUTH_SSO_INACTIVITY="${MISE_AUTH_SSO_INACTIVITY:-15m}" \
   -e MISE_AUTH_WEBAUTHN_DISABLE="${MISE_AUTH_WEBAUTHN_DISABLE:-true}" \

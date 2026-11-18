@@ -15,6 +15,7 @@ services:
       dockerfile: Dockerfile
     container_name: mise
     restart: unless-stopped
+    init: true # forward SIGTERM to node so graceful shutdown runs
     read_only: true
     cap_drop: [ALL]
     security_opt: ['no-new-privileges:true']
