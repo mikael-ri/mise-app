@@ -15,7 +15,7 @@
     "test:int": "vitest run --config vitest.int.config.ts"
   },
   "dependencies": {
-    "fastify": "^5.12.7",
+    "fastify": "^5.12.8",
     "pg": "^8.23.1",
     "@mise/contracts": "workspace:*",
     "@mise/domain": "workspace:*",
