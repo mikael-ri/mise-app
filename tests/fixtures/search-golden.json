@@ -12,7 +12,7 @@
     "en"
   ],
   "corpus": {
-    "ainon-nuudelipannu": "Ainon Nuudelipannu",
+    "nuudelipannu": "Nuudelipannu",
     "helppo-moussaka": "Helppo moussaka",
     "jauheliha-kaalipata": "Jauheliha-kaalipata",
     "juustoinen-kasviskiusaus": "Juustoinen kasviskiusaus",
@@ -38,7 +38,7 @@
       "kind": "inflection",
       "strength": "must",
       "expect": [
-        "ainon-nuudelipannu",
+        "nuudelipannu",
         "jauheliha-kaalipata",
         "nopea-kanawokki",
         "unkarilainen-jauhelihakeitto"
@@ -51,7 +51,7 @@
       "kind": "inflection",
       "strength": "must",
       "expect": [
-        "ainon-nuudelipannu",
+        "nuudelipannu",
         "jauheliha-kaalipata",
         "nopea-kanawokki",
         "unkarilainen-jauhelihakeitto"
@@ -64,7 +64,7 @@
       "kind": "inflection",
       "strength": "must",
       "expect": [
-        "ainon-nuudelipannu",
+        "nuudelipannu",
         "jauheliha-kaalipata",
         "nopea-kanawokki",
         "unkarilainen-jauhelihakeitto"
@@ -152,7 +152,7 @@
       "kind": "compound",
       "strength": "must",
       "expect": [
-        "ainon-nuudelipannu",
+        "nuudelipannu",
         "helppo-moussaka",
         "jauheliha-kaalipata",
         "juustoinen-kasviskiusaus",
@@ -175,7 +175,7 @@
       "kind": "compound",
       "strength": "must",
       "expect": [
-        "ainon-nuudelipannu",
+        "nuudelipannu",
         "helppo-moussaka",
         "juustoinen-kasviskiusaus",
         "kantarellirisotto",
@@ -215,7 +215,7 @@
       "kind": "compound",
       "strength": "must",
       "expect": [
-        "ainon-nuudelipannu",
+        "nuudelipannu",
         "juustoinen-kasviskiusaus",
         "kantarellirisotto",
         "punajuurivuoka",
@@ -303,10 +303,10 @@
       "kind": "title-ranking",
       "strength": "should",
       "expect": [
-        "ainon-nuudelipannu",
+        "nuudelipannu",
         "nopea-kanawokki"
       ],
-      "expectFirst": "ainon-nuudelipannu",
+      "expectFirst": "nuudelipannu",
       "note": "Compound title 'Nuudelipannu' outranks ingredient-only hit."
     },
     {
@@ -361,7 +361,7 @@
       "kind": "typo",
       "strength": "should",
       "expect": [
-        "ainon-nuudelipannu",
+        "nuudelipannu",
         "jauheliha-kaalipata",
         "nopea-kanawokki",
         "unkarilainen-jauhelihakeitto"
@@ -441,7 +441,7 @@
       "expectFirst": "en-carrot-ginger-soup",
       "note": "Singular query finds plural English ingredient/title. No cross-language: Finnish porkkana recipes must not match.",
       "mustNotMatch": [
-        "ainon-nuudelipannu",
+        "nuudelipannu",
         "jauheliha-kaalipata",
         "nopea-kanawokki",
         "unkarilainen-jauhelihakeitto"

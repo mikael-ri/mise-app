@@ -97,3 +97,17 @@ app.addHook('onClose', async () => {
 });
 
 await app.listen({ port: config.port, host: config.host });
+
+// Graceful shutdown: app.close() runs preClose (closes SSE streams) and onClose (sweep, pool).
+for (const signal of ['SIGTERM', 'SIGINT'] as const) {
+  process.once(signal, () => {
+    app.log.info({ signal }, 'shutting down');
+    app.close().then(
+      () => process.exit(0),
+      (err: unknown) => {
+        app.log.error({ err }, 'shutdown failed');
+        process.exit(1);
+      },
+    );
+  });
+}

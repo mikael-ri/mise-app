@@ -34,20 +34,20 @@ No secrets are committed. Everything generated lives in gitignored paths: `secre
 4. Set the environment. Either `export` the variables in your shell or put them in a private file outside git and
    pass `docker compose --env-file <file> …`. Defaults in `compose.yaml` use `mydomain.com`:
 
-   | Variable                     | Example / default                            | Meaning                                        |
-   | ---------------------------- | -------------------------------------------- | ---------------------------------------------- |
-   | `MISE_COOKIE_DOMAIN`         | `mydomain.com`                               | Parent domain of both hosts                    |
-   | `MISE_AUTH_PUBLIC_URL`       | `https://auth.mydomain.com`                  | Public URL = OIDC issuer (no trailing slash)   |
-   | `MISE_AUTH_PUBLIC_HOST`      | `auth.mydomain.com`                          | Used as TOTP issuer label                      |
-   | `MISE_OIDC_REDIRECT_URI`     | `https://mise.mydomain.com/auth/callback`    | Must equal the callback route A07 implements   |
-   | `AUTHELIA_BIND_ADDRESS`      | LAN IP of the Mise host, e.g. `192.168.1.20` | Never `0.0.0.0`; firewall to the proxy Pi only |
-   | `AUTHELIA_BIND_PORT`         | `9091`                                       |                                                |
-   | `AUTHELIA_UID/GID`           | `1000`                                       | Must own the `authelia_data` volume            |
-   | `MISE_AUTH_SSO_EXPIRATION`   | `15m`                                        | Authelia SSO session absolute lifetime         |
-   | `MISE_AUTH_SSO_INACTIVITY`   | `15m` (not relied on, see ADR addendum)      | Authelia SSO session idle lifetime             |
-   | `MISE_AUTH_WEBAUTHN_DISABLE` | `true`                                       | Passkeys off in P0; `false` only for PASSKEY=1 |
-   | `MISE_AUTH_SSO_REMEMBER_ME`  | `-1`                                         | `-1` disables Remember Me. **`0` does not.**   |
-   | `AUTHELIA_LOG_LEVEL`         | `info`                                       | `debug` while diagnosing                       |
+   | Variable                     | Example / default                                     | Meaning                                        |
+   | ---------------------------- | ----------------------------------------------------- | ---------------------------------------------- |
+   | `MISE_COOKIE_DOMAIN`         | `mydomain.com`                                        | Parent domain of both hosts                    |
+   | `MISE_AUTH_PUBLIC_URL`       | `https://auth.mydomain.com`                           | Public URL = OIDC issuer (no trailing slash)   |
+   | `MISE_AUTH_PUBLIC_HOST`      | `auth.mydomain.com`                                   | Used as TOTP issuer label                      |
+   | `MISE_OIDC_REDIRECT_URI`     | `https://mise.mydomain.com/api/v1/auth/oidc/callback` | Must equal the app's OIDC callback route       |
+   | `AUTHELIA_BIND_ADDRESS`      | LAN IP of the Mise host, e.g. `192.168.1.20`          | Never `0.0.0.0`; firewall to the proxy Pi only |
+   | `AUTHELIA_BIND_PORT`         | `9091`                                                |                                                |
+   | `AUTHELIA_UID/GID`           | `1000`                                                | Must own the `authelia_data` volume            |
+   | `MISE_AUTH_SSO_EXPIRATION`   | `15m`                                                 | Authelia SSO session absolute lifetime         |
+   | `MISE_AUTH_SSO_INACTIVITY`   | `15m` (not relied on, see ADR addendum)               | Authelia SSO session idle lifetime             |
+   | `MISE_AUTH_WEBAUTHN_DISABLE` | `true`                                                | Passkeys off in P0; `false` only for PASSKEY=1 |
+   | `MISE_AUTH_SSO_REMEMBER_ME`  | `-1`                                                  | `-1` disables Remember Me. **`0` does not.**   |
+   | `AUTHELIA_LOG_LEVEL`         | `info`                                                | `debug` while diagnosing                       |
 
 5. `./scripts/validate-config.sh` (same environment, `.secrets/`), then `docker compose up -d`. Wait for `healthy`.
 6. One-time codes for registering TOTP or a passkey are written to `/data/notification.txt` in the `authelia_data` volume (production: `docker exec authelia cat /data/notification.txt`; dev: `data/notification.txt`; filesystem notifier,
