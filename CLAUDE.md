@@ -3,7 +3,10 @@
 Private household app for two adults: shared recipe bank, meal planning, live shopping lists.
 TypeScript pnpm monorepo, modular monolith, PostgreSQL. Recipes and AI chat are in Finnish; UI strings may be English.
 
-**Current milestone: A (daily foundations).** Build only what the task card asks for. Do not build Milestone B–D features or anything marked P1.
+** Current milestone: B. ** Build only what the task card asks for. Do not build Milestone C–D features or anything marked P1.
+
+Cards live in `docs/milestone-*/tasks/`; closed decisions for B are in docs/milestone-b/plan.md.
+
 
 ## Commands
 - `pnpm check` : typecheck + lint + unit tests. Must pass before you call a task done.
@@ -40,6 +43,7 @@ The docs in `docs/` are frozen baselines. Do not edit them to fit your code. If 
 8. Retriable mutations take an `Idempotency-Key`. Never hold a DB transaction open across an external call.
 9. Never log secrets, tokens, profile data, chat content or images.
 10. No new dependency without stating why.
+11. In unattended runs the agent may commit locally on the lane branch and must never push.
 
 ## Scope discipline
 - Do only the task card. List adjacent problems at the end; do not fix them unasked.

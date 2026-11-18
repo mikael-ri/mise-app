@@ -1,0 +1,44 @@
+{
+  "env": {
+    "MISE_AUTONOMOUS": "1"
+  },
+  "permissions": {
+    "deny": [
+      "Bash(git push:*)",
+      "Bash(git remote:*)",
+      "Bash(git config:*)",
+      "Bash(git tag:*)",
+      "Bash(git merge:*)",
+      "Bash(git rebase:*)",
+      "Bash(git stash drop:*)",
+      "Bash(git branch -D:*)",
+      "Bash(gh:*)",
+      "Bash(docker:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm remove:*)",
+      "Bash(pnpm update:*)",
+      "Bash(pnpm dlx:*)",
+      "Bash(npx:*)",
+      "Bash(npm:*)",
+      "Bash(chmod:*)",
+      "Bash(chown:*)",
+      "Bash(ssh:*)",
+      "Bash(scp:*)",
+      "Bash(rsync:*)",
+      "Bash(nc:*)",
+      "Bash(telnet:*)",
+      "Edit(./.claude/**)",
+      "Edit(./.github/**)",
+      "Edit(./.autonomy/**)",
+      "Edit(./scripts/overnight.sh)",
+      "Edit(./scripts/autonomy-*.sh)",
+      "Edit(./pnpm-lock.yaml)",
+      "Edit(./pnpm-workspace.yaml)",
+      "Read(~/.ssh/**)",
+      "Read(~/.config/gh/**)",
+      "Read(~/.aws/**)",
+      "Read(~/.docker/**)",
+      "Read(./.autonomy/**)"
+    ]
+  }
+}
