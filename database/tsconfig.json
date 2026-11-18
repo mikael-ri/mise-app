@@ -1,5 +1,5 @@
 {
   "extends": "../tsconfig.base.json",
-  "compilerOptions": { "allowImportingTsExtensions": true },
+  "compilerOptions": { "types": ["node"], "allowImportingTsExtensions": true },
   "include": ["*.ts", "roles", "schema", "seed", "src", "test"]
 }

@@ -5,10 +5,11 @@
   "main": "src/index.ts",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "typecheck": "tsc -p .",
+    "typecheck": "tsc -p . && tsc -p tsconfig.test.json",
     "test": "vitest run --passWithNoTests"
   },
   "devDependencies": {
+    "@types/node": "^26.6.6",
     "fast-check": "^4.10.2"
   }
 }
