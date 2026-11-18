@@ -3,6 +3,7 @@
   "permissions": {
     "defaultMode": "acceptEdits",
     "allow": [
+      "Bash(cat docs/:*)",
       "Bash(pnpm check)",
       "Bash(pnpm check:*)",
       "Bash(pnpm test)",

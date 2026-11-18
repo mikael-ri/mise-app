@@ -12,6 +12,15 @@ rel="${file#"$proj"/}"
 
 block() { echo "BLOCKED: $1" >&2; exit 2; }
 
+# Unattended runs (MISE_AUTONOMOUS=1, set by .claude/settings.autonomous.json): the agent may not
+# change its own guardrails, CI, the driver, or dependency pins.
+if [ "${MISE_AUTONOMOUS:-}" = "1" ]; then
+  case "$rel" in
+    .claude/*|.github/*|.git/*|.autonomy/*|scripts/overnight.sh|scripts/autonomy-*.sh|pnpm-lock.yaml|pnpm-workspace.yaml)
+      block "$rel may not be changed in an unattended run. Describe the needed change in your report and stop that part of the work." ;;
+  esac
+fi
+
 case "$rel" in
   docs/product-specification.md|docs/technical-architecture.md|docs/database-design.md)
     block "$rel is a frozen baseline. Do not edit it. Describe the needed change as a change request or ADR amendment in your final summary." ;;
