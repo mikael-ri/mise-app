@@ -1,7 +1,7 @@
 name: mise-dev
 services:
   postgres:
-    image: postgres:18
+    image: postgres:19
     environment:
       POSTGRES_USER: mise
       POSTGRES_PASSWORD: mise_dev_only
@@ -18,7 +18,7 @@ services:
   # One-shot, idempotent: creates the migrator/app roles for `mise` and the roles + database for tests
   # (ADR-018). Runs on every `up`, so it also works on an existing volume. Dev-only credentials.
   db-provision:
-    image: postgres:18
+    image: postgres:19
     depends_on:
       postgres:
         condition: service_healthy
