@@ -51,7 +51,7 @@ services:
       start_period: 15s
 
   authelia_db:
-    image: postgres:18.7-alpine
+    image: postgres:19.0-alpine
     restart: unless-stopped
     volumes:
       - authelia_db_dev:/var/lib/postgresql
