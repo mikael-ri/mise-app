@@ -59,7 +59,7 @@ services:
 
   authelia_db:
     container_name: authelia_db
-    image: postgres:18.7-alpine
+    image: postgres:19.0-alpine
     volumes:
       - authelia_db:/var/lib/postgresql
     environment:
