@@ -67,7 +67,7 @@ services:
       retries: 5
 
   proxy:
-    image: nginx:1.29-alpine
+    image: nginx:1.31-alpine
     ports:
       - '127.0.0.1:9443:443'
     volumes:
